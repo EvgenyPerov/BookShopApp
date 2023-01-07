@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+
+<script th:fragment="jsFragment" type="text/javascript">
+    $(document).ready(function (){
+        $("#locales").change(function (){
+            let selectedItem = $("#locales").val();
+            if (selectedItem != ' ') {
+                window.location.replace('?lang='+selectedItem);
+            }
+        });
+    });
+</script>
+
+<body>
+
+</body>
+</html>
