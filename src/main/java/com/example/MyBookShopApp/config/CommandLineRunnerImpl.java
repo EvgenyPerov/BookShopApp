@@ -14,7 +14,7 @@ import javax.persistence.EntityManagerFactory;
 import java.util.List;
 import java.util.logging.Logger;
 
-@Configuration
+//@Configuration
 public class CommandLineRunnerImpl implements CommandLineRunner {
 
     private TestEntityCrudRepository repository;

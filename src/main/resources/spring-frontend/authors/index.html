@@ -42,7 +42,7 @@
                         <h2 class="Authors-title" id="a" th:id="${#strings.toLowerCase(authorList.key)}" th:text="${authorList.key}"> </h2>
                         <div class="Authors-letter">
                             <div th:each="author : ${authorList.value}" class="Authors-item">
-                                <a href="/authors/slug.html" th:text="${author.lastName+' '+author.firstName}"> </a>
+                                <a href="/authors/slug.html" th:href="${'/authors/slug/'}+${author.id}" th:text="${author.name}"> </a>
                             </div>
                         </div>
                     </div>

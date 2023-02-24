@@ -23,14 +23,14 @@
     <div class="wrap">
         <main class="Middle-main">
             <ul class="breadcrumbs"
-                th:replace="~{fragments/breadcrumb_fragment :: breadcrumps(category='Детективы')}"></ul>
+                th:replace="~{fragments/breadcrumb_fragment :: breadcrumps(category=${name})}"></ul>
             <header class="Middle-header">
-                <h1 class="Middle-title">Детективы
+                <h1 class="Middle-title" th:text="${name}">Детективы
                 </h1>
             </header>
             <div class="Section">
                 <div class="Cards Cards_refresh"
-                     th:replace="~{fragments/books_pool_fragment :: pool(category='genre')}"></div>
+                     th:replace="~{fragments/books_pool_fragment :: pool(category='genre', list=${jenrePagesBooks})}"></div>
             </div>
         </main>
     </div>

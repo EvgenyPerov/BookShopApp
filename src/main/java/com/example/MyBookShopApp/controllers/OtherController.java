@@ -1,10 +1,30 @@
 package com.example.MyBookShopApp.controllers;
 
+import com.example.MyBookShopApp.data.BooksPageDto;
+import com.example.MyBookShopApp.data.OtherService;
+import com.example.MyBookShopApp.data.SearchWordDto;
+import com.example.MyBookShopApp.struct.book.book.Book;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.ui.Model;
 
 @Controller
 public class OtherController {
+
+    private OtherService otherService;
+
+    @Autowired
+    public OtherController(OtherService otherService) {
+        this.otherService = otherService;
+    }
+
+    @ModelAttribute("searchWordDto")
+    public SearchWordDto searchWordDto(){
+        return new SearchWordDto();
+    }
 
     @GetMapping("/documents/index")
     public String documentsPage(){
@@ -29,4 +49,28 @@ public class OtherController {
         System.out.println("Переход на страницу Контакты");
         return "/contacts";
     }
+
+    @ApiOperation("этот метод изначально при переходе с главной страницы на Тэг")
+    @GetMapping("/tags/index/{tagId}")
+    public String getTags(Model model,
+                          @PathVariable(value = "tagId", required = false) Integer tagId) {
+        System.out.println("Переход на страницу тэгов");
+        Page<Book> page = otherService.getPageOfTagBooks(tagId, 0, 5);
+        model.addAttribute("bookListByTag",page.getContent());
+        model.addAttribute("tagName",otherService.getTagNameById(tagId));
+        model.addAttribute("id",tagId);
+    return "/tags/index";
+    }
+
+    @ApiOperation("этот метод постраничная загрузка книг найденных по Тэгу")
+    @ResponseBody
+    @GetMapping("/books/tag/{tagId}")
+    public BooksPageDto getRecentNextPage(@PathVariable(value = "tagId", required = false) Integer tagId
+            ,@RequestParam(value ="offset", required = false) Integer offset
+            , @RequestParam(value ="limit", required = false) Integer limit){
+        Page<Book> page = otherService.getPageOfTagBooks(tagId, offset, limit);
+        System.out.println("Передача данных популярных книг в JS с параметром offset = "+ offset + " limit= "+ limit);
+        return new BooksPageDto(page.getContent());
+    }
+
 }

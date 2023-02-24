@@ -21,19 +21,18 @@
     <script th:replace="~{fragments/common_js_fragment :: jsFragment}"> </script>
 </head>
 <body class="Site">
-<header class="Header"
-        th:replace="~{fragments/common_header_fragment :: head(main='menu-item menu-item_ACTIVE', status='unauthorized')}"></header>
+<header th:replace="~{fragments/common_header_fragment :: head(main='menu-item menu-item_ACTIVE', status='unauthorized')}"></header>
 <div class="Middle">
     <div class="wrap">
         <main class="Middle-main">
             <div class="Section">
-                <div th:replace="~{fragments/book_slider_fragment :: bookSlider(title='Рекомендуемое')}"></div>
-                <div th:replace="~{fragments/book_slider_fragment :: bookSlider(title='Новинки')}"></div>
-                <div th:replace="~{fragments/book_slider_fragment :: bookSlider(title='Популярное')}"></div>
+                <div th:replace="~{fragments/book_slider_fragment :: bookSlider(title='Рекомендуемое', list=${recommendedBooks}, category='recommended')}"></div>
+                <div th:replace="~{fragments/book_slider_fragment :: bookSlider(title='Новинки',list=${recentedBooks}, category='recent')}"></div>
+                <div th:replace="~{fragments/book_slider_fragment :: bookSlider(title='Популярное', list=${popularBooks}, category='popular')}"></div>
             </div>
             <h2 class="Middle-title">Книги по тегам
             </h2>
-            <div class="Tags" id="tags" th:replace="~{fragments/tag_cloud_fragment :: cloud}"></div>
+            <div th:replace="~{fragments/tag_cloud_fragment :: cloud}"></div>
         </main>
     </div>
 </div>

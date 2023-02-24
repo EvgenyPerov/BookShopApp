@@ -1,17 +1,24 @@
 package com.example.MyBookShopApp.struct.genre;
 
-import javax.persistence.*;
+import com.example.MyBookShopApp.struct.author.Author;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Data;
 
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+
+@Data
 @Entity
 @Table(name = "genre")
 public class GenreEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
-    @Column(columnDefinition = "INT")
-    private int parentId;
+    @Column(name = "parent_id", columnDefinition = "INT")
+    private Integer parentId;
 
     @Column(columnDefinition = "VARCHAR(255) NOT NULL")
     private String slug;
@@ -19,35 +26,16 @@ public class GenreEntity {
     @Column(columnDefinition = "VARCHAR(255) NOT NULL")
     private String name;
 
-    public int getId() {
-        return id;
-    }
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "genre_id", referencedColumnName = "id")
+    private GenreEntity genre;
 
-    public void setId(int id) {
-        this.id = id;
-    }
+    @JsonIgnore
+    @OneToMany(mappedBy = "genre")
+    private List<GenreEntity> children = new ArrayList<>();
 
-    public int getParentId() {
-        return parentId;
-    }
+    @Column(name = "count_books", columnDefinition = "INT")
+    private Integer countBooks;
 
-    public void setParentId(int parentId) {
-        this.parentId = parentId;
-    }
-
-    public String getSlug() {
-        return slug;
-    }
-
-    public void setSlug(String slug) {
-        this.slug = slug;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 }
