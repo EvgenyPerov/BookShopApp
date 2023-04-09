@@ -1,4 +1,4 @@
-package com.example.MyBookShopApp.data;
+package com.example.MyBookShopApp.data.repo;
 
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.book.links.Book2GenreEntity;

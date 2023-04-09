@@ -1,6 +1,10 @@
 package com.example.MyBookShopApp.controllers;
 
-import com.example.MyBookShopApp.data.*;
+import com.example.MyBookShopApp.data.dto.BooksPageDto;
+import com.example.MyBookShopApp.data.dto.SearchWordDto;
+import com.example.MyBookShopApp.data.services.BookService;
+import com.example.MyBookShopApp.data.services.OtherService;
+import com.example.MyBookShopApp.errs.EmptySearchException;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.other.Tag;
 import io.swagger.annotations.Api;
@@ -26,8 +30,8 @@ public class MainPageController {
         this.otherService = otherService;
     }
 
-    private SearchWordDto newSearchWord = new SearchWordDto();
-    private boolean flagNewSearch = false;
+//    private SearchWordDto newSearchWord = new SearchWordDto();
+//    private boolean flagNewSearch = false;
 
     @ModelAttribute("recommendedBooks")
     public List<Book> recommendedBooks(){
@@ -49,57 +53,46 @@ public class MainPageController {
         return new ArrayList<>();
     }
 
-    @ModelAttribute("searchWordDto")
-    public SearchWordDto getSearchWord(){
-        return new SearchWordDto();
-    }
+//    @ModelAttribute("searchWordDto")
+//    public SearchWordDto getSearchWord(){
+//        return new SearchWordDto();
+//    }
 
     @ModelAttribute("tagsMap")
     public Map<Tag, Integer> getTagsIdList(){
         return otherService.getTagsAndSizesMap();
     }
 
-    @GetMapping(value = {"/search", "/", "/index"})
-    public String mainPage(){
+    @GetMapping(value = { "/", "/index"})
+    public String mainPage(Model model){
         System.out.println("Переход на страницу Главная");
+        model.addAttribute("searchWordDto", new SearchWordDto());
         return "/index";
     }
-
-    @GetMapping(value = { "/search/{searchWord}"})
-    public String getSearchResults(@PathVariable(value = "searchWord", required = false) SearchWordDto searchWordDto,
-                                   Model model) {
-        SearchWordDto correctSearchWordDto;
-        if (flagNewSearch) {
-            correctSearchWordDto = newSearchWord;
-        }
-           else {
-            correctSearchWordDto = searchWordDto;
-        }
-
-        model.addAttribute("searchWordDto", correctSearchWordDto);
-        model.addAttribute("searchResults",
-                bookService.getPageOfSearchResultBooks(correctSearchWordDto.getExample(), 0, 10).getContent());
-        System.out.println("Переход на страницу поиска по слову " + correctSearchWordDto.getExample()+ " FLAG= "+ flagNewSearch);
+    @GetMapping(value = {"/search", "/search/{searchWord}"})
+    public String getSearchResult(@PathVariable(value = "searchWord", required = false) SearchWordDto searchWordDto,
+                                  Model model) throws EmptySearchException {
+        if (searchWordDto != null) {
+        model.addAttribute("searchWordDto", searchWordDto);
+        List<Book> searchResults = bookService.getPageOfSearchResultBooks(searchWordDto.getExample(), 0, 20).getContent();
+        model.addAttribute("searchResults",searchResults);
+            System.out.println("найдено сначала книг = " + searchResults.size());
         return "/search/index";
+        } else {
+            throw new EmptySearchException("Поисковый запрос не задан");
+        }
     }
-
     @GetMapping("/search/page/{searchWord}")
     @ResponseBody
     public BooksPageDto getNextSearchPage(Model model,
-                                          @RequestParam("offset") Integer offset, @RequestParam("limit") Integer limit
-                                          ,@PathVariable(value = "searchWord", required = false) SearchWordDto searchWordDto
-                                          ){
-//        model.addAttribute("searchWordDto", this.searchWord);
-        if (offset >= 0) {
-            flagNewSearch = true;
-            newSearchWord.setExample(searchWordDto.getExample());
-        }
-        System.out.println("Переход на страницу внутреннего поиска \"/search/page/{searchWord}\" " + searchWordDto.getExample()+" offset= "+ offset);
-        return new BooksPageDto(bookService.getPageOfSearchResultBooks(searchWordDto.getExample(), offset, limit).getContent());
+                                          @RequestParam("offset") Integer offset,
+                                          @RequestParam("limit") Integer limit,
+                                          @PathVariable(value = "searchWord", required = false) SearchWordDto searchWordDto) {
+        List<Book> searchResults =bookService.getPageOfSearchResultBooks(searchWordDto.getExample(), offset, limit).getContent();
+//            model.addAttribute("isEmptyList",searchResults.isEmpty());
+        System.out.println("найдено Pageable книг = " + searchResults.size());
+        return new BooksPageDto(searchResults);
     }
 
-//    @GetMapping("/tags/index")
-//    public String getTags(){
-//        return "/tags/index";
-//    }
+
 }

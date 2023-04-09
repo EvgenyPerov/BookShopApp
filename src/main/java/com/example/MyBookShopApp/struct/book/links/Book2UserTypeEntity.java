@@ -1,7 +1,14 @@
 package com.example.MyBookShopApp.struct.book.links;
 
-import javax.persistence.*;
+import com.example.MyBookShopApp.struct.book.book.Book;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Data;
 
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+
+@Data
 @Entity
 @Table(name = "book2user_type")
 public class Book2UserTypeEntity {
@@ -16,27 +23,8 @@ public class Book2UserTypeEntity {
     @Column(columnDefinition = "VARCHAR(255) NOT NULL")
     private String name;
 
-    public int getId() {
-        return id;
-    }
+    @JsonIgnore
+    @OneToMany(mappedBy = "book2UserType")
+    private List<Book2UserEntity> books = new ArrayList<>();
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 }

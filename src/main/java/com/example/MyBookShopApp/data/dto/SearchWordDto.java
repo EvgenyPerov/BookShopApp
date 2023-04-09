@@ -1,4 +1,4 @@
-package com.example.MyBookShopApp.data;
+package com.example.MyBookShopApp.data.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

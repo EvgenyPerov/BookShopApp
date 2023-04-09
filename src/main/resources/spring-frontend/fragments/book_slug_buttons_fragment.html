@@ -3,7 +3,8 @@
 <div th:fragment="panel">
     <div class="ProductCard-cart">
         <div class="ProductCard-cartElement">
-            <button class="btn btn_primary btn_outline" data-sendstatus="KEPT" data-bookid="[1111]"
+            <button class="btn btn_primary btn_outline" data-sendstatus="KEPT"
+                    data-bookid="[1111]" th:attr="data-bookid = ${bookId}"
                     data-btntype="check" data-btnradio="buyblock" data-check="false"
                     data-alttext="Отложена"><span class="btn-icon"><img
                     src="/assets/img/icons/heart.svg" alt="heart.svg"/></span><span
@@ -11,7 +12,8 @@
             </button>
         </div>
         <div class="ProductCard-cartElement">
-            <button class="btn btn_primary btn_outline" data-sendstatus="CART" data-bookid="[1111]"
+            <button class="btn btn_primary btn_outline" data-sendstatus="CART"
+                    data-bookid="[1111]" th:attr="data-bookid = ${bookId}"
                     data-btntype="check" data-btnradio="buyblock" data-check="false"
                     data-alttext="В корзине"><span class="btn-icon"><img
                     src="/assets/img/icons/shopping-basket.svg"
@@ -33,6 +35,15 @@
                     class="btn-content">В архив</span>
             </button>
         </div>
+        <div id="myPopup">
+            <p> Ссылки для скачивания:</p>
+            <div th:each="bookFile: ${slugBook.bookFileList}" >
+                <a  href="#" th:href="${'/books/download/'+ bookFile.hash}"
+                    th:text="${bookFile.getExtensionStringByTypeId()}"> </a>
+            </div>
+            <span id="myPopup_close" class="close">❎</span>
+        </div>
+        <div id="myOverlay">  </div>
     </div>
 </div>
 </html>

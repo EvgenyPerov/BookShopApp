@@ -13,24 +13,26 @@
             <div class="Card-description" th:text="${book.description}">
             </div>
             <div class="Card-cost">
-                <span class="Card-priceOld" th:text="(${book.discount} != 0)? ${book.price} : '' " ></span>
-                <span class="Card-price" th:text="${-book.price*book.discount/100+book.price}"></span>
+                <span class="Card-priceOld" th:text="(${book.discountPrice() != book.price} ? ${'₽'+ book.price})" ></span>
+                <span class="Card-price" th:text="${'₽'+ book.discountPrice()}"></span>
             </div>
         </div>
     </div>
-    <div class="Cards-footer Cards-footer_center"  >
-        <a class="btn btn_primary"
-           href="#"
-           data-refreshoffset="0"
-           data-refreshlimit="5"
-           data-refreshshow="search"
-           data-refreshquery="new search"
-           th:attr= "data-refreshquery=${searchWordDto.example}, data-refreshshow=${category}, data-refreshid=${id} "
-           data-refreshid="1"
+<!--        <div th:if="${not #lists.isEmpty(${list})}">-->
+        <div class="Cards-footer Cards-footer_center">
+            <a class="btn btn_primary"
+               href="#"
+               data-refreshoffset="0"
+               data-refreshlimit="20"
+               data-refreshshow="search"
+               data-refreshquery="new search"
+               th:attr="data-refreshquery=${searchWordDto.example}, data-refreshshow=${category}, data-refreshid=${id} "
+               data-refreshid="1"
              >Показать еще </a>
-    </div>
-    <!--           th:attr= "data-refreshquery=${searchWordDto.example}, data-refreshshow=${category}"
-    th:field="*{example}-->
+        </div>
+<!--        th:text="${isEmptyList}"-->
+        <!--               th:text="${!isEmptyList}? 'Показать еще больше': '' "-->
+        <!--        <div th:if="${not #lists.isEmpty(${list})}">-->
 </div>
 
 </html>

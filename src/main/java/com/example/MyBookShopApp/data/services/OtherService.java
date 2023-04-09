@@ -1,8 +1,9 @@
-package com.example.MyBookShopApp.data;
+package com.example.MyBookShopApp.data.services;
 
-import com.example.MyBookShopApp.struct.author.Author;
+import com.example.MyBookShopApp.data.repo.BookFileTypeRepository;
+import com.example.MyBookShopApp.data.repo.BookRepository;
+import com.example.MyBookShopApp.data.repo.TagsRepository;
 import com.example.MyBookShopApp.struct.book.book.Book;
-import com.example.MyBookShopApp.struct.genre.GenreEntity;
 import com.example.MyBookShopApp.struct.other.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -10,11 +11,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class OtherService {
@@ -22,10 +21,13 @@ public class OtherService {
     private TagsRepository tagsRepository;
     private BookRepository bookRepository;
 
+    private BookFileTypeRepository bookFileTypeRepository;
+
     @Autowired
-    public OtherService(TagsRepository tagsRepository, BookRepository bookRepository) {
+    public OtherService(TagsRepository tagsRepository, BookRepository bookRepository, BookFileTypeRepository bookFileTypeRepository) {
         this.tagsRepository = tagsRepository;
         this.bookRepository = bookRepository;
+        this.bookFileTypeRepository = bookFileTypeRepository;
     }
 
     public List<Tag> getTagsList() {
@@ -65,4 +67,7 @@ public class OtherService {
         return tagsRepository.findTagByIdIs(tagId).getName();
     }
 
+//    public String getExtensionStringByTypeId(Integer id){
+//        return bookFileTypeRepository.findByIdIs(id).getName();
+//    }
 }

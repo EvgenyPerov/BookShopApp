@@ -1,4 +1,4 @@
-package com.example.MyBookShopApp.data;
+package com.example.MyBookShopApp.data.repo;
 
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.other.Tag;
@@ -40,6 +40,7 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
     Page<Book> findBooksByTagListContains(Tag tag, Pageable nextPage);
 
     Page<Book> findBooksByIdIn(List<Integer> list, Pageable nextPage);
+    List<Book> findBooksByIdIn(int[] array);
 
     Page<Book> findBooksByAuthorId(Integer auihorId, Pageable nextPage);
 

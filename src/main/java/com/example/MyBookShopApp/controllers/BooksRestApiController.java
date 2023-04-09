@@ -1,16 +1,17 @@
 package com.example.MyBookShopApp.controllers;
 
-import com.example.MyBookShopApp.data.BookService;
+import com.example.MyBookShopApp.data.responses.ApiResponse;
+import com.example.MyBookShopApp.data.services.BookService;
+import com.example.MyBookShopApp.errs.BookstoreApiWrongPatameterException;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
 @Api(description = "book data api")
@@ -32,8 +33,17 @@ public class BooksRestApiController {
 
     @ApiOperation("operation to get books by title")
     @GetMapping("/by-title")
-    public ResponseEntity<List<Book>> booksByTitle(@RequestParam("title") String title){
-        return ResponseEntity.ok(bookService.getBooksByTitle(title));
+    public ResponseEntity<ApiResponse<Book>> booksByTitle(@RequestParam("title") String title) throws BookstoreApiWrongPatameterException {
+        ApiResponse<Book> response = new ApiResponse<>();
+
+        List<Book> data = bookService.getBooksByTitle(title);
+
+        response.setData(data);
+        response.setDebugMessage("successful request");
+        response.setMessage("data size = " + data.size() + " elements");
+        response.setStatus(HttpStatus.OK);
+
+        return ResponseEntity.ok(response);
     }
 
     @ApiOperation("operation to get books by price-range")
@@ -59,4 +69,19 @@ public class BooksRestApiController {
     public ResponseEntity<List<Book>> bestsellerBooks(){
         return ResponseEntity.ok(bookService.getBestsellers());
     }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponse<Book>>  handleMissingServletRequestParameterException(Exception ex){
+        ApiResponse<Book> response = new ApiResponse<>(HttpStatus.BAD_REQUEST,
+                "Missing requiared parameters", ex);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(BookstoreApiWrongPatameterException.class)
+    public ResponseEntity<ApiResponse<Book>>  handleBookstoreApiWrongPatameterException(Exception ex){
+        ApiResponse<Book> response = new ApiResponse<>(HttpStatus.BAD_REQUEST,
+                "Wrong parameter value...", ex);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
 }

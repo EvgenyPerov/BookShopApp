@@ -1,8 +1,15 @@
 package com.example.MyBookShopApp.struct.book.book;
 
 import com.example.MyBookShopApp.struct.author.Author;
+import com.example.MyBookShopApp.struct.book.file.BookFileEntity;
+import com.example.MyBookShopApp.struct.book.links.Book2UserEntity;
+import com.example.MyBookShopApp.struct.book.review.BookRatingEntity;
+import com.example.MyBookShopApp.struct.book.review.BookReviewEntity;
 import com.example.MyBookShopApp.struct.other.Tag;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.ToString;
@@ -25,6 +32,7 @@ public class Book {
     //pub_date DATE NOT NULL — дата публикации
     @ApiModelProperty(value = "date of book publication")
     @Column(name = "pub_date", columnDefinition = "DATE NOT NULL")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
     private Date pubDate;
 
     //is_bestseller TINYINT NOT NULL — книга очень популярна, является бестселлером
@@ -86,6 +94,30 @@ public class Book {
             inverseJoinColumns = @JoinColumn (name = "tag_id"))
     private List<Tag> tagList = new ArrayList<>();
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "book")
+    private List<BookFileEntity> bookFileList = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "book")
+    private List<Book2UserEntity> book2UserEntities = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "book")
+    private List<BookRatingEntity> bookRatingEntities = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "book")
+    private List<BookReviewEntity> bookReviewEntities = new ArrayList<>();
+    @JsonProperty
+    public double discountPrice(){
+        return discount>0 ? price - (price*discount)/100 : price;
+    }
+
+    @JsonGetter("authors")
+    public String authorName(){
+        return author.getName();
+    }
 
     @Override
     public String toString() {

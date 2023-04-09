@@ -1,4 +1,4 @@
-package com.example.MyBookShopApp.data;
+package com.example.MyBookShopApp.data.repo;
 
 import com.example.MyBookShopApp.struct.author.Author;
 import com.example.MyBookShopApp.struct.book.book.Book;

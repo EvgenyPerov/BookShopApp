@@ -1,8 +1,8 @@
 package com.example.MyBookShopApp.controllers;
 
-import com.example.MyBookShopApp.data.BooksPageDto;
-import com.example.MyBookShopApp.data.GenreService;
-import com.example.MyBookShopApp.data.SearchWordDto;
+import com.example.MyBookShopApp.data.dto.BooksPageDto;
+import com.example.MyBookShopApp.data.services.GenreService;
+import com.example.MyBookShopApp.data.dto.SearchWordDto;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;

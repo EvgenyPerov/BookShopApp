@@ -1,8 +1,19 @@
 package com.example.MyBookShopApp.struct.user;
 
+import com.example.MyBookShopApp.struct.book.links.Book2UserEntity;
+import com.example.MyBookShopApp.struct.book.review.BookRatingEntity;
+import com.example.MyBookShopApp.struct.book.review.BookReviewEntity;
+import com.example.MyBookShopApp.struct.book.review.BookReviewLikeEntity;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Data;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+@Data
 @Entity
 @Table(name = "users")
 public class UserEntity {
@@ -14,7 +25,8 @@ public class UserEntity {
     @Column(columnDefinition = "VARCHAR(255) NOT NULL")
     private String hash;
 
-    @Column(columnDefinition = "TIMESTAMP NOT NULL")
+    @Column(name = "reg_time", columnDefinition = "TIMESTAMP NOT NULL")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
     private LocalDateTime regTime;
 
     @Column(columnDefinition = "INT NOT NULL")
@@ -23,43 +35,19 @@ public class UserEntity {
     @Column(columnDefinition = "VARCHAR(255) NOT NULL")
     private String name;
 
-    public int getId() {
-        return id;
-    }
+    @JsonIgnore
+    @OneToMany(mappedBy = "user")
+    private List<Book2UserEntity> book2UserEntities = new ArrayList<>();
 
-    public void setId(int id) {
-        this.id = id;
-    }
+    @JsonIgnore
+    @OneToMany(mappedBy = "user")
+    private List<BookRatingEntity> bookRatingEntities = new ArrayList<>();
 
-    public String getHash() {
-        return hash;
-    }
+    @JsonIgnore
+    @OneToMany(mappedBy = "user")
+    private List<BookReviewEntity> bookReviewEntities = new ArrayList<>();
 
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
-
-    public LocalDateTime getRegTime() {
-        return regTime;
-    }
-
-    public void setRegTime(LocalDateTime regTime) {
-        this.regTime = regTime;
-    }
-
-    public int getBalance() {
-        return balance;
-    }
-
-    public void setBalance(int balance) {
-        this.balance = balance;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
+    @JsonIgnore
+    @OneToMany(mappedBy = "user")
+    private List<BookReviewLikeEntity> bookReviewLikeEntities = new ArrayList<>();
 }

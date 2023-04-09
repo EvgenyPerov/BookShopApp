@@ -25,11 +25,11 @@
                             <form class="form form_search" action="#" method="post" data-searchlimit="20" th:object="${searchWordDto}" >
                                 <input class="search-input" id="query" name="query" type="text"
                                        placeholder="Search over 30 million book titles" th:field="*{example}" value=""/>
-                                <button class="search-button" type="submit" name="search" id="search">Поиск
-                                </button>
+                                <button class="search-button" type="submit" name="search" id="search">Поиск </button>
                             </form>
                         </div>
                     </div>
+                    <span th:if="${searchError}" th:text="${searchError}" style="color: red"> </span>
                 </div>
                 <div class="row-block Header-cart" th:replace="~{fragments/cart_block_fragment :: ${status}}"></div>
                 <div class="row-block Header-trigger"><a class="menuTrigger" href="#navigate">

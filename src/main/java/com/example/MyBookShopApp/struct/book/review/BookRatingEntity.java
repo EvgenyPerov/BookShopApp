@@ -1,5 +1,6 @@
 package com.example.MyBookShopApp.struct.book.review;
 
+import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -15,30 +16,30 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "book_review_like")
-public class BookReviewLikeEntity {
+@Table(name = "book_rating")
+public class BookRatingEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
     @ManyToOne
-    @JoinColumn(name = "review_id", referencedColumnName = "id")
-    private BookReviewEntity review;
+    @JoinColumn(name = "book_id", referencedColumnName = "id")
+    private Book book;
 
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private UserEntity user;
 
     @Column(columnDefinition = "TIMESTAMP NOT NULL")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
     private LocalDateTime time;
 
     @Column(columnDefinition = "SMALLINT NOT NULL")
-    private short value;
+    private Integer value;
 
-    public BookReviewLikeEntity(BookReviewEntity review, UserEntity user, LocalDateTime time, short value) {
-        this.review = review;
+    public BookRatingEntity(Book book, UserEntity user, LocalDateTime time, Integer value) {
+        this.book = book;
         this.user = user;
         this.time = time;
         this.value = value;

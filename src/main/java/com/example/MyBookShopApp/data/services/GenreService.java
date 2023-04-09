@@ -1,5 +1,8 @@
-package com.example.MyBookShopApp.data;
+package com.example.MyBookShopApp.data.services;
 
+import com.example.MyBookShopApp.data.repo.Book2GenreRepository;
+import com.example.MyBookShopApp.data.repo.BookRepository;
+import com.example.MyBookShopApp.data.repo.GenreRepository;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.book.links.Book2GenreEntity;
 import com.example.MyBookShopApp.struct.genre.GenreEntity;

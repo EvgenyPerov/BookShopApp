@@ -1,8 +1,9 @@
-package com.example.MyBookShopApp.data;
+package com.example.MyBookShopApp.data.services;
 
+import com.example.MyBookShopApp.data.repo.AuthorRepository;
+import com.example.MyBookShopApp.data.repo.BookRepository;
 import com.example.MyBookShopApp.struct.author.Author;
 import com.example.MyBookShopApp.struct.book.book.Book;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

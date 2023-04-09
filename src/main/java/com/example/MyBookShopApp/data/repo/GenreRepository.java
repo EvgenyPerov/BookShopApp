@@ -1,4 +1,4 @@
-package com.example.MyBookShopApp.data;
+package com.example.MyBookShopApp.data.repo;
 
 import com.example.MyBookShopApp.struct.genre.GenreEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
