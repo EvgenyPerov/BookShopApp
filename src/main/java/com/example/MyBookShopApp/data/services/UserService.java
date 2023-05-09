@@ -150,4 +150,17 @@ public class UserService {
 
         return Arrays.asList(0, countLike, countDislike);
     }
+
+    public void addReviewForBook(Book book, UserEntity user, String text){
+        if (user != null && !text.isBlank()) {
+
+            BookReviewEntity review = BookReviewEntity.builder()
+                    .book(book)
+                    .user(user)
+                    .time(LocalDateTime.now())
+                    .text(text)
+                    .build();
+            bookReviewRepository.save(review);
+        }
+    }
 }

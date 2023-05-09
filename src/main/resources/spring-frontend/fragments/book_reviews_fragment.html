@@ -86,7 +86,7 @@
                 <div class="Comment-content">
                     <div class="Spoiler">
                         <div class="Spoiler-visible">
-                            <p th:text="${review.key.text.substring(0,30)}">
+                            <p  th:text="${review.key.text.length()>30}? ${review.key.text.substring(0,30)} : ${review.key.text}">
                                 Lorem ipsum dolor sit amet, consectetuer adipiscing elit doli. Aenean commodo ligula eget
                                 dolor. Aenean massa. Cumtipsu sociis natoque penatibus et magnis dis parturient
                                 montesti,
@@ -101,7 +101,7 @@
                             </p>
                         </div>
                         <div class="Spoiler-hide">
-                            <p th:text="${review.key.text.substring(30)}"> Здесь отображается скрытая часть текста
+                            <p th:text="${review.key.text.length()>30}? ${review.key.text.substring(30)}"> Здесь отображается скрытая часть текста
                             </p>
                         </div>
                         <div class="Comment-footer">

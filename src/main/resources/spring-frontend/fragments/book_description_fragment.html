@@ -371,9 +371,14 @@
             </span>
         </div>
 
-        <div class="ProductCard-tags"><span class="ProductCard-titleProp">Тэги:</span><a
-                href="/tags/">Современные</a>,&#32;<a href="/tags/">Психологическая проза</a>
+        <div class="ProductCard-tags" >
+            <span class="ProductCard-titleProp">Тэги:</span>
+            <div th:each="tag: ${slugBook.tagList}">
+                <a href="/tags/" th:href="@{${'/tags/index/'}+${tag.id}}"
+                   th:text="${tag.name}" >Современные</a>
+            </div>
         </div>
+
         <div class="ProductCard-cost"><span class="ProductCard-titleProp">Цена:</span><span
                 class="ProductCard-priceOld" th:text="(${slugBook.discountPrice() != slugBook.price} ? ${slugBook.price}) ">₽300</span><span class="ProductCard-price" th:text="${slugBook.discountPrice()}">₽180</span>
         </div>

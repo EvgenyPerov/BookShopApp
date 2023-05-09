@@ -35,6 +35,15 @@ public class UserEntity {
     @Column(columnDefinition = "VARCHAR(255) NOT NULL")
     private String name;
 
+//    @Column(columnDefinition = "VARCHAR(255)")
+    private String email;
+
+//    @Column(columnDefinition = "VARCHAR(30)")
+    private String phone;
+
+//    @Column(columnDefinition = "VARCHAR(255)")
+    private String password;
+
     @JsonIgnore
     @OneToMany(mappedBy = "user")
     private List<Book2UserEntity> book2UserEntities = new ArrayList<>();

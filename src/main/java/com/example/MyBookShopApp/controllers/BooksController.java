@@ -1,6 +1,7 @@
 package com.example.MyBookShopApp.controllers;
 
 import com.example.MyBookShopApp.data.dto.BooksPageDto;
+import com.example.MyBookShopApp.data.services.OtherService;
 import com.example.MyBookShopApp.data.services.ResourceStorage;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
 import com.example.MyBookShopApp.data.services.UserService;
@@ -35,7 +36,6 @@ public class BooksController {
 
     private BookService bookService;
     private ResourceStorage storage;
-
     private UserService userService;
 
     @Autowired
@@ -134,9 +134,11 @@ public class BooksController {
 
         model.addAttribute("df", DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"));
 
+//        model.addAttribute("tagsList", otherService.);
+
 //        model.addAttribute("reviewLikeRating", userService.getReviewLikeByReviewId(bookId));
 
-        return "/books/slug";
+        return "/books/slugmy";
     }
 
     @PostMapping("/{bookId}/img/save")
@@ -200,6 +202,18 @@ public class BooksController {
         return "redirect:/books/" + userService.getBookByReviewId(reviewId);
     }
 
+    @PostMapping("/bookReview/{bookId}/{text}")
+    public String saveNewReviewForBook(@PathVariable(value = "bookId") Integer bookId,
+                                       @PathVariable(value = "text") String text) {
+        System.out.println("Оставляем отзыв для книги " + bookId + " : " + text);
+
+        String hashUser = "hash55555";
+        UserEntity user = userService.getUserByHash(hashUser);
+
+        userService.addReviewForBook(bookService.getBookById(bookId), user, text);
+
+        return "redirect:/books/" + bookId;
+    }
 
 
 }
