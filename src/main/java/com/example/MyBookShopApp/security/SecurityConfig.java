@@ -77,14 +77,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .addLogoutHandler((httpServletRequest, httpServletResponse, authentication) -> {
                     Cookie[] cookies = httpServletRequest.getCookies();
                     if (cookies != null){
-                        Cookie cookie = Arrays.stream(cookies)
+                        Cookie cookieToken = Arrays.stream(cookies)
                                 .filter(item -> item.getName().equals("token"))
                                 .findFirst()
                                 .orElse(null);
-                        if (cookie != null) {
-                            jwtService.addTokenToBlacklist(cookie.getValue());
+                        if (cookieToken != null) {
+                            jwtService.addTokenToBlacklist(cookieToken.getValue());
                         }
                     }
+
                 })
                 .deleteCookies("token")
                 .and().oauth2Client()

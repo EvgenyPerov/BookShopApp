@@ -2,10 +2,12 @@ package com.example.MyBookShopApp.controllers;
 
 import com.example.MyBookShopApp.data.dto.BooksPageDto;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
+import com.example.MyBookShopApp.data.services.Book2UserService;
 import com.example.MyBookShopApp.data.services.UserService;
 import com.example.MyBookShopApp.struct.author.Author;
 import com.example.MyBookShopApp.data.services.AuthorService;
 import com.example.MyBookShopApp.struct.book.book.Book;
+import com.example.MyBookShopApp.struct.user.UserEntity;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -25,10 +28,13 @@ public class AuthorsController {
     private AuthorService authorService;
     private final UserService userService;
 
+    private final Book2UserService book2UserService;
+
     @Autowired
-    public AuthorsController(AuthorService authorService, UserService userService) {
+    public AuthorsController(AuthorService authorService, UserService userService, Book2UserService book2UserService) {
         this.authorService = authorService;
         this.userService = userService;
+        this.book2UserService = book2UserService;
     }
 
     @ModelAttribute("authorsMap")
@@ -44,6 +50,22 @@ public class AuthorsController {
     @ModelAttribute("status")
     public String authenticationStatus(){
         return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
+    }
+
+    @ModelAttribute("bookPostponedList")
+    public List<Book> geBookPostponedList(){
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getCookieBooksFromRepoByTypeCode("KEPT", user);
+        } else return new ArrayList<>();
+    }
+
+    @ModelAttribute("bookCartList")
+    public List<Book> geBookCartList(){
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getCookieBooksFromRepoByTypeCode("CART",user);
+        } else return new ArrayList<>();
     }
 
     @GetMapping("/authors")

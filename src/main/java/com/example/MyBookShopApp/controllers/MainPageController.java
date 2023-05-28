@@ -2,12 +2,14 @@ package com.example.MyBookShopApp.controllers;
 
 import com.example.MyBookShopApp.data.dto.BooksPageDto;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
+import com.example.MyBookShopApp.data.services.Book2UserService;
 import com.example.MyBookShopApp.data.services.BookService;
 import com.example.MyBookShopApp.data.services.OtherService;
 import com.example.MyBookShopApp.data.services.UserService;
 import com.example.MyBookShopApp.errs.EmptySearchException;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.other.Tag;
+import com.example.MyBookShopApp.struct.user.UserEntity;
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -27,11 +29,14 @@ public class MainPageController {
 
     private final UserService userService;
 
+    private final Book2UserService book2UserService;
+
     @Autowired
-    public MainPageController(BookService bookService, OtherService otherService, UserService userService) {
+    public MainPageController(BookService bookService, OtherService otherService, UserService userService, Book2UserService book2UserService) {
         this.bookService = bookService;
         this.otherService = otherService;
         this.userService = userService;
+        this.book2UserService = book2UserService;
     }
 
     @ModelAttribute("recommendedBooks")
@@ -62,6 +67,22 @@ public class MainPageController {
     @ModelAttribute("tagsMap")
     public Map<Tag, Integer> getTagsIdList(){
         return otherService.getTagsAndSizesMap();
+    }
+
+    @ModelAttribute("bookPostponedList")
+    public List<Book> geBookPostponedList(){
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getCookieBooksFromRepoByTypeCode("KEPT", user);
+        } else return new ArrayList<>();
+    }
+
+    @ModelAttribute("bookCartList")
+    public List<Book> geBookCartList(){
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getCookieBooksFromRepoByTypeCode("CART",user);
+        } else return new ArrayList<>();
     }
 
     @GetMapping(value = { "/", "/index"})

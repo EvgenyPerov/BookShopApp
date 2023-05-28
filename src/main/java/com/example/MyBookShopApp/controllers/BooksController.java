@@ -1,6 +1,7 @@
 package com.example.MyBookShopApp.controllers;
 
 import com.example.MyBookShopApp.data.dto.BooksPageDto;
+import com.example.MyBookShopApp.data.services.Book2UserService;
 import com.example.MyBookShopApp.data.services.ResourceStorage;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
 import com.example.MyBookShopApp.data.services.UserService;
@@ -35,11 +36,14 @@ public class BooksController {
     private ResourceStorage storage;
     private UserService userService;
 
+    private final Book2UserService book2UserService;
+
     @Autowired
-    public BooksController(BookService bookService, ResourceStorage storage, UserService userService) {
+    public BooksController(BookService bookService, ResourceStorage storage, UserService userService, Book2UserService book2UserService) {
         this.bookService = bookService;
         this.storage = storage;
         this.userService = userService;
+        this.book2UserService = book2UserService;
     }
 
     @ModelAttribute("searchWordDto")
@@ -55,6 +59,22 @@ public class BooksController {
     @ModelAttribute("recentResults")
     public List<Book> recentResults(){
         return new ArrayList<>();
+    }
+
+    @ModelAttribute("bookPostponedList")
+    public List<Book> geBookPostponedList(){
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getCookieBooksFromRepoByTypeCode("KEPT", user);
+        } else return new ArrayList<>();
+    }
+
+    @ModelAttribute("bookCartList")
+    public List<Book> geBookCartList(){
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getCookieBooksFromRepoByTypeCode("CART",user);
+        } else return new ArrayList<>();
     }
 
     // метод срабатывает первым при выборе Новинок в главном меню

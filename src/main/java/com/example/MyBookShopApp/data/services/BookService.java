@@ -178,6 +178,7 @@ public class BookService {
 
     public float getBookCartDiscountCost(List<Book> booksFromCookie) {
         float summ = 0;
+        if (booksFromCookie != null)
         for (Book book : booksFromCookie){
             summ += book.getPrice() - (book.getPrice() * book.getDiscount() / 100);
         }
@@ -187,6 +188,7 @@ public class BookService {
 
     public Object getBookCartTotalCost(List<Book> booksFromCookie) {
         float summ = 0;
+        if (booksFromCookie != null)
         for (Book book : booksFromCookie){
             summ += book.getPrice();
         }
@@ -195,6 +197,7 @@ public class BookService {
 
     public String getIdListPostponedBooks(List<Book> booksFromCookie) {
         StringJoiner stringJoiner = new StringJoiner(", ");
+        if (booksFromCookie != null)
         for(Book book : booksFromCookie){
             stringJoiner.add(String.valueOf(book.getId()));
         }

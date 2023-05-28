@@ -43,45 +43,54 @@ public class PostponedController {
         return new SearchWordDto();
     }
 
-    @ModelAttribute("bookPostponedList")
-    public List<Book> bookPostponed(){
-        return new ArrayList<>();
+    @ModelAttribute("bookCartList")
+    public List<Book> geBookCartList(){
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getCookieBooksFromRepoByTypeCode("CART",user);
+        } else return new ArrayList<>();
     }
 
     @GetMapping("/postponed")
     public String postponedPage(Model model,
                                 @CookieValue(name = "postponedContents", required = false) String postponedContents){
-        System.out.println("Переход на страницу Отложенное");
-        if (postponedContents == null || postponedContents.isBlank()){
-            model.addAttribute("isPostponedEmpty", true);
-        } else {
-            model.addAttribute("isPostponedEmpty", false);
-
-            postponedContents = postponedContents.startsWith("/")?
-                    postponedContents.substring(1) : postponedContents;
-
-            postponedContents = postponedContents.endsWith("/")?
-                    postponedContents.substring(0,postponedContents.length()-1) : postponedContents;
-
-            String[] arrayIds = postponedContents.split("/");
-
-            List<Book> booksFromCookie = bookService.getBooksByIdIn(arrayIds);
-
-            model.addAttribute("bookPostponedList", booksFromCookie);
-
-            model.addAttribute("idListPostponedBooks", bookService.getIdListPostponedBooks(booksFromCookie));
-
-        }
         String status;
-
+        List<Book> booksFromCookie = null;
         UserEntity user = userService.getCurrentUser();
 
-        if (user != null){
-            status = "authorized";
-            model.addAttribute("curUser", user);
-        } else {
+        if (user == null) {
             status = "unauthorized";
+            System.out.println("страница Отложенное, берем Cookie из запроса, нет пользователя");
+
+            if (postponedContents == null || postponedContents.isBlank()) {
+                model.addAttribute("isPostponedEmpty", true);
+            } else {
+                model.addAttribute("isPostponedEmpty", false);
+
+                postponedContents = postponedContents.startsWith("/") ?
+                        postponedContents.substring(1) : postponedContents;
+
+                postponedContents = postponedContents.endsWith("/") ?
+                        postponedContents.substring(0, postponedContents.length() - 1) : postponedContents;
+
+                String[] arrayIds = postponedContents.split("/");
+
+                booksFromCookie = bookService.getBooksByIdIn(arrayIds);
+            }
+
+        } else {
+            status = "authorized";
+            System.out.println("страница Отложенное, берем Cookie из БД для пользователя "+ user.getName());
+            model.addAttribute("curUser", user);
+            booksFromCookie = book2UserService.getCookieBooksFromRepoByTypeCode("KEPT",user);
+
+            if (booksFromCookie.isEmpty()) model.addAttribute("isPostponedEmpty", true);
+            else model.addAttribute("isPostponedEmpty", false);
         }
+
+        model.addAttribute("bookPostponedList", booksFromCookie);
+
+        model.addAttribute("idListPostponedBooks", bookService.getIdListPostponedBooks(booksFromCookie));
 
         model.addAttribute("status", status);
 
@@ -94,47 +103,39 @@ public class PostponedController {
                                          @CookieValue(name = "postponedContents", required = false) String postponedContents,
                                          HttpServletResponse response,
                                          Model model){
-        String hashUser = "hash44444";
-        UserEntity user = userService.getUserByHash(hashUser);
 
-        System.out.println("Сработал мапинг /changeBookStatus/KEPT/{bookId}");
+        UserEntity user = userService.getCurrentUser();
 
-        if (postponedContents == null || postponedContents.isBlank()){
-            Cookie cookie = new Cookie("postponedContents", String.valueOf(bookId));
-            cookie.setPath("/books");
-            response.addCookie(cookie);
-            model.addAttribute("isPostponedEmpty", false);
+        if (user == null) {
 
+            if (postponedContents == null || postponedContents.isBlank()) {
+                Cookie cookie = new Cookie("postponedContents", String.valueOf(bookId));
+                cookie.setPath("/books");
+                response.addCookie(cookie);
+                model.addAttribute("isPostponedEmpty", false);
+            } else if (!postponedContents.contains(String.valueOf(bookId))) {
+                StringJoiner stringJoiner = new StringJoiner("/");
+                stringJoiner.add(postponedContents).add(String.valueOf(bookId));
+                Cookie cookie = new Cookie("postponedContents", stringJoiner.toString());
+                cookie.setPath("/books");
+                response.addCookie(cookie);
+                model.addAttribute("isPostponedEmpty", false);
+            }
+
+            if (cartContents != null && !cartContents.isBlank()) {
+                System.out.println("Нажали Отложить из корзины");
+
+                ArrayList<String> cookiesCartOld = new ArrayList<>(Arrays.asList(cartContents.split("/")));
+                cookiesCartOld.remove(String.valueOf(bookId));
+                Cookie cookiesCartNew = new Cookie("cartContents", String.join("/", cookiesCartOld));
+                cookiesCartNew.setPath("/books");
+                cookiesCartNew.setHttpOnly(true);
+                response.addCookie(cookiesCartNew);
+            }
+        } else {
             bookService.increaseKept(bookId);
-
-            book2UserService.update("KEPT",bookService.getBookById(bookId), user);
-
-        } else
-        if (!postponedContents.contains(String.valueOf(bookId))) {
-            StringJoiner stringJoiner = new StringJoiner("/");
-            stringJoiner.add(postponedContents).add(String.valueOf(bookId));
-            Cookie cookie = new Cookie("postponedContents", stringJoiner.toString());
-            cookie.setPath("/books");
-            response.addCookie(cookie);
-            model.addAttribute("isPostponedEmpty", false);
-
-            bookService.increaseKept(bookId);
-
-            book2UserService.update("KEPT",bookService.getBookById(bookId), user);
-        }
-
-        if (cartContents != null && !cartContents.isBlank()){
-            System.out.println("Нажали Отложить из корзины");
-
-            ArrayList<String> cookiesCartOld = new ArrayList<>(Arrays.asList(cartContents.split("/")));
-            cookiesCartOld.remove(String.valueOf(bookId));
-            Cookie cookiesCartNew = new Cookie("cartContents", String.join("/", cookiesCartOld));
-            cookiesCartNew.setPath("/books");
-            cookiesCartNew.setHttpOnly(true);
-            response.addCookie(cookiesCartNew);
-
             bookService.decreaseCart(bookId);
-
+            book2UserService.update("KEPT", bookService.getBookById(bookId), user);
         }
         return "redirect:/books/" + bookId;
     }
@@ -144,28 +145,27 @@ public class PostponedController {
                                    @CookieValue(name = "postponedContents", required = false) String postponedContents,
                                    HttpServletResponse response,
                                    Model model){
-        String hashUser = "hash44444";
-        UserEntity user = userService.getUserByHash(hashUser);
-
-        if (postponedContents != null && !postponedContents.isBlank()){
-            ArrayList<String> cookies = new ArrayList<>(Arrays.asList(postponedContents.split("/")));
-            System.out.println("было кук = " + cookies.size() + " " + cookies.get(0));
-            cookies.remove(String.valueOf(bookId));
-            System.out.println("стало кук = " + cookies.size());
-            Cookie cookie = new Cookie("postponedContents", String.join("/", cookies));
-            cookie.setPath("/books");
-            cookie.setHttpOnly(true);
-            response.addCookie(cookie);
-            model.addAttribute("isPostponedEmpty", false);
-
+        System.out.println("Удаляем книгу из отложенного");
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
             bookService.decreaseKept(bookId);
+            book2UserService.delete(bookService.getBookById(bookId), user);
         } else {
-            model.addAttribute("isPostponedEmpty", true);
 
-            bookService.decreaseKept(bookId);
+            if (postponedContents != null && !postponedContents.isBlank()) {
+                ArrayList<String> cookies = new ArrayList<>(Arrays.asList(postponedContents.split("/")));
+                System.out.println("было кук = " + cookies.size() + " " + cookies.get(0));
+                cookies.remove(String.valueOf(bookId));
+                System.out.println("стало кук = " + cookies.size());
+                Cookie cookie = new Cookie("postponedContents", String.join("/", cookies));
+                cookie.setPath("/books");
+                cookie.setHttpOnly(true);
+                response.addCookie(cookie);
+                model.addAttribute("isPostponedEmpty", false);
+            } else {
+                model.addAttribute("isPostponedEmpty", true);
+            }
         }
-
-        book2UserService.delete(bookService.getBookById(bookId), user);
 
         return "redirect:/books/postponed";
     }

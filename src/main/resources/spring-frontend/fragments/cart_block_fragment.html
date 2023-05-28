@@ -13,7 +13,7 @@
                 </g>
             </g>
         </svg>
-            <span class="CartBlock-amount">0</span>
+            <span class="CartBlock-amount" >0</span>
         </a>
 
         <a class="CartBlock-block" href="/cart.html" th:href="@{/books/cart}" >
@@ -26,7 +26,7 @@
                 </g>
             </g>
         </svg>
-            <span class="CartBlock-amount">0</span>
+            <span class="CartBlock-amount" >0</span>
         </a>
 
         <a class="CartBlock-block" th:href="@{/my}" href="/signin.html" >
@@ -76,7 +76,7 @@
                 </g>
             </g>
         </svg>
-        <span class="CartBlock-amount">0</span>
+        <span class="CartBlock-amount" th:text="${bookPostponedList.size()}">0</span>
         </a>
 
         <a class="CartBlock-block" th:href="@{/books/cart}" href="/cart.html" >
@@ -88,7 +88,7 @@
                 </g>
             </g>
         </svg>
-        <span class="CartBlock-amount">0</span>
+        <span class="CartBlock-amount" th:text="${bookCartList.size()}">0</span>
         </a>
 
         <a class="CartBlock-block CartBlock-block_text" th:href="@{/profile}" href="/profile.html" >

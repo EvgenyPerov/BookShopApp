@@ -1,8 +1,11 @@
 package com.example.MyBookShopApp.security;
 
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
+import com.example.MyBookShopApp.data.services.Book2UserService;
 import com.example.MyBookShopApp.data.services.UserService;
 import com.example.MyBookShopApp.security.jwt.JwtService;
+import com.example.MyBookShopApp.struct.book.book.Book;
+import com.example.MyBookShopApp.struct.user.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 public class AuthUserController {
@@ -18,10 +23,13 @@ public class AuthUserController {
 
     private final JwtService jwtService;
 
+    private final Book2UserService book2UserService;
+
     @Autowired
-    public AuthUserController(UserService userService, JwtService jwtService) {
+    public AuthUserController(UserService userService, JwtService jwtService, Book2UserService book2UserService) {
         this.userService = userService;
         this.jwtService = jwtService;
+        this.book2UserService = book2UserService;
     }
 
     @ModelAttribute("searchWordDto")
@@ -32,6 +40,22 @@ public class AuthUserController {
     @ModelAttribute("status")
     public String authenticationStatus(){
         return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
+    }
+
+    @ModelAttribute("bookPostponedList")
+    public List<Book> geBookPostponedList(){
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getCookieBooksFromRepoByTypeCode("KEPT", user);
+        } else return new ArrayList<>();
+    }
+
+    @ModelAttribute("bookCartList")
+    public List<Book> geBookCartList(){
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getCookieBooksFromRepoByTypeCode("CART",user);
+        } else return new ArrayList<>();
     }
 
     @GetMapping("/signin")
