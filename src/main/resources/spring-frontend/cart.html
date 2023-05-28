@@ -22,7 +22,7 @@
 </head>
 <body class="Site">
 <header class="Header"
-        th:replace="~{fragments/common_header_fragment :: head(status='unauthorized')}"></header>
+        th:replace="~{fragments/common_header_fragment :: head(status=${status})}"></header>
 <div class="Middle">
     <div class="wrap">
         <main class="Middle-main">
@@ -44,8 +44,9 @@
                                 </div>
                                 <div class="Cart-title"><a href="#" th:text="${book.title}">Жизнь</a>
                                 </div>
-                                <div class="Cart-rating"><span class="Rating"><span class="Rating-stars"><span
-                                        class="Rating-star Rating-star_view">
+
+                                <div class="Cart-rating"><span class="Rating"><span class="Rating-stars">
+                                    <span class="Rating-star Rating-star_view">
                           <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                             <g>
                               <g>
@@ -53,7 +54,9 @@
                                       d="M9.5 14.925L3.629 18l1.121-6.512L0 6.875l6.564-.95L9.5 0l2.936 5.925 6.564.95-4.75 4.613L15.371 18z"></path>
                               </g>
                             </g>
-                          </svg></span><span class="Rating-star Rating-star_view">
+                          </svg></span>
+
+                                    <span class="Rating-star Rating-star_view">
                           <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                             <g>
                               <g>
@@ -61,7 +64,9 @@
                                       d="M9.5 14.925L3.629 18l1.121-6.512L0 6.875l6.564-.95L9.5 0l2.936 5.925 6.564.95-4.75 4.613L15.371 18z"></path>
                               </g>
                             </g>
-                          </svg></span><span class="Rating-star Rating-star_view">
+                          </svg></span>
+
+                                    <span class="Rating-star Rating-star_view">
                           <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                             <g>
                               <g>
@@ -69,7 +74,9 @@
                                       d="M9.5 14.925L3.629 18l1.121-6.512L0 6.875l6.564-.95L9.5 0l2.936 5.925 6.564.95-4.75 4.613L15.371 18z"></path>
                               </g>
                             </g>
-                          </svg></span><span class="Rating-star">
+                          </svg></span>
+
+                                    <span class="Rating-star">
                           <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                             <g>
                               <g>
@@ -77,7 +84,9 @@
                                       d="M9.5 14.925L3.629 18l1.121-6.512L0 6.875l6.564-.95L9.5 0l2.936 5.925 6.564.95-4.75 4.613L15.371 18z"></path>
                               </g>
                             </g>
-                          </svg></span><span class="Rating-star">
+                          </svg></span>
+
+                                    <span class="Rating-star">
                           <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                             <g>
                               <g>
@@ -85,8 +94,11 @@
                                       d="M9.5 14.925L3.629 18l1.121-6.512L0 6.875l6.564-.95L9.5 0l2.936 5.925 6.564.95-4.75 4.613L15.371 18z"></path>
                               </g>
                             </g>
-                          </svg></span></span></span>
+                          </svg></span>
+                                </span>
+                                </span>
                                 </div>
+
                                 <div class="Cart-buttons">
                                     <div class="Cart-btn">
                                         <button class="btn btn_primary btn_outline" data-sendstatus="KEPT"
@@ -126,9 +138,16 @@
                 <div class="Cart-total">
                     <div class="Cart-block Cart-block_total">
                         <strong class="Cart-title">Итого:
-                        </strong><span class="Cart-price">534 р.</span><span class="Cart-price_old">658 р.</span>
+                        </strong><span class="Cart-price" th:text="${bookCartDiscountCost +' р.'}">534 р.</span>
+                        <span class="Cart-price_old" th:text="(${bookCartDiscountCost != bookCartTotalCost} ? ${bookCartTotalCost+' р.'} :'')">658 р.</span>
                     </div>
-                    <div class="Cart-block"><a class="btn btn_success btn_md" href="/order.html">Купить</a>
+
+                    <div class="Cart-block" th:if="${status == 'unauthorized'}">
+                        <a class="btn btn_success btn_md" th:href="@{/signin}" href="/order.html">Купить</a>
+                    </div>
+
+                    <div class="Cart-block" th:if="${status == 'authorized'}">
+                        <a class="btn btn_success btn_md" th:href="@{/order}"  href="/order.html">Купить</a>
                     </div>
                 </div>
             </form>

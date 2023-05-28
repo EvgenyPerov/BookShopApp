@@ -13,9 +13,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -176,5 +174,31 @@ public class BookService {
             book.setCountOfPostponed(book.getCountOfPostponed() + 1);
             bookRepository.save(book);
         }
+    }
+
+    public float getBookCartDiscountCost(List<Book> booksFromCookie) {
+        float summ = 0;
+        for (Book book : booksFromCookie){
+            summ += book.getPrice() - (book.getPrice() * book.getDiscount() / 100);
+        }
+        return summ;
+    }
+
+
+    public Object getBookCartTotalCost(List<Book> booksFromCookie) {
+        float summ = 0;
+        for (Book book : booksFromCookie){
+            summ += book.getPrice();
+        }
+        return summ;
+    }
+
+    public String getIdListPostponedBooks(List<Book> booksFromCookie) {
+        StringJoiner stringJoiner = new StringJoiner(", ");
+        for(Book book : booksFromCookie){
+            stringJoiner.add(String.valueOf(book.getId()));
+        }
+        System.out.println("[" + stringJoiner + "]");
+        return "[" + stringJoiner + "]";
     }
 }

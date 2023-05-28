@@ -3,6 +3,7 @@ package com.example.MyBookShopApp.controllers;
 import com.example.MyBookShopApp.data.dto.BooksPageDto;
 import com.example.MyBookShopApp.data.services.GenreService;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
+import com.example.MyBookShopApp.data.services.UserService;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,15 +16,22 @@ import org.springframework.web.bind.annotation.*;
 public class JenresController {
 
     private GenreService genreService;
+    private final UserService userService;
 
     @Autowired
-    public JenresController(GenreService genreService) {
+    public JenresController(GenreService genreService, UserService userService) {
         this.genreService = genreService;
+        this.userService = userService;
     }
 
     @ModelAttribute("searchWordDto")
     public SearchWordDto searchWordDto(){
         return new SearchWordDto();
+    }
+
+    @ModelAttribute("status")
+    public String authenticationStatus(){
+        return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
     }
 
     @ApiOperation("этот метод изначально при переходе с главной страницы на Жанры")

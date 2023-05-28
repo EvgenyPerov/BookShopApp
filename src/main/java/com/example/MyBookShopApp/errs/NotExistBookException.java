@@ -3,9 +3,10 @@ package com.example.MyBookShopApp.errs;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(value = HttpStatus.BAD_REQUEST)
-public class EmptySearchException extends Exception {
-    public EmptySearchException(String mess) {
+@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+public class NotExistBookException extends Exception {
+    public NotExistBookException(String mess) {
         super(mess);
     }
+
 }

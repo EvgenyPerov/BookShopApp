@@ -4,6 +4,7 @@ import com.example.MyBookShopApp.data.dto.BooksPageDto;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
 import com.example.MyBookShopApp.data.services.BookService;
 import com.example.MyBookShopApp.data.services.OtherService;
+import com.example.MyBookShopApp.data.services.UserService;
 import com.example.MyBookShopApp.errs.EmptySearchException;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.other.Tag;
@@ -21,17 +22,17 @@ import java.util.Map;
 @Controller
 public class MainPageController {
 
-    private BookService bookService;
-    private OtherService otherService;
+    private final BookService bookService;
+    private final OtherService otherService;
+
+    private final UserService userService;
 
     @Autowired
-    public MainPageController(BookService bookService, OtherService otherService) {
+    public MainPageController(BookService bookService, OtherService otherService, UserService userService) {
         this.bookService = bookService;
         this.otherService = otherService;
+        this.userService = userService;
     }
-
-//    private SearchWordDto newSearchWord = new SearchWordDto();
-//    private boolean flagNewSearch = false;
 
     @ModelAttribute("recommendedBooks")
     public List<Book> recommendedBooks(){
@@ -53,10 +54,10 @@ public class MainPageController {
         return new ArrayList<>();
     }
 
-//    @ModelAttribute("searchWordDto")
-//    public SearchWordDto getSearchWord(){
-//        return new SearchWordDto();
-//    }
+    @ModelAttribute("status")
+    public String authenticationStatus(){
+        return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
+    }
 
     @ModelAttribute("tagsMap")
     public Map<Tag, Integer> getTagsIdList(){
@@ -69,6 +70,7 @@ public class MainPageController {
         model.addAttribute("searchWordDto", new SearchWordDto());
         return "/index";
     }
+
     @GetMapping(value = {"/search", "/search/{searchWord}"})
     public String getSearchResult(@PathVariable(value = "searchWord", required = false) SearchWordDto searchWordDto,
                                   Model model) throws EmptySearchException {

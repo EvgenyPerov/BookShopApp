@@ -49,6 +49,22 @@
                     </div>
                 </div>
 
+                <div class="ProductCard-cart">
+                    <p><strong class="Comments-title">Отзывы могут оставлять только авторизованные пользователи
+                        ---></strong></p>
+                    <div class="ProductCard-cartElement">
+                        <a th:href="@{/signin}">
+                            <button class="btn btn_primary btn_outline" th:text="#{title.name-signin}">Войти</button>
+                        </a>
+                    </div>
+
+                    <div class="ProductCard-cartElement">
+                        <a th:href="@{/signup}">
+                            <button class="btn btn_primary btn_outline" th:text="#{title.name-signup}">Зарегистрироваться</button>
+                        </a>
+                    </div>
+                </div>
+
                 <div th:replace="~{fragments/book_reviews_fragment :: reviewBlock}"></div>
             </div>
         </main>

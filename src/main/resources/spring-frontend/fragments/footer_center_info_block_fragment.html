@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<div th:fragment="unauthorized">
+    <div class="row-block">
+        <ul class="menu menu_vt Footer-menu">
+            <li class="menu-item" th:class="${main}"><a class="menu-link" href="/index.html" th:text="#{top-bar.main}" th:href="@{/}">Главная</a>
+            </li>
+            <li class="menu-item" th:class="${genres}"><a class="menu-link" href="/genres/index.html" th:text="#{top-bar.genres}" th:href="@{/genres}">Жанры</a>
+            </li>
+            <li class="menu-item" th:class="${recent}"><a class="menu-link" href="/books/recent.html" th:text="#{top-bar.news}" th:href="@{/books/recent}">Новинки</a>
+            </li>
+            <li class="menu-item" th:class="${popular}"><a class="menu-link" href="/books/popular.html" th:text="#{top-bar.popular}" th:href="@{/books/popular}">Популярное</a>
+            </li>
+            <li class="menu-item" th:class="${authors}"><a class="menu-link" href="/authors/index.html" th:text="#{top-bar.authors}" th:href="@{/authors}">Авторы</a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div th:fragment="authorized">
+    <div class="row-block">
+        <ul class="menu menu_vt Footer-menu">
+            <li class="menu-item" ><a class="menu-link" th:text="#{top-bar.genres}" th:href="@{/genres}">Жанры</a>
+            </li>
+            <li class="menu-item" ><a class="menu-link" th:text="#{top-bar.news}" th:href="@{/books/recent}">Новинки</a>
+            </li>
+            <li class="menu-item" ><a class="menu-link" th:text="#{top-bar.popular}" th:href="@{/books/popular}">Популярное</a>
+            </li>
+            <li class="menu-item" ><a class="menu-link" th:text="#{top-bar.authors}" th:href="@{/authors}">Авторы</a>
+            </li>
+            <li class="menu-item" ><a class="menu-link" th:text="#{title.name-my}"  th:href="@{/my}">Мои книги</a>
+            </li>
+            <li class="menu-item" ><a class="menu-link" th:text="#{title.name-cart}" th:href="@{/books/cart}">Корзина</a>
+            </li>
+            <li class="menu-item" ><a class="menu-link" th:text="#{title.name-postponed}" th:href="@{/books/postponed}">Отложено</a>
+            </li>
+            <li class="menu-item" ><a class="menu-link" th:text="#{title.name-profile}" th:href="@{/profile}">Мой профиль</a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+</html>

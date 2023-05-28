@@ -22,7 +22,7 @@
 </head>
 <body class="Site">
 <header class="Header"
-        th:replace="~{fragments/common_header_fragment :: head(status='unauthorized')}"></header>
+        th:replace="~{fragments/common_header_fragment :: head(status=${status})}"></header>
 <div class="Middle">
     <div class="wrap">
         <main class="Middle-main">
@@ -45,7 +45,8 @@
                                 </div>
                                 <div class="Cart-title"><a href="#" th:text="${book.title}">Жизнь</a>
                                 </div>
-                                <div class="Cart-rating"><span class="Rating"><span class="Rating-stars"><span
+                                <div class="Cart-rating"><span class="Rating"><span class="Rating-stars">
+                                    <span
                                         class="Rating-star Rating-star_view">
                           <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                             <g>
@@ -54,7 +55,9 @@
                                       d="M9.5 14.925L3.629 18l1.121-6.512L0 6.875l6.564-.95L9.5 0l2.936 5.925 6.564.95-4.75 4.613L15.371 18z"></path>
                               </g>
                             </g>
-                          </svg></span><span class="Rating-star Rating-star_view">
+                          </svg></span>
+
+                                    <span class="Rating-star Rating-star_view">
                           <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                             <g>
                               <g>
@@ -62,7 +65,9 @@
                                       d="M9.5 14.925L3.629 18l1.121-6.512L0 6.875l6.564-.95L9.5 0l2.936 5.925 6.564.95-4.75 4.613L15.371 18z"></path>
                               </g>
                             </g>
-                          </svg></span><span class="Rating-star Rating-star_view">
+                          </svg></span>
+
+                                    <span class="Rating-star Rating-star_view">
                           <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                             <g>
                               <g>
@@ -70,7 +75,9 @@
                                       d="M9.5 14.925L3.629 18l1.121-6.512L0 6.875l6.564-.95L9.5 0l2.936 5.925 6.564.95-4.75 4.613L15.371 18z"></path>
                               </g>
                             </g>
-                          </svg></span><span class="Rating-star">
+                          </svg></span>
+
+                                    <span class="Rating-star">
                           <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                             <g>
                               <g>
@@ -78,7 +85,9 @@
                                       d="M9.5 14.925L3.629 18l1.121-6.512L0 6.875l6.564-.95L9.5 0l2.936 5.925 6.564.95-4.75 4.613L15.371 18z"></path>
                               </g>
                             </g>
-                          </svg></span><span class="Rating-star">
+                          </svg></span>
+
+                                    <span class="Rating-star">
                           <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                             <g>
                               <g>
@@ -86,7 +95,9 @@
                                       d="M9.5 14.925L3.629 18l1.121-6.512L0 6.875l6.564-.95L9.5 0l2.936 5.925 6.564.95-4.75 4.613L15.371 18z"></path>
                               </g>
                             </g>
-                          </svg></span></span></span>
+                          </svg></span>
+                                </span>
+                                </span>
                                 </div>
                                 <div class="Cart-buttons">
                                     <div class="Cart-btn">
@@ -94,7 +105,7 @@
                                                 data-bookid="[1122]" th:attr="data-bookid=${book.id}">
                                             <span class="btn-icon"><img
                                                 src="/assets/img/icons/shopping-basket.svg" alt="shopping-basket.svg"/></span><span
-                                                class="btn-content">Купить</span>
+                                                class="btn-content">В корзину</span>
                                         </button>
                                     </div>
                                     <div class="Cart-btn">
@@ -123,7 +134,7 @@
                     </div>
                     <div class="Cart-block">
                         <button class="btn btn_success btn_md Cart-buyAll" data-sendstatus="CART"
-                                data-bookid="[1111, 1122, 1133]">Купить все
+                                data-bookid="[1111, 1122, 1133]" th:attr="data-bookid=${idListPostponedBooks}">В корзину все
                         </button>
                     </div>
                 </div>

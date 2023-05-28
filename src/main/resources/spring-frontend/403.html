@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<title th:text="#{bottom-bar.about}">Bookstore</title>
+	<meta name="description" content="Описание страницы">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+	<link href="favicon.ico" th:href="'/'+#{shortcut.icon}" rel="shortcut icon">
+	<link rel="preload" href="/assets/fonts/Montserrat/Montserrat-SemiBold.woff2" as="font" crossorigin="anonymous">
+	<link rel="preload" href="/assets/fonts/Montserrat/Montserrat-Light.woff2" as="font" crossorigin="anonymous">
+	<link rel="preload" href="/assets/fonts/Montserrat/Montserrat-Medium.woff2" as="font" crossorigin="anonymous">
+	<link rel="preload" href="/assets/fonts/Montserrat/Montserrat-ExtraBold.woff2" as="font" crossorigin="anonymous">
+	<link rel="stylesheet" href="/assets/css/fonts.min.css?v=74020866">
+	<link rel="stylesheet" href="/assets/css/basic.min.css?v=74020866">
+	<link rel="stylesheet" href="/assets/css/extra.min.css?v=74020866">
+	<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<script defer src="/assets/js/scripts.min.js?v=74020866"></script>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+	<script th:replace="~{fragments/common_js_fragment :: jsFragment}"> </script>
+</head>
+<body class="Site">
+<div class="row-block Header-logo"><a class="logo" th:href="@{/}" href="/"><img class="logo-image"
+																				src="/assets/img/logo.png"
+																				alt="logo.png"/><span
+		class="logo-text" th:text="#{header.title}">BOOKSHOP</span></a>
+</div>
+
+<h2>Sorry, you don't have permission!</h2>
+
+<div class="ProductCard-cart">
+	<div class="ProductCard-cartElement">
+		<a th:href="@{/signin}">
+			<button class="btn btn_primary btn_outline" th:text="#{title.name-signin}">Войти</button>
+		</a>
+	</div>
+
+	<div class="ProductCard-cartElement">
+		<a th:href="@{/signup}">
+			<button class="btn btn_primary btn_outline" th:text="#{title.name-signup}">Зарегистрироваться</button>
+		</a>
+	</div>
+</div>
+
+<footer class="Footer" th:replace="~{fragments/common_footer_fragment :: footer}"></footer>
+
+<script src="/assets/plg/jQuery/jquery-3.5.1.min.js"></script>
+</body>
+</html>

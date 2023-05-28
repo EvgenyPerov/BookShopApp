@@ -3,6 +3,7 @@ package com.example.MyBookShopApp.controllers;
 import com.example.MyBookShopApp.data.dto.BooksPageDto;
 import com.example.MyBookShopApp.data.services.OtherService;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
+import com.example.MyBookShopApp.data.services.UserService;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,15 +16,22 @@ import org.springframework.ui.Model;
 public class OtherController {
 
     private OtherService otherService;
+    private final UserService userService;
 
     @Autowired
-    public OtherController(OtherService otherService) {
+    public OtherController(OtherService otherService, UserService userService) {
         this.otherService = otherService;
+        this.userService = userService;
     }
 
     @ModelAttribute("searchWordDto")
     public SearchWordDto searchWordDto(){
         return new SearchWordDto();
+    }
+
+    @ModelAttribute("status")
+    public String authenticationStatus(){
+        return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
     }
 
     @GetMapping("/documents/index")

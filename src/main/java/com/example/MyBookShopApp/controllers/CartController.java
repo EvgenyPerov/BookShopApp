@@ -12,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -59,16 +60,32 @@ public class CartController {
 
             String[] arrayIds = cartContents.split("/");
 
-            List<Book> booksFromCookie = new ArrayList<>();
-            booksFromCookie = bookService.getBooksByIdIn(arrayIds);
+            List<Book> booksFromCookie = bookService.getBooksByIdIn(arrayIds);
 
             model.addAttribute("bookCartList", booksFromCookie);
+
+            model.addAttribute("bookCartDiscountCost", bookService.getBookCartDiscountCost(booksFromCookie));
+
+            model.addAttribute("bookCartTotalCost", bookService.getBookCartTotalCost(booksFromCookie));
         }
+        String status;
+
+        UserEntity user = userService.getCurrentUser();
+
+        if (user != null){
+            status = "authorized";
+            model.addAttribute("curUser", user);
+        } else {
+            status = "unauthorized";
+        }
+
+        model.addAttribute("status", status);
+
         return "cart";
     }
 
-    @PostMapping("/changeBookStatus/CART/{bookId}")
-    public String handleChangeBookStatusCart(@PathVariable(value = "bookId", required = false) Integer bookId,
+    @PostMapping("/changeBookStatus/CART/{bookIds}")
+    public String handleChangeBookStatusCart(@PathVariable(value = "bookIds", required = false) String bookIdString,
                                          @CookieValue(name = "cartContents", required = false) String cartContents,
                                          @CookieValue(name = "postponedContents", required = false) String postponedContents,
                                          HttpServletResponse response,
@@ -76,21 +93,23 @@ public class CartController {
         String hashUser = "hash44444";
         UserEntity user = userService.getUserByHash(hashUser);
 
-        System.out.println("Сработал мапинг /changeBookStatus/CART/{bookId}");
+        System.out.println("Сработал мапинг /changeBookStatus/CART/{bookId}: " + bookIdString);
 
-        if (cartContents == null || cartContents.isBlank()){
-            Cookie cookieCart = new Cookie("cartContents", String.valueOf(bookId));
-            cookieCart.setPath("/books");
-            cookieCart.setHttpOnly(true);
-            response.addCookie(cookieCart);
-            model.addAttribute("isCartEmpty", false);
+        String[] strArray = bookIdString.split(",");
 
-            bookService.increaseCart(bookId);
+        for (String bookId : strArray) {
+            if (cartContents == null || cartContents.isBlank()) {
+                Cookie cookieCart = new Cookie("cartContents", String.valueOf(bookId));
+                cookieCart.setPath("/books");
+                cookieCart.setHttpOnly(true);
+                response.addCookie(cookieCart);
+                model.addAttribute("isCartEmpty", false);
 
-            book2UserService.update("CART",bookService.getBookById(bookId), user);
+                bookService.increaseCart(Integer.valueOf(bookId));
 
-        } else
-            if (!cartContents.contains(String.valueOf(bookId))) {
+                book2UserService.update("CART", bookService.getBookById(Integer.valueOf(bookId)), user);
+
+            } else if (!cartContents.contains(String.valueOf(bookId))) {
                 StringJoiner stringJoiner = new StringJoiner("/");
                 stringJoiner.add(cartContents).add(String.valueOf(bookId));
                 Cookie cookieCart = new Cookie("cartContents", stringJoiner.toString());
@@ -99,26 +118,27 @@ public class CartController {
                 response.addCookie(cookieCart);
                 model.addAttribute("isCartEmpty", false);
 
-                bookService.increaseCart(bookId);
+                bookService.increaseCart(Integer.valueOf(bookId));
 
-                book2UserService.update("CART",bookService.getBookById(bookId), user);
+                book2UserService.update("CART", bookService.getBookById(Integer.valueOf(bookId)), user);
+            }
+
+            if (postponedContents != null && !postponedContents.isBlank()) {
+
+                System.out.println("Нажали Купить из отложенного");
+                ArrayList<String> cookiesKeptOld = new ArrayList<>(Arrays.asList(postponedContents.split("/")));
+                cookiesKeptOld.remove(String.valueOf(bookId));
+                Cookie cookiesKeptNew = new Cookie("postponedContents", String.join("/", cookiesKeptOld));
+                cookiesKeptNew.setPath("/books");
+                cookiesKeptNew.setHttpOnly(true);
+                response.addCookie(cookiesKeptNew);
+
+                bookService.decreaseKept(Integer.valueOf(bookId));
+
+            }
         }
 
-        if (postponedContents != null && !postponedContents.isBlank()){
-
-            System.out.println("Нажали Купить из отложенного");
-            ArrayList<String> cookiesKeptOld = new ArrayList<>(Arrays.asList(postponedContents.split("/")));
-            cookiesKeptOld.remove(String.valueOf(bookId));
-            Cookie cookiesKeptNew = new Cookie("postponedContents", String.join("/", cookiesKeptOld));
-            cookiesKeptNew.setPath("/books");
-            cookiesKeptNew.setHttpOnly(true);
-            response.addCookie(cookiesKeptNew);
-
-            bookService.decreaseKept(bookId);
-
-        }
-
-        return "redirect:/books/" + bookId;
+        return "redirect:/books/postponed";
 
     }
 

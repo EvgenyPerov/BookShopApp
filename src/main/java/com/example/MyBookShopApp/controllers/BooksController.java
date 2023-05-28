@@ -1,15 +1,17 @@
 package com.example.MyBookShopApp.controllers;
 
 import com.example.MyBookShopApp.data.dto.BooksPageDto;
-import com.example.MyBookShopApp.data.services.OtherService;
 import com.example.MyBookShopApp.data.services.ResourceStorage;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
 import com.example.MyBookShopApp.data.services.UserService;
+import com.example.MyBookShopApp.errs.BadRequestException;
+import com.example.MyBookShopApp.errs.NotExistBookException;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.data.services.BookService;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -20,14 +22,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringJoiner;
+import java.util.*;
 
 @Api(description = " entity book")
 @Controller
@@ -48,6 +45,11 @@ public class BooksController {
     @ModelAttribute("searchWordDto")
     public SearchWordDto searchWordDto(){
         return new SearchWordDto();
+    }
+
+    @ModelAttribute("status")
+    public String authenticationStatus(){
+        return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
     }
 
     @ModelAttribute("recentResults")
@@ -119,26 +121,36 @@ public class BooksController {
     @ApiOperation("operation to get SLUG books")
     @GetMapping("/{bookId}")
     public String getSlugOfBook(Model model,
-                                @PathVariable(value = "bookId", required = false) Integer bookId){
-        System.out.println("Переход на страницу SLUG book Id = " + bookId);
-        Book book =  bookService.getBookById(bookId);
-        model.addAttribute("slugBook", book );
+                                @PathVariable(value = "bookId", required = false) Integer bookId) throws Exception {
+        System.out.println("Переход на страницу SLUG book Id = " + bookId + " Тип- "+bookId.getClass());
+        try {
+            Book book = bookService.getBookById(bookId);
+            model.addAttribute("slugBook", book);
 
-        System.out.println("Средний рейтинг = " + userService.getRatingMapByBookId(bookId).get(100));
+            System.out.println("Средний рейтинг = " + userService.getRatingMapByBookId(bookId).get(100));
 
-        System.out.println("Количество голосов = " + userService.getRatingMapByBookId(bookId).get(200));
+            System.out.println("Количество голосов = " + userService.getRatingMapByBookId(bookId).get(200));
 
-        model.addAttribute("ratingMap", userService.getRatingMapByBookId(bookId));
+            model.addAttribute("ratingMap", userService.getRatingMapByBookId(bookId));
 
-        model.addAttribute("reviewMap", userService.getReviewMapByBookId(bookId));
+            model.addAttribute("reviewMap", userService.getReviewMapByBookId(bookId));
 
-        model.addAttribute("df", DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"));
+            model.addAttribute("df", DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"));
 
-//        model.addAttribute("tagsList", otherService.);
+            if (authenticationStatus() == "authorized") {
+                model.addAttribute("curUser", userService.getCurrentUser());
+                return "/books/slugmy";
+            }
 
-//        model.addAttribute("reviewLikeRating", userService.getReviewLikeByReviewId(bookId));
+            return "/books/slug";
 
-        return "/books/slugmy";
+        } catch (TypeMismatchException e){ //MethodArgumentTypeMismatchException NumberFormatException TypeMismatchException
+            System.out.println("bookController поймал ошибку NumberFormatException");
+            throw new BadRequestException("Введен недопустимый формат данных");
+        } catch (NoSuchElementException e){
+            System.out.println("bookController поймал ошибку NoSuchElementException");
+            throw new NotExistBookException("Не существует книги с таким номером");
+        }
     }
 
     @PostMapping("/{bookId}/img/save")
@@ -156,8 +168,7 @@ public class BooksController {
 
     @ApiOperation("operation to download books")
     @GetMapping("/download/{hash}")
-    public ResponseEntity<ByteArrayResource> getSlugOfBook(Model model,
-                                                           @PathVariable(value = "hash", required = false) String hash){
+    public ResponseEntity<ByteArrayResource> getSlugOfBook(@PathVariable(value = "hash", required = false) String hash){
         System.out.println("Переход на страницу download = " + hash);
 
         Path path = storage.getBookPathFile(hash);
@@ -175,16 +186,14 @@ public class BooksController {
 
 @PostMapping("/changeBookStatus/rating/{bookId}")
     public String handleChangeBookStatusRating(@PathVariable(value = "bookId", required = true) Integer bookId,
-                                        @RequestParam(value = "value", required = false) Integer value) {
+                                        @RequestParam(value = "value", required = false) int value) {
 
-        System.out.println("Выставлен для книги = " + bookId + " рейтинг = " + value);
-
-        String hashUser = "hash55555";
-        UserEntity user = userService.getUserByHash(hashUser);
-
-        userService.setRatingForBook(bookService.getBookById(bookId), user, value);
-
-        return "redirect:/books/" + bookId;
+    if (authenticationStatus() == "authorized"){
+        UserEntity user = userService.getCurrentUser();
+        Book book = bookService.getBookById(bookId);
+        userService.setRatingForBook(book, user, value);
+    }
+    return "redirect:/books/" + bookId;
     }
 
 
@@ -192,28 +201,24 @@ public class BooksController {
     public String handleChangeBookStatusReview(@PathVariable(value = "reviewId", required = true) Integer reviewId,
                                                @PathVariable(value = "value", required = true) short value) {
 
-        String hashUser = "hash55555";
-        UserEntity user = userService.getUserByHash(hashUser);
-
-        System.out.println("Лайки для отзыва = " + reviewId + " оценка = " + value);
-
-        userService.setReviewLikeForBook(reviewId, user, value);
-
+        if (authenticationStatus() == "authorized"){
+            UserEntity user = userService.getCurrentUser();
+            userService.setReviewLikeForBook(reviewId, user, value);
+            System.out.println("Лайки для отзыва = " + reviewId + " оценка = " + value);
+        }
         return "redirect:/books/" + userService.getBookByReviewId(reviewId);
     }
 
     @PostMapping("/bookReview/{bookId}/{text}")
     public String saveNewReviewForBook(@PathVariable(value = "bookId") Integer bookId,
                                        @PathVariable(value = "text") String text) {
-        System.out.println("Оставляем отзыв для книги " + bookId + " : " + text);
 
-        String hashUser = "hash55555";
-        UserEntity user = userService.getUserByHash(hashUser);
-
-        userService.addReviewForBook(bookService.getBookById(bookId), user, text);
-
+        if (authenticationStatus() == "authorized") {
+            UserEntity user = userService.getCurrentUser();
+            userService.addReviewForBook(bookService.getBookById(bookId), user, text);
+            System.out.println("Оставляем отзыв для книги " + bookId + " : " + text);
+        }
         return "redirect:/books/" + bookId;
     }
-
 
 }

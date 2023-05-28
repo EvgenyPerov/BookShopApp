@@ -2,6 +2,7 @@ package com.example.MyBookShopApp.controllers;
 
 import com.example.MyBookShopApp.data.dto.BooksPageDto;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
+import com.example.MyBookShopApp.data.services.UserService;
 import com.example.MyBookShopApp.struct.author.Author;
 import com.example.MyBookShopApp.data.services.AuthorService;
 import com.example.MyBookShopApp.struct.book.book.Book;
@@ -22,10 +23,12 @@ import java.util.Map;
 @Api("authors data")
 public class AuthorsController {
     private AuthorService authorService;
+    private final UserService userService;
 
     @Autowired
-    public AuthorsController(AuthorService authorService) {
+    public AuthorsController(AuthorService authorService, UserService userService) {
         this.authorService = authorService;
+        this.userService = userService;
     }
 
     @ModelAttribute("authorsMap")
@@ -36,6 +39,11 @@ public class AuthorsController {
     @ModelAttribute("searchWordDto")
     public SearchWordDto searchWordDto(){
         return new SearchWordDto();
+    }
+
+    @ModelAttribute("status")
+    public String authenticationStatus(){
+        return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
     }
 
     @GetMapping("/authors")

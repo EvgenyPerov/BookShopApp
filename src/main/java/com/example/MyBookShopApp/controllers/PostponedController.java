@@ -10,8 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -63,11 +65,26 @@ public class PostponedController {
 
             String[] arrayIds = postponedContents.split("/");
 
-            List<Book> booksFromCookie = new ArrayList<>();
-            booksFromCookie = bookService.getBooksByIdIn(arrayIds);
+            List<Book> booksFromCookie = bookService.getBooksByIdIn(arrayIds);
 
             model.addAttribute("bookPostponedList", booksFromCookie);
+
+            model.addAttribute("idListPostponedBooks", bookService.getIdListPostponedBooks(booksFromCookie));
+
         }
+        String status;
+
+        UserEntity user = userService.getCurrentUser();
+
+        if (user != null){
+            status = "authorized";
+            model.addAttribute("curUser", user);
+        } else {
+            status = "unauthorized";
+        }
+
+        model.addAttribute("status", status);
+
         return "postponed";
     }
 

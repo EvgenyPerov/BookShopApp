@@ -19,6 +19,9 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 
     <script th:replace="~{fragments/common_js_fragment :: jsFragment}"> </script>
+
+<!--    <meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>-->
+<!--    <meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>-->
 </head>
 <body class="Site">
 <header class="Header"
@@ -35,9 +38,10 @@
             <h2 class="Middle-title">Мой профиль
             </h2>
             <div class="Tabs Tabs_default">
-                <div class="Tabs-links"><a class="Tabs-link Tabs-link_ACTIVE" href="#basic">Основные сведения</a><a
-                        class="Tabs-link" href="#transactions">История транзакций</a><a class="Tabs-link" href="#topup">Пополнить
-                    счет</a>
+                <div class="Tabs-links">
+                    <a class="Tabs-link Tabs-link_ACTIVE" href="#basic">Основные сведения</a>
+                    <a class="Tabs-link" href="#transactions">История транзакций</a>
+                    <a class="Tabs-link" href="#topup">Пополнить счет</a>
                 </div>
                 <div class="Tabs-wrap">
                     <div class="Tabs-block" id="basic">
@@ -48,13 +52,13 @@
                                         <div class="form-group">
                                             <label class="form-label" for="name">Имя
                                             </label>
-                                            <input class="form-input" id="name" name="name" type="text" value="Михаил"/>
+                                            <input class="form-input" id="name" name="name" type="text" value="Михаил" th:value="${curUser.name}"/>
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="mail">E-mail
                                             </label>
                                             <input class="form-input" id="mail" name="mail" type="text"
-                                                   value="addr@sait.com" data-validate="require mail"/>
+                                                   value="addr@sait.com" th:value="${curUser.email}" data-validate="require mail"/>
                                             <div class="Profile-btn Profile-btn_confirm">
                                                 <button class="btn btn_primary" type="button">Подтвердить
                                                 </button>
@@ -64,7 +68,7 @@
                                             <label class="form-label" for="phone">Телефон
                                             </label>
                                             <input class="form-input" id="phone" name="phone" type="text"
-                                                   value="+70000000000" data-mask="+7 (999) 999-99-99"
+                                                   value="+70000000000" th:value="${curUser.phone}" data-mask="+7 (999) 999-99-99"
                                                    data-validate="require"/>
                                             <div class="Profile-btn Profile-btn_confirm">
                                                 <button class="btn btn_primary" type="button">Подтвердить
