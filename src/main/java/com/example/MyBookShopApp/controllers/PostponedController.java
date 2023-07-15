@@ -10,12 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -44,18 +41,20 @@ public class PostponedController {
     }
 
     @ModelAttribute("bookCartList")
-    public List<Book> geBookCartList(){
+    public List<Book> geBookCartList(@CookieValue(name = "cartContents", required = false) String cartContents){
         UserEntity user = userService.getCurrentUser();
         if (user != null) {
-            return book2UserService.getCookieBooksFromRepoByTypeCode("CART",user);
-        } else return new ArrayList<>();
+            return book2UserService.getBooksFromRepoByTypeCodeAndUser("CART",user);
+        } else {
+            return bookService.getBooksFromCookies(cartContents);
+        }
     }
 
     @GetMapping("/postponed")
     public String postponedPage(Model model,
                                 @CookieValue(name = "postponedContents", required = false) String postponedContents){
         String status;
-        List<Book> booksFromCookie = null;
+        List<Book> booksFromCookie = new ArrayList<>();
         UserEntity user = userService.getCurrentUser();
 
         if (user == null) {
@@ -67,22 +66,14 @@ public class PostponedController {
             } else {
                 model.addAttribute("isPostponedEmpty", false);
 
-                postponedContents = postponedContents.startsWith("/") ?
-                        postponedContents.substring(1) : postponedContents;
-
-                postponedContents = postponedContents.endsWith("/") ?
-                        postponedContents.substring(0, postponedContents.length() - 1) : postponedContents;
-
-                String[] arrayIds = postponedContents.split("/");
-
-                booksFromCookie = bookService.getBooksByIdIn(arrayIds);
+                booksFromCookie = bookService.getBooksFromCookies(postponedContents);
             }
 
         } else {
             status = "authorized";
             System.out.println("страница Отложенное, берем Cookie из БД для пользователя "+ user.getName());
             model.addAttribute("curUser", user);
-            booksFromCookie = book2UserService.getCookieBooksFromRepoByTypeCode("KEPT",user);
+            booksFromCookie = book2UserService.getBooksFromRepoByTypeCodeAndUser("KEPT",user);
 
             if (booksFromCookie.isEmpty()) model.addAttribute("isPostponedEmpty", true);
             else model.addAttribute("isPostponedEmpty", false);
@@ -110,14 +101,14 @@ public class PostponedController {
 
             if (postponedContents == null || postponedContents.isBlank()) {
                 Cookie cookie = new Cookie("postponedContents", String.valueOf(bookId));
-                cookie.setPath("/books");
+                cookie.setPath("/");
                 response.addCookie(cookie);
                 model.addAttribute("isPostponedEmpty", false);
             } else if (!postponedContents.contains(String.valueOf(bookId))) {
                 StringJoiner stringJoiner = new StringJoiner("/");
                 stringJoiner.add(postponedContents).add(String.valueOf(bookId));
                 Cookie cookie = new Cookie("postponedContents", stringJoiner.toString());
-                cookie.setPath("/books");
+                cookie.setPath("/");
                 response.addCookie(cookie);
                 model.addAttribute("isPostponedEmpty", false);
             }
@@ -128,7 +119,7 @@ public class PostponedController {
                 ArrayList<String> cookiesCartOld = new ArrayList<>(Arrays.asList(cartContents.split("/")));
                 cookiesCartOld.remove(String.valueOf(bookId));
                 Cookie cookiesCartNew = new Cookie("cartContents", String.join("/", cookiesCartOld));
-                cookiesCartNew.setPath("/books");
+                cookiesCartNew.setPath("/");
                 cookiesCartNew.setHttpOnly(true);
                 response.addCookie(cookiesCartNew);
             }
@@ -154,15 +145,19 @@ public class PostponedController {
 
             if (postponedContents != null && !postponedContents.isBlank()) {
                 ArrayList<String> cookies = new ArrayList<>(Arrays.asList(postponedContents.split("/")));
-                System.out.println("было кук = " + cookies.size() + " " + cookies.get(0));
+                System.out.println("было кук = " + cookies.size());
                 cookies.remove(String.valueOf(bookId));
                 System.out.println("стало кук = " + cookies.size());
                 Cookie cookie = new Cookie("postponedContents", String.join("/", cookies));
-                cookie.setPath("/books");
-                cookie.setHttpOnly(true);
-                response.addCookie(cookie);
-                model.addAttribute("isPostponedEmpty", false);
-            } else {
+                if (!cookies.isEmpty()) {
+                    model.addAttribute("isPostponedEmpty", false);
+                } else {
+                    model.addAttribute("isPostponedEmpty", true);
+                }
+                    cookie.setPath("/");
+                    cookie.setHttpOnly(true);
+                    response.addCookie(cookie);
+                } else {
                 model.addAttribute("isPostponedEmpty", true);
             }
         }

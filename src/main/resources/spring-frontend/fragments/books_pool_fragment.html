@@ -3,12 +3,12 @@
 <div class="Cards Cards_refresh" th:fragment="pool" >
     <div class="Card" th:each="book: ${list}">
         <div class="Card-picture">
-            <a href="#" th:href="${book.id}">
+            <a href="#" th:href="@{${'/books/'} + ${book.id}}">
                 <img src="/assets/img/content/main/card.jpg" th:src="${book.image}" alt="card.jpg"/>
             </a>
         </div>
         <div class="Card-content">
-            <strong class="Card-title"><a href="#" th:href="${book.id}" th:text="${book.title}"></a>
+            <strong class="Card-title"><a href="#" th:href="@{${'/books/'} + ${book.id}}" th:text="${book.title}"></a>
             </strong>
             <div class="Card-description" th:text="${book.description}">
             </div>
@@ -24,10 +24,12 @@
                href="#"
                data-refreshoffset="0"
                data-refreshlimit="20"
+
+               th:attr="data-refreshquery=${searchWordDto.example}, data-refreshshow=${category}, data-refreshid=${id} "
+
+               data-refreshid="1"
                data-refreshshow="search"
                data-refreshquery="new search"
-               th:attr="data-refreshquery=${searchWordDto.example}, data-refreshshow=${category}, data-refreshid=${id} "
-               data-refreshid="1"
              >Показать еще </a>
         </div>
 <!--        th:text="${isEmptyList}"-->

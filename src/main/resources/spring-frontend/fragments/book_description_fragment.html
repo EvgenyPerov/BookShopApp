@@ -4,8 +4,9 @@
     <div class="ProductCard-header">
         <h1 class="ProductCard-title" th:text="${slugBook.title}">Мара и морок
         </h1>
-        <div class="ProductCard-author"><span class="ProductCard-titleProp">Автор:</span>&#32;<a
-                href="#" th:text="${slugBook.authorName()}">Лия Арден</a>
+        <div class="ProductCard-author"><span class="ProductCard-titleProp">Автор:</span>&#32;
+            <a href="#" th:href="${'/authors/slug/'}+${slugBook.authorId()}"
+                th:text="${slugBook.authorName()}">Лия Арден</a>
         </div>
         <div class="ProductCard-rating">
             <span class="ProductCard-titleProp">Рейтинг:</span>

@@ -1,23 +1,16 @@
 package com.example.MyBookShopApp.data.services;
 
 import com.example.MyBookShopApp.data.repo.*;
-import com.example.MyBookShopApp.struct.author.Author;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.book.links.Book2UserEntity;
 import com.example.MyBookShopApp.struct.book.links.Book2UserTypeEntity;
-import com.example.MyBookShopApp.struct.book.review.BookRatingEntity;
 import com.example.MyBookShopApp.struct.user.UserEntity;
-import lombok.Builder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,13 +39,13 @@ public class Book2UserService {
             book2UserRepository.save(book2UserFromRepo);
         } else {
             Book2UserEntity book2UserEntity = new Book2UserEntity();
+            System.out.println("Пытаемся сохранить новый объект book2UserEntity ");
 
             book2UserEntity.setTime(LocalDateTime.now());
             book2UserEntity.setBook2UserType(book2UserTypeRepository.findByCodeIs(typeBook));
             book2UserEntity.setBook(book);
             book2UserEntity.setUser(user);
             book2UserRepository.save(book2UserEntity);
-            System.out.println("Пытаемся сохранить новый объект book2UserEntity " + book2UserEntity.getBook2UserType().getCode());
         }
     }
 
@@ -64,7 +57,7 @@ public class Book2UserService {
         }
     }
 
-    public List<Book> getCookieBooksFromRepoByTypeCode(String bookTypeCode, UserEntity user) {
+    public List<Book> getBooksFromRepoByTypeCodeAndUser(String bookTypeCode, UserEntity user) {
         Book2UserTypeEntity typeEntity = book2UserTypeRepository.findByCodeIs(bookTypeCode);
         List<Book2UserEntity> book2UserList = null;
         if (typeEntity != null) {

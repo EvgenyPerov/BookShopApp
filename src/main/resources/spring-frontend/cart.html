@@ -101,7 +101,7 @@
 
                                 <div class="Cart-buttons">
                                     <div class="Cart-btn">
-                                        <button class="btn btn_primary btn_outline" data-sendstatus="KEPT"
+                                        <button class="btn btn_primary btn_outline" data-sendstatus="KEPT" id="KEPT"
                                                 data-bookid="[1122]" th:attr="data-bookid = ${book.id}">
                                             <span class="btn-icon"><img
                                                 src="/assets/img/icons/heart.svg" alt="heart.svg"/></span><span
@@ -109,7 +109,7 @@
                                         </button>
                                     </div>
                                     <div class="Cart-btn">
-                                        <button class="btn btn_danger btn_outline" data-sendstatus="UNLINK"
+                                        <button class="btn btn_danger btn_outline" data-sendstatus="UNLINK" id="UNLINK"
                                                 data-bookid="[1122]" th:attr="data-bookid=${'CART/'+ book.id}">
                                             <span class="btn-icon"><img
                                                     src="/assets/img/icons/trash.svg" alt="trash.svg"/>

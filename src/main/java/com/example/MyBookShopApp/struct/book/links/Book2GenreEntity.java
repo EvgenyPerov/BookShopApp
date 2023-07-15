@@ -1,9 +1,14 @@
 package com.example.MyBookShopApp.struct.book.links;
 
+import com.example.MyBookShopApp.struct.book.book.Book;
+import com.example.MyBookShopApp.struct.genre.GenreEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.ToString;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @ToString
@@ -15,11 +20,12 @@ public class Book2GenreEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name ="book_id",  columnDefinition = "INT NOT NULL")
-    private Integer bookId;
+    @ManyToOne
+    @JoinColumn(name = "book_id", referencedColumnName = "id")
+    private Book book;
 
-    @Column(name ="genre_id",  columnDefinition = "INT NOT NULL")
-    private Integer genreId;
-
+    @ManyToOne
+    @JoinColumn(name = "genre_id", referencedColumnName = "id")
+    private GenreEntity genre;
 
 }

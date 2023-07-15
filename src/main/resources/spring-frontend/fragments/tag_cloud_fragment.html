@@ -2,22 +2,22 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <div class="Tags" id="tags" th:fragment="cloud">
     <div class="Tag" th:each="tagMap: ${tagsMap}">
-        <div th:switch="${tagMap.value}">
+        <div th:switch="${tagMap.value}" id = "tag">
 
 <!--            <div th:with="currentUrl=(${#httpServletRequest.requestURI + '?' + #strings.defaultString(#httpServletRequest.queryString, '')})">-->
 <!--                <a th:href="@{${'/tags/index'}(tagName=test)}">click here</a>-->
 <!--            </div>-->
-            <p th:case=0 class="Tag_xs"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:text="${tagMap.key.name}">сказки</a> </p>
-            <p th:case=1 class="Tag_xs"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:text="${tagMap.key.name}">сказки</a> </p>
-            <p th:case=2 class="Tag_sm"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:text="${tagMap.key.name}">сказки</a> </p>
-            <p th:case=3 class="Tag_sm"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:text="${tagMap.key.name}">сказки</a> </p>
-            <p th:case=4 class="Tags"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:text="${tagMap.key.name}">сказки</a> </p>
-            <p th:case=5 class="Tags"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:text="${tagMap.key.name}">сказки</a> </p>
-            <p th:case=6 class="Tag"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:text="${tagMap.key.name}">сказки</a> </p>
-            <p th:case=7 class="Tag_md"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:text="${tagMap.key.name}">сказки</a> </p>
-            <p th:case=8 class="Tag_md"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:text="${tagMap.key.name}">сказки</a> </p>
-            <p th:case=9 class="Tag_lg"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:text="${tagMap.key.name}">сказки</a> </p>
-            <p th:case=10 class="Tag_lg"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:text="${tagMap.key.name}">сказки</a> </p>
+            <p th:case=0 class="Tag_xs"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:name="${tagMap.key.name}" th:text="${tagMap.key.name}">сказки</a> </p>
+            <p th:case=1 class="Tag_xs"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:name="${tagMap.key.name}" th:text="${tagMap.key.name}">сказки</a> </p>
+            <p th:case=2 class="Tag_sm"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:name="${tagMap.key.name}" th:text="${tagMap.key.name}">сказки</a> </p>
+            <p th:case=3 class="Tag_sm"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:name="${tagMap.key.name}" th:text="${tagMap.key.name}">сказки</a> </p>
+            <p th:case=4 class="Tags"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:name="${tagMap.key.name}" th:text="${tagMap.key.name}">сказки</a> </p>
+            <p th:case=5 class="Tags"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:name="${tagMap.key.name}" th:text="${tagMap.key.name}">сказки</a> </p>
+            <p th:case=6 class="Tag"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:name="${tagMap.key.name}" th:text="${tagMap.key.name}">сказки</a> </p>
+            <p th:case=7 class="Tag_md"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:name="${tagMap.key.name}" th:text="${tagMap.key.name}">сказки</a> </p>
+            <p th:case=8 class="Tag_md"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:name="${tagMap.key.name}" th:text="${tagMap.key.name}">сказки</a> </p>
+            <p th:case=9 class="Tag_lg"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:name="${tagMap.key.name}" th:text="${tagMap.key.name}">сказки</a> </p>
+            <p th:case=10 class="Tag_lg"> <a th:href="@{${'/tags/index/'}+${tagMap.key.id}}" th:name="${tagMap.key.name}" th:text="${tagMap.key.name}" id="tag2">сказки</a> </p>
                 <!--        <div th:class="${tagMap.value &gt; 1 and tagMap.value &lt; 3 }? 'Tag_xs'  Tag_xs Tag_sm Tag_md Tag_lg-->
                 <!--         : ${tagMap.value &gt; 3 and tagMap.value &lt; 5 }? 'Tag_xs'-->
                 <!--         : 'Tag_lg'-->

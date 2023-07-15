@@ -44,7 +44,7 @@ public class GlobalExceptionHandlerController {
     }
 
         @ExceptionHandler(UsernameNotFoundException.class)
-    public String handleUsernameNotFoundException(UsernameNotFoundException ex, RedirectAttributes redirectAttributes){
+    public String handleUsernameNotFoundException(UserNotFoundException ex, RedirectAttributes redirectAttributes){
         redirectAttributes.addFlashAttribute("textError", ex.getLocalizedMessage());
         System.out.println("Обработчик перехватил UsernameNotFoundException" + ex.getMessage());
         return "redirect:/errorspage";
@@ -63,7 +63,5 @@ public class GlobalExceptionHandlerController {
         System.out.println("Обработчик перехватил IllegalStateException");
         return "redirect:/errorspage";
     }
-
-
 
 }

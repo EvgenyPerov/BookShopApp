@@ -20,10 +20,6 @@ public class JwtUtil {
     @Value("${auth.secret}")
     private String secret;
 
-    @Value("${auth.secretRefresh}")
-    private String secretRefresh;
-
-
     public String createToken(Map<String, Object> claims, String username){
         final LocalDateTime now = LocalDateTime.now();
         final Instant accessExpirationInstant = now.plusMonths(1).atZone(ZoneId.systemDefault()).toInstant();
@@ -35,19 +31,6 @@ public class JwtUtil {
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(accessExpiration)
                 .signWith(SignatureAlgorithm.HS256, secret).compact();
-    }
-
-    public String generateRefreshToken(Map<String, Object> claims, String username) {
-        final LocalDateTime now = LocalDateTime.now();
-        final Instant refreshExpirationInstant = now.plusDays(30).atZone(ZoneId.systemDefault()).toInstant();
-        final Date refreshExpiration = Date.from(refreshExpirationInstant);
-        return Jwts
-                .builder()
-//                .setClaims(claims)
-                .setSubject(username)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(refreshExpiration)
-                .signWith(SignatureAlgorithm.HS256, secretRefresh).compact();
     }
 
         public String generateToken(UserDetails userDetails){
@@ -77,24 +60,6 @@ public class JwtUtil {
         return null;
     }
 
-    private Claims extractRefreshAllClaims(String token){
-        try {
-            Claims claims = Jwts.parser().setSigningKey(secretRefresh).parseClaimsJws(token).getBody();
-            return claims;
-        } catch (ExpiredJwtException expEx) {
-            System.out.println("Token expired> " + expEx);
-        } catch (UnsupportedJwtException unsEx) {
-            System.out.println("Unsupported jwt> " + unsEx);
-        } catch (MalformedJwtException mjEx) {
-            System.out.println("Malformed jwt> " + mjEx);
-        } catch (SignatureException sEx) {
-            System.out.println("Invalid signature> " + sEx);
-        } catch (Exception e) {
-            System.out.println("invalid token> " + e);
-        }
-        return null;
-    }
-
     public String extractUserName(String token){
             return extractClaim(token, Claims::getSubject);
     }
@@ -109,11 +74,6 @@ public class JwtUtil {
     public Boolean validateToken(String token, UserDetails userDetails){ //
         String username = extractUserName(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-    }
-
-    public Boolean validateRefreshToken(String refreshToken, UserDetails userDetails){ //
-        String username = extractUserName(refreshToken);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(refreshToken));
     }
 
 }

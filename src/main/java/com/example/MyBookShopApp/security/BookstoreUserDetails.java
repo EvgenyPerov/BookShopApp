@@ -2,6 +2,7 @@ package com.example.MyBookShopApp.security;
 
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import lombok.Data;
+import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,7 +10,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Arrays;
 import java.util.Collection;
 
-@Data
 public class BookstoreUserDetails implements UserDetails {
 
     private final UserEntity user;

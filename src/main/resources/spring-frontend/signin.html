@@ -2,19 +2,20 @@
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
     <title th:text="#{title.name-signin}">Bookstore</title>
-    <meta name="description" content="Описание страницы">
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <link href="favicon.ico" th:href="'/'+#{shortcut.icon}" rel="shortcut icon">
-    <link rel="preload" href="/assets/fonts/Montserrat/Montserrat-SemiBold.woff2" as="font" crossorigin="anonymous">
-    <link rel="preload" href="/assets/fonts/Montserrat/Montserrat-Light.woff2" as="font" crossorigin="anonymous">
-    <link rel="preload" href="/assets/fonts/Montserrat/Montserrat-Medium.woff2" as="font" crossorigin="anonymous">
-    <link rel="preload" href="/assets/fonts/Montserrat/Montserrat-ExtraBold.woff2" as="font" crossorigin="anonymous">
-    <link rel="stylesheet" href="/assets/css/fonts.min.css?v=27449092">
-    <link rel="stylesheet" href="/assets/css/basic.min.css?v=27449092">
-    <link rel="stylesheet" href="/assets/css/extra.min.css?v=27449092">
-    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <script defer src="/assets/js/scripts.min.js?v=27449092"></script>
+    <meta name="description" content="Описание страницы"/>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+    <link href="/favicon.ico" th:href="'/'+#{shortcut.icon}" rel="shortcut icon"/>
+    <link rel="preload" href="/assets/fonts/Montserrat/Montserrat-SemiBold.woff2" as="font" crossorigin="anonymous"/>
+    <link rel="preload" href="/assets/fonts/Montserrat/Montserrat-Light.woff2" as="font" crossorigin="anonymous"/>
+    <link rel="preload" href="/assets/fonts/Montserrat/Montserrat-Medium.woff2" as="font" crossorigin="anonymous"/>
+    <link rel="preload" href="/assets/fonts/Montserrat/Montserrat-ExtraBold.woff2" as="font" crossorigin="anonymous"/>
+    <link rel="stylesheet" href="/assets/css/fonts.min.css?v=27449092"/>
+    <link rel="stylesheet" href="/assets/css/basic.min.css?v=27449092"/>
+    <link rel="stylesheet" href="/assets/css/extra.min.css?v=27449092"/>
+<!--    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>-->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.6.1/html5shiv.js"></script>
+    <script defer  src="/assets/js/scripts.min.js?v=27449092"></script>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 
@@ -40,7 +41,7 @@
                     <div class="Login-step">
                         <div class="form-group">
                             <label class="form-label Login-title">Введите e-mail или телефон
-                                <br>
+<!--                                <br/>-->
                                 <span th:if="${regOk}">Регистрация прошла успешно!</span>
                             </label>
                         </div>
@@ -75,7 +76,7 @@
                     </div>
                     <div class="Login-step Login-step_hide" data-type="phone">
                         <div class="form-group">
-                            <label class="form-label Login-title">На&nbsp;Ваш телефон отправлено сообщение с&nbsp;кодом
+                            <label class="form-label Login-title">На Ваш телефон отправлено сообщение с кодом
                                 для входа. Введите его:
                             </label>
                         </div>
@@ -91,7 +92,7 @@
                     </div>
                     <div class="Login-step Login-step_hide" data-type="mail">
                         <div class="form-group">
-                            <label class="form-label Login-title">Введите пароль для входа или пройдите регистрацию: </label>
+                            <label class="form-label Login-title">Введите пароль для входа или пройдите регистрацию:</label>
                         </div>
                         <div class="form-group form-group_key">
                             <input class="form-input" id="mailcode" name="mailcode" type="text" placeholder="Пароль"

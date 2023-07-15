@@ -87,7 +87,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     }
 
                 })
-                .deleteCookies("token")
+                .deleteCookies("token","postponedContents", "cartContents")
+//                .deleteCookies("postponedContents", "cartContents")
+//                .deleteCookies("postponedContents", "cartContents")
                 .and().oauth2Client()
                 .and().oauth2Login().
                 loginPage("/signin")
@@ -116,7 +118,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     }
                 })
                 .and()
-                .exceptionHandling().accessDeniedPage("/403");
+                .exceptionHandling().accessDeniedPage("/403")
+                .and()
+                .logout().deleteCookies("token","postponedContents", "cartContents");
 
 //        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 

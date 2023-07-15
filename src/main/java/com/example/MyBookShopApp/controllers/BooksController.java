@@ -62,39 +62,37 @@ public class BooksController {
     }
 
     @ModelAttribute("bookPostponedList")
-    public List<Book> geBookPostponedList(){
+    public List<Book> geBookPostponedList(@CookieValue(name = "postponedContents", required = false) String postponedContents){
         UserEntity user = userService.getCurrentUser();
         if (user != null) {
-            return book2UserService.getCookieBooksFromRepoByTypeCode("KEPT", user);
-        } else return new ArrayList<>();
+            return book2UserService.getBooksFromRepoByTypeCodeAndUser("KEPT", user);
+        } else {
+            return bookService.getBooksFromCookies(postponedContents);
+        }
     }
 
     @ModelAttribute("bookCartList")
-    public List<Book> geBookCartList(){
+    public List<Book> geBookCartList(@CookieValue(name = "cartContents", required = false) String cartContents){
         UserEntity user = userService.getCurrentUser();
         if (user != null) {
-            return book2UserService.getCookieBooksFromRepoByTypeCode("CART",user);
-        } else return new ArrayList<>();
+            return book2UserService.getBooksFromRepoByTypeCodeAndUser("CART",user);
+        } else {
+            return bookService.getBooksFromCookies(cartContents);
+        }
     }
 
     // метод срабатывает первым при выборе Новинок в главном меню
     @ApiOperation("operation to get recent books")
     @GetMapping("/recent")
-    public String recentFirstPage(Model model
-            , @RequestParam(value = "from", required = false) String from
-            , @RequestParam(value ="to", required = false) String to
-            , @RequestParam(value ="offset", required = false) Integer offset
-            , @RequestParam(value ="limit", required = false) Integer limit) {
-
-        System.out.println("Переход на страницу Новинки c параметрами: " +
-                "from " + from +" to= "+ to + " offset= "+ offset + " limit= "+ limit);
-
+    public String recentFirstPage(Model model) {
+        System.out.println("Переход на страницу Новинки");
         model.addAttribute("recentResults",
-                bookService.getPageOfRecentBooks(from, to, 0, 5).getContent());
+                bookService.getPageOfRecentBooks(null, null, 0, 20).getContent());
         return "/books/recent";
     }
 
-    // метод срабатывает при "Показать еще" подгрузке следующей партии книг на
+    // метод срабатывает при "Показать еще" подгрузке следующей партии книг на Новинках +
+    // метод срабатывает при карусельной подгрузке следующей партии книг на Главной странице
     @ApiOperation("этот метод мапинга нужен для JS файла, постраничная загрузка новинок книг")
     @ResponseBody
     @GetMapping("/page/recent")
@@ -103,18 +101,18 @@ public class BooksController {
             , @RequestParam(value ="to", required = false) String to
             , @RequestParam(value ="offset", required = false) Integer offset
             , @RequestParam(value ="limit", required = false) Integer limit) {
-        return  new BooksPageDto(bookService.getPageOfRecentBooks(from, to, offset, limit).getContent());
+        System.out.println("Передача данных Новинок книг в JS с параметрами offset = "+ offset +
+                " limit= "+ limit + " from= "+ from + " to= "+ to);
+        return new BooksPageDto(bookService.getPageOfRecentBooks(from, to, offset, limit).getContent());
     }
 
     // метод срабатывает выборе в главном меню
     @ApiOperation("operation to get popular books")
     @GetMapping("/popular")
-    public String popularPage(Model model
-            ,@RequestParam(value ="offset", required = false) Integer offset
-            , @RequestParam(value ="limit", required = false) Integer limit){
+    public String popularPage(Model model){
         System.out.println("Переход на страницу Популярное");
         model.addAttribute("popularBooks",
-                bookService.getPageOfPopularBooks( 0, 5).getContent());
+                bookService.getPageOfPopularBooks(0, 20).getContent());
         return "/books/popular";
     }
 
@@ -124,19 +122,10 @@ public class BooksController {
     @GetMapping("/page/popular")
     public BooksPageDto getPopularBooksPage(@RequestParam("offset") Integer offset,
                                             @RequestParam("limit") Integer limit) {
-        System.out.println("Передача данных популярных книг в JS с параметром offset = "+ offset + " limit= "+ limit);
+        System.out.println("Передача данных популярных книг в JS с параметрами offset = "+ offset + " limit= "+ limit);
         return new BooksPageDto(bookService.getPageOfPopularBooks(offset,limit).getContent());
     }
 
-    // метод срабатывает при карусельной подгрузке следующей партии книг на главной странице
-    @ApiOperation("этот метод мапинга нужен для JS файла, постраничная загрузка рекомендованных книг")
-    @ResponseBody
-    @GetMapping("/page/recommended")
-    public BooksPageDto getRecommendedeBooksPage(@RequestParam("offset") Integer offset,
-                                                 @RequestParam("limit") Integer limit) {
-        System.out.println("Передача данных рекомендованных книг в JS");
-        return new BooksPageDto(bookService.geRecomendedBooksOnMainPage(offset,limit).getContent());
-    }
 
     @ApiOperation("operation to get SLUG books")
     @GetMapping("/{bookId}")

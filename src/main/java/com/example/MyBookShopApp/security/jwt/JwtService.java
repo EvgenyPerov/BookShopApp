@@ -12,13 +12,10 @@ import java.util.List;
 @Service
 public class JwtService {
 
-    private Date today;
-
     @Autowired
     private JwtTokenRepository jwtTokenRepository;
 
     public boolean addTokenToBlacklist(String token) {
-//        System.out.println("Hash токена в Blacklist - " + token.hashCode());
         clearOldTokenFromBlacklist();
 
         if (jwtTokenRepository.findByTokenHashIs(token.hashCode()) == null) {

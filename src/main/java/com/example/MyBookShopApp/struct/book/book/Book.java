@@ -2,9 +2,11 @@ package com.example.MyBookShopApp.struct.book.book;
 
 import com.example.MyBookShopApp.struct.author.Author;
 import com.example.MyBookShopApp.struct.book.file.BookFileEntity;
+import com.example.MyBookShopApp.struct.book.links.Book2GenreEntity;
 import com.example.MyBookShopApp.struct.book.links.Book2UserEntity;
 import com.example.MyBookShopApp.struct.book.review.BookRatingEntity;
 import com.example.MyBookShopApp.struct.book.review.BookReviewEntity;
+import com.example.MyBookShopApp.struct.genre.GenreEntity;
 import com.example.MyBookShopApp.struct.other.Tag;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -18,6 +20,7 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "books")
@@ -87,6 +90,7 @@ public class Book {
     @JoinColumn(name = "author_id", referencedColumnName = "id")
     private Author author;
 
+
     @JsonIgnore
     @ManyToMany
     @JoinTable(name = "books2tags",
@@ -107,8 +111,18 @@ public class Book {
     private List<BookRatingEntity> bookRatingEntities = new ArrayList<>();
 
     @JsonIgnore
+    @ManyToMany
+    @JoinColumn(name = "rating_id", referencedColumnName = "id")
+    private  List<BookRatingEntity> RatingEntity = new ArrayList<>();
+
+    @JsonIgnore
     @OneToMany(mappedBy = "book")
     private List<BookReviewEntity> bookReviewEntities = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "book")
+    private List<Book2GenreEntity> book2GenreEntities = new ArrayList<>();
+
     @JsonProperty
     public double discountPrice(){
         return discount>0 ? price - (price*discount)/100 : price;
@@ -117,6 +131,23 @@ public class Book {
     @JsonGetter("authors")
     public String authorName(){
         return author.getName();
+    }
+
+    public Integer authorId(){
+        return author.getId();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Book book = (Book) o;
+        return id == book.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     @Override
@@ -131,7 +162,9 @@ public class Book {
                 ", description='" + description + '\'' +
                 ", price=" + price +
                 ", discount=" + discount +
-                ", tagList=" + tagList +
+                ", countOfBuy=" + countOfBuy +
+                ", countOfCart=" + countOfCart +
+                ", countOfPostponed=" + countOfPostponed +
                 '}';
     }
 }

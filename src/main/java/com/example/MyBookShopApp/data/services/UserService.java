@@ -61,8 +61,8 @@ public class UserService {
         this.jwtUtil = jwtUtil;
     }
 
-    public UserEntity getUserByHash(String hash) {
-        return userRepository.findByHashIs(hash);
+    public UserEntity getUserByName(String name){
+        return userRepository.findUserEntityByName(name);
     }
 
     public boolean setRatingForBook(Book book, UserEntity user, int value) {
@@ -107,9 +107,11 @@ public class UserService {
         if (!list.isEmpty()) {
             for (BookRatingEntity rating : list) {
                 Integer key = rating.getValue();
-                ratingMap.put(key, ratingMap.get(key) + 1);
-                sumOfRating += key;
-                count++;
+                if (key != 0) {
+                    ratingMap.put(key, ratingMap.get(key) + 1);
+                    sumOfRating += key;
+                    count++;
+                }
             }
             int averageRating = Math.round(sumOfRating / count);
             ratingMap.put(100, averageRating);
@@ -216,9 +218,10 @@ public class UserService {
         }
     }
 
-    public void addUser(RegistrationForm form) {
+    public UserEntity addUser(RegistrationForm form) {
+        UserEntity user = null;
         if (userRepository.findUserEntityByEmail(form.getEmail()) == null) {
-            UserEntity user = new UserEntity();
+            user = new UserEntity();
             user.setName(form.getName());
             user.setEmail(form.getEmail());
             user.setPhone(form.getPhone());
@@ -228,7 +231,9 @@ public class UserService {
             user.setBalance(0);
 
             userRepository.save(user);
+            return user;
         }
+        return null;
     }
 
     public ContactConfirmationResponse login(ContactConfirmationPayload payload) {
@@ -246,6 +251,9 @@ public class UserService {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(payload.getContact(), payload.getCode()));
 
+        System.out.println("payload.getContact() - " + payload.getContact());
+        System.out.println("payload.getCode() - "+ payload.getCode());
+
         BookstoreUserDetails userDetails = (BookstoreUserDetails) userDetailsService.loadUserByUsername(payload.getContact());
 
         String jwtToken = jwtUtil.generateToken(userDetails);
@@ -259,8 +267,11 @@ public class UserService {
 
         if (bookstoreUserDetailsService.getHandleTokenValid()) {
 
-            Object user = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            if (user == "anonymousUser") {
+            Object authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null) return null;
+
+            Object user = ((Authentication) authentication).getPrincipal();
+            if (user == null | user == "anonymousUser") {
                 System.out.println("Авторизация не пройдена, User = " + user);
                 return null;
             }
@@ -273,7 +284,6 @@ public class UserService {
         } else {
             System.out.println("<UserService>- " + expiredMessage);
             throw new myJwtException(expiredMessage);
-//            throw new IllegalStateException(expiredMessage);
         }
     }
 

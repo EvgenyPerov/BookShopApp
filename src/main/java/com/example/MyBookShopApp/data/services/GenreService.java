@@ -31,46 +31,51 @@ public class GenreService {
         return genreRepository.findGenreEntityById(id).getName();
     }
 
-    public List<GenreEntity> getGenreMap(){
-        List<GenreEntity> genreEntityList = genreRepository.findAll();
-
+    public List<GenreEntity> getGenreList(){
+        List<GenreEntity> genreEntityTotalList = genreRepository.findAll();
         List<GenreEntity> listResult = new ArrayList<>();
+        List<GenreEntity> listRepeatGenresDelete = new ArrayList<>();
 
-        List <GenreEntity> listForDelete = new ArrayList<>();
+        if (genreEntityTotalList != null) {
+            for (GenreEntity parent : genreEntityTotalList) {
+                Integer id = parent.getId();
+                parent.setCountBooks(getCountBooksByGenreId(id));
 
-        for (GenreEntity jenreEntity : genreEntityList) {
-            Integer id = jenreEntity.getId();
-
-            for (GenreEntity child : genreEntityList) {
-                Integer parentId = child.getParentId();
-                if (parentId != null & parentId == id) {
-                    child.setCountBooks(getCountBooksByGanreId(child.getId()));
-                    jenreEntity.getChildren().add(child);
-                    listForDelete.add(child);
+                for (GenreEntity child : genreEntityTotalList) {
+                    Integer parentId = child.getParentId();
+                    if (parentId != null & parentId == id) {
+                        parent.getChildren().add(child);
+                        listRepeatGenresDelete.add(child);
+                    }
                 }
-            }
-
-            if (!listForDelete.contains(jenreEntity)) {
-            jenreEntity.setCountBooks(getCountBooksByGanreId(id));
-            listResult.add(jenreEntity);
+                parent.getChildren().remove(0);
+                if (!listRepeatGenresDelete.contains(parent) || parent.getParentId() == null) {
+                    listResult.add(parent);
+                }
             }
         }
         return listResult;
     }
 
-    public Integer getCountBooksByGanreId(Integer id) {
-        return getAllByGenreId(id).size();
+    public List<GenreEntity> sortGenresByCountBooks(List<GenreEntity> genresList) {
+
+        genresList.sort(Comparator.comparing(GenreEntity::getCountBooks).reversed());
+
+        return genresList;
     }
 
-    public List<Book2GenreEntity> getAllByGenreId(Integer id){
-        return book2GenreRepository.findAllByGenreIdIs(id);
+    public int getCountBooksByGenreId(Integer genreId) {
+        return book2GenreRepository.countAllByGenre_Id(genreId);
     }
+
+
     public Page<Book> getPageOfGenreBooks(Integer id, Integer offset, Integer limit){
         Pageable nextPage = PageRequest.of(offset, limit);
         List<Integer> idBookList = new ArrayList<>();
-        List<Book2GenreEntity> listIdBookByIdGenre = getAllByGenreId(id);
+        List<Book2GenreEntity> listIdBookByIdGenre = book2GenreRepository.findAllByGenreIdIs(id);
+
         for (Book2GenreEntity entity : listIdBookByIdGenre) {
-           idBookList.add(entity.getBookId());
+           idBookList.add(entity.getBook().getId());
         }
         Page<Book> page = bookRepository.findBooksByIdIn(idBookList,nextPage);
         return page;

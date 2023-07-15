@@ -11,7 +11,9 @@ import java.util.List;
 
 public interface Book2GenreRepository extends JpaRepository<Book2GenreEntity, Integer> {
 
-    List<Book2GenreEntity> findAllByGenreIdIs(Integer id);
+    List<Book2GenreEntity> findAllByGenreIdIs(Integer genreId);
+
+    int countAllByGenre_Id(Integer genreId);
 
 
 }

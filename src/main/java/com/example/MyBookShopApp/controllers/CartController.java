@@ -12,9 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,18 +41,20 @@ public class CartController {
     }
 
     @ModelAttribute("bookPostponedList")
-    public List<Book> geBookPostponedList(){
+    public List<Book> geBookPostponedList(@CookieValue(name = "postponedContents", required = false) String postponedContents){
         UserEntity user = userService.getCurrentUser();
         if (user != null) {
-            return book2UserService.getCookieBooksFromRepoByTypeCode("KEPT", user);
-        } else return new ArrayList<>();
+            return book2UserService.getBooksFromRepoByTypeCodeAndUser("KEPT", user);
+        } else {
+            return bookService.getBooksFromCookies(postponedContents);
+        }
     }
 
     @GetMapping({"/cart"})
     public String getCartPage(Model model,
                               @CookieValue(name = "cartContents", required = false) String cartContents){
         String status;
-        List<Book> booksFromCookie = null;
+        List<Book> booksFromCookie = new ArrayList<>();
         UserEntity user = userService.getCurrentUser();
 
         if (user == null) {
@@ -65,19 +65,14 @@ public class CartController {
                 model.addAttribute("isCartEmpty", true);
             } else {
                 model.addAttribute("isCartEmpty", false);
-                cartContents = cartContents.startsWith("/") ? cartContents.substring(1) : cartContents;
 
-                cartContents = cartContents.endsWith("/") ? cartContents.substring(0, cartContents.length() - 1) : cartContents;
-
-                String[] arrayIds = cartContents.split("/");
-
-                booksFromCookie = bookService.getBooksByIdIn(arrayIds);
+                booksFromCookie = bookService.getBooksFromCookies(cartContents);
             }
         } else {
             status = "authorized";
             System.out.println("страница Корзина, берем Cookie из БД для пользователя "+ user.getName());
             model.addAttribute("curUser", user);
-            booksFromCookie = book2UserService.getCookieBooksFromRepoByTypeCode("CART",user);
+            booksFromCookie = book2UserService.getBooksFromRepoByTypeCodeAndUser("CART",user);
 
             if (booksFromCookie.isEmpty()) model.addAttribute("isCartEmpty", true);
             else model.addAttribute("isCartEmpty", false);
@@ -110,7 +105,7 @@ public class CartController {
 
                 if (cartContents == null || cartContents.isBlank()) {
                     Cookie cookieCart = new Cookie("cartContents", String.valueOf(bookId));
-                    cookieCart.setPath("/books");
+                    cookieCart.setPath("/");
                     cookieCart.setHttpOnly(true);
                     response.addCookie(cookieCart);
                     model.addAttribute("isCartEmpty", false);
@@ -119,7 +114,7 @@ public class CartController {
                     StringJoiner stringJoiner = new StringJoiner("/");
                     stringJoiner.add(cartContents).add(String.valueOf(bookId));
                     Cookie cookieCart = new Cookie("cartContents", stringJoiner.toString());
-                    cookieCart.setPath("/books");
+                    cookieCart.setPath("/");
                     cookieCart.setHttpOnly(true);
                     response.addCookie(cookieCart);
                     model.addAttribute("isCartEmpty", false);
@@ -131,7 +126,7 @@ public class CartController {
                     ArrayList<String> cookiesKeptOld = new ArrayList<>(Arrays.asList(postponedContents.split("/")));
                     cookiesKeptOld.remove(String.valueOf(bookId));
                     Cookie cookiesKeptNew = new Cookie("postponedContents", String.join("/", cookiesKeptOld));
-                    cookiesKeptNew.setPath("/books");
+                    cookiesKeptNew.setPath("/");
                     cookiesKeptNew.setHttpOnly(true);
                     response.addCookie(cookiesKeptNew);
 
@@ -160,14 +155,20 @@ public class CartController {
 
             if (cartContents != null && !cartContents.isBlank()) {
                 ArrayList<String> cookies = new ArrayList<>(Arrays.asList(cartContents.split("/")));
-                System.out.println("было кук = " + cookies.size() + " " + cookies.get(0));
+                System.out.println("было кук = " + cookies.size());
                 cookies.remove(String.valueOf(bookId));
                 System.out.println("стало кук = " + cookies.size());
                 Cookie cookie = new Cookie("cartContents", String.join("/", cookies));
-                cookie.setPath("/books");
+
+                if (!cookies.isEmpty()) {
+                    model.addAttribute("isCartEmpty", false);
+                } else {
+                    model.addAttribute("isCartEmpty", true);
+                }
+
+                cookie.setPath("/");
                 cookie.setHttpOnly(true);
                 response.addCookie(cookie);
-                model.addAttribute("isCartEmpty", false);
             } else {
                 model.addAttribute("isCartEmpty", true);
             }

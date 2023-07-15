@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <div th:fragment="genreFragment" th:remove="tag">
-    <div th:each="genre: ${genreList}" th:class="${genre.children.isEmpty()? 'Tags': 'Tags Tags_embed'}">
+<!--    < th:each="genre : ${#sort(genreList, 'countBooks')}">-->
+<!--    <div th:each="genre : ${@genreService.sortGenresByCountBooks(genreList)}">-->
+    <div th:each="genre : ${@genreService.sortGenresByCountBooks(genreList)}" th:class="${genre.children.isEmpty()? 'Tags': 'Tags Tags_embed'}">
         <div class="Tags-title">
             <div class="Tag">
                 <a href="/genres/slug.html"
