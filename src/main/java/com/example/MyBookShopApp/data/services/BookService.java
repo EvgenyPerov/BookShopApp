@@ -1,5 +1,6 @@
 package com.example.MyBookShopApp.data.services;
 
+import com.example.MyBookShopApp.Aop.annotations.SelectRecentDateAnnotation;
 import com.example.MyBookShopApp.data.repo.BookRatingRepository;
 import com.example.MyBookShopApp.data.repo.BookRepository;
 import com.example.MyBookShopApp.errs.BookstoreApiWrongPatameterException;
@@ -81,17 +82,15 @@ public class BookService {
         UserEntity user = userService.getCurrentUser();
         if (user == null) {
             System.out.println("User не зарегистрирован");
+
+            Date dateFrom = Date.from(LocalDate.now().minusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            List<Book> getBooksByPubDateAfter = bookRepository.findAllByPubDateAfterOrderByPubDateDesc(dateFrom);
+
             if ((postponedCookies == null || postponedCookies.isBlank()) &&
                     (cartCookies == null || cartCookies.isBlank())) {
                 System.out.println("Ничего нет в Отложенном и Корзине");
 
-
                 Set<Integer> setIds = new HashSet<>();
-
-//                LocalDateTime dateFrom = LocalDateTime.now().minusMonths(1);
-                Date dateFrom = Date.from(LocalDate.now().minusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-                List<Book> getBooksByPubDateAfter = bookRepository.findAllByPubDateAfterOrderByPubDateDesc(dateFrom);
 
                 setIds.addAll(getBooksByPubDateAfter.stream().map(Book::getId).collect(Collectors.toSet()));
 
@@ -120,9 +119,6 @@ public class BookService {
 
             } else   {
                 System.out.println("есть содержимое в Отложенном или Корзине");
-
-               Date dateFrom = Date.from(LocalDate.now().minusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
-                List<Book> getBooksByPubDateAfter = bookRepository.findAllByPubDateAfterOrderByPubDateDesc(dateFrom);
 
                 Set<Integer> allIdBooksThese = new HashSet<>();
                 allIdBooksThese.addAll(getBooksByPubDateAfter.stream().map(Book::getId).collect(Collectors.toSet()));
@@ -224,6 +220,7 @@ public class BookService {
 
     // метод срабатывает выборе при переходе на Новинки и отображаются книги не позднее 1 месяца публикации
     // далее при карусели
+    @SelectRecentDateAnnotation
     public Page<Book> getPageOfRecentBooks(String from, String to, Integer offset, Integer limit){
         SimpleDateFormat Dformat = new SimpleDateFormat("dd.MM.yyyy");
         Page<Book> page;
@@ -248,46 +245,44 @@ public class BookService {
         nextPage = PageRequest.of(offset, limit);
         page = bookRepository.findBooksByPubDateBetweenOrderByPubDateDesc(dFrom, dTo, nextPage);
         System.out.println("Количество подгруженных на странице Новинок сервисом книг = " + page.stream().count());
-//        System.out.println("На странице Новинки имеем следующие параметры запроса: from " + dFrom +" to= "
-//                + dTo + " offset= "+ offset + " limit= "+ limit);
         page.getContent().forEach(x-> System.out.println(x.getId())); //
 
         return page;
     }
 
-    public List<Book> getBooksListSortedByRating(List<BookRatingEntity> listBookRatingFromDb){
-        Map <Book, Double> mapBookAndRating = new LinkedHashMap<>();
-        List<Book> sortedList = new LinkedList<>();
-
-        if (listBookRatingFromDb != null){
-            for (BookRatingEntity ratingEntity : listBookRatingFromDb){
-                if (!mapBookAndRating.containsKey(ratingEntity.getBook())) {
-
-
-                     OptionalDouble averageValue = listBookRatingFromDb.stream()
-                            .filter(obj -> obj.getBook().getId() == ratingEntity.getBook().getId())
-                            .mapToDouble(BookRatingEntity :: getValue).average();
-
-                    mapBookAndRating.put(ratingEntity.getBook(), averageValue.getAsDouble());
-                }
-            }
-
-            // сортировка по значению по убыванию "-v.getValue()"
-            Map <Book, Double> sortedMap = mapBookAndRating.entrySet().stream()
-                    .sorted(Comparator.comparingDouble(v -> -v.getValue()))
-                    .collect(Collectors.toMap(
-                            Map.Entry :: getKey,
-                            Map.Entry :: getValue,
-                            (a,b) -> {throw new AssertionError();},
-                            LinkedHashMap ::new
-                    ));
-
-            sortedMap.values().forEach(v -> System.out.println(v));
-
-            sortedList = sortedMap.keySet().stream().collect(Collectors.toList());
-        }
-        return sortedList;
-    }
+//    public List<Book> getBooksListSortedByRating(List<BookRatingEntity> listBookRatingFromDb){
+//        Map <Book, Double> mapBookAndRating = new LinkedHashMap<>();
+//        List<Book> sortedList = new LinkedList<>();
+//
+//        if (listBookRatingFromDb != null){
+//            for (BookRatingEntity ratingEntity : listBookRatingFromDb){
+//                if (!mapBookAndRating.containsKey(ratingEntity.getBook())) {
+//
+//
+//                     OptionalDouble averageValue = listBookRatingFromDb.stream()
+//                            .filter(obj -> obj.getBook().getId() == ratingEntity.getBook().getId())
+//                            .mapToDouble(BookRatingEntity :: getValue).average();
+//
+//                    mapBookAndRating.put(ratingEntity.getBook(), averageValue.getAsDouble());
+//                }
+//            }
+//
+//            // сортировка по значению по убыванию "-v.getValue()"
+//            Map <Book, Double> sortedMap = mapBookAndRating.entrySet().stream()
+//                    .sorted(Comparator.comparingDouble(v -> -v.getValue()))
+//                    .collect(Collectors.toMap(
+//                            Map.Entry :: getKey,
+//                            Map.Entry :: getValue,
+//                            (a,b) -> {throw new AssertionError();},
+//                            LinkedHashMap ::new
+//                    ));
+//
+//            sortedMap.values().forEach(v -> System.out.println(v));
+//
+//            sortedList = sortedMap.keySet().stream().collect(Collectors.toList());
+//        }
+//        return sortedList;
+//    }
 
     public Book getBookById(Integer id){
         return bookRepository.findById(id).get();

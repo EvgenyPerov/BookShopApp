@@ -40,12 +40,6 @@ public class MainPageController {
         this.book2UserService = book2UserService;
     }
 
-//    @ModelAttribute("recommendedBooks")
-//    public List<Book> recommendedBooks(@CookieValue(name = "cartContents", required = false) String cartContents,
-//                                       @CookieValue(name = "postponedContents", required = false) String postponedContents){
-//        return bookService.getRecomendedBooksOnMainPage( 0,6);
-//    }
-
     @ModelAttribute("recentedBooks")
     public List<Book> recentedBooks(){
         return bookService.getPageOfRecentBooks(null,null, 0, 6).getContent();
