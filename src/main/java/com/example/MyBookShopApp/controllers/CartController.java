@@ -3,16 +3,20 @@ package com.example.MyBookShopApp.controllers;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
 import com.example.MyBookShopApp.data.services.Book2UserService;
 import com.example.MyBookShopApp.data.services.BookService;
+import com.example.MyBookShopApp.data.services.PaymentServise;
 import com.example.MyBookShopApp.data.services.UserService;
+import com.example.MyBookShopApp.errs.PayException;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,16 +32,29 @@ public class CartController {
 
     private UserService userService;
 
+    private final PaymentServise paymentServise;
+
     @Autowired
-    public CartController(BookService bookService, Book2UserService book2UserService, UserService userService) {
+    public CartController(BookService bookService, Book2UserService book2UserService, UserService userService, PaymentServise paymentServise) {
         this.bookService = bookService;
         this.book2UserService = book2UserService;
         this.userService = userService;
+        this.paymentServise = paymentServise;
     }
 
     @ModelAttribute("searchWordDto")
     public SearchWordDto searchWordDto(){
         return new SearchWordDto();
+    }
+
+    @ModelAttribute("myBooks")
+    public int geBookPostponedList() {
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getBooksFromRepoByTypeCodeAndUser("PAID", user).size();
+        } else {
+            return 0;
+        }
     }
 
     @ModelAttribute("bookPostponedList")
@@ -52,9 +69,12 @@ public class CartController {
 
     @GetMapping({"/cart"})
     public String getCartPage(Model model,
-                              @CookieValue(name = "cartContents", required = false) String cartContents){
+                              @CookieValue(name = "cartContents", required = false) String cartContents,
+                              @RequestParam(value = "result", required = false) Boolean isPaymentOk,
+                              @RequestParam(value = "error", required = false) String errorMessage) {
+
         String status;
-        List<Book> booksFromCookie = new ArrayList<>();
+        List<Book> books = new ArrayList<>();
         UserEntity user = userService.getCurrentUser();
 
         if (user == null) {
@@ -66,25 +86,40 @@ public class CartController {
             } else {
                 model.addAttribute("isCartEmpty", false);
 
-                booksFromCookie = bookService.getBooksFromCookies(cartContents);
+                books = bookService.getBooksFromCookies(cartContents);
             }
         } else {
             status = "authorized";
             System.out.println("страница Корзина, берем Cookie из БД для пользователя "+ user.getName());
             model.addAttribute("curUser", user);
-            booksFromCookie = book2UserService.getBooksFromRepoByTypeCodeAndUser("CART",user);
+            books = book2UserService.getBooksFromRepoByTypeCodeAndUser("CART",user);
 
-            if (booksFromCookie.isEmpty()) model.addAttribute("isCartEmpty", true);
-            else model.addAttribute("isCartEmpty", false);
+            if (books.isEmpty()) {
+                model.addAttribute("isCartEmpty", true);
+            } else {
+                model.addAttribute("isCartEmpty", false);
+                model.addAttribute("balance", user.getBalance());
+                System.out.println("Баланс=  "+ user.getBalance());
+                if (isPaymentOk != null && isPaymentOk){
+                    for (Book book : books) {
+                        book2UserService.update("PAID", book, user);
+                    }
+                    return "redirect:/books/cart";
+                }
+            }
         }
 
-            model.addAttribute("bookCartList", booksFromCookie);
+            model.addAttribute("bookCartList", books);
 
-            model.addAttribute("bookCartDiscountCost", bookService.getBookCartDiscountCost(booksFromCookie));
+            model.addAttribute("bookCartDiscountCost", bookService.getBookCartDiscountCost(books));
 
-            model.addAttribute("bookCartTotalCost", bookService.getBookCartTotalCost(booksFromCookie));
+            model.addAttribute("bookCartTotalCost", bookService.getBookCartTotalCost(books));
 
             model.addAttribute("status", status);
+
+            model.addAttribute("PaymentOk", isPaymentOk);
+
+            model.addAttribute("errorMessage", errorMessage);
 
         return "cart";
     }
@@ -176,4 +211,5 @@ public class CartController {
 
         return "redirect:/books/cart";
     }
-}
+
+   }

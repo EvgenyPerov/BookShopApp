@@ -121,15 +121,9 @@
                             </div>
                             <div class="Cart-block Cart-block_price">
                                 <div class="Cart-priceTitle">Цена: </div>
-<!--                                <div th:if="${book.discount>0}">-->
                                 <span class="Cart-price Cart-price_old" th:text="(${book.discount != 0} ? ${'₽'+ book.price})">254 р. </span>
-<!--                                </div>-->
                                 <span class="Cart-price" th:text="${'₽'+ book.discountPrice()}">230 р. </span>
-
-<!--                                <div th:if="${book.discount>0}">-->
                                 <span class="Cart-sale" th:text="(${book.discount != 0} ? ${'-'+ book.discount + '%'})"  >-10% </span>
-
-<!--                                </div>-->
                             </div>
                         </div>
                     </div>
@@ -138,7 +132,7 @@
                 <div class="Cart-total">
                     <div class="Cart-block Cart-block_total">
                         <strong class="Cart-title">Итого:
-                        </strong><span class="Cart-price" th:text="${bookCartDiscountCost +' р.'}">534 р.</span>
+                        </strong><span class="Cart-price" th:text="${#numbers.formatDecimal(bookCartDiscountCost, 0, 2) +' р.'}">534 р.</span>
                         <span class="Cart-price_old" th:text="(${bookCartDiscountCost != bookCartTotalCost} ? ${bookCartTotalCost+' р.'} :'')">658 р.</span>
                     </div>
 
@@ -146,9 +140,22 @@
                         <a class="btn btn_success btn_md" th:href="@{/signin}" href="/order.html">Купить</a>
                     </div>
 
-                    <div class="Cart-block" th:if="${status == 'authorized'}">
-                        <a class="btn btn_success btn_md" th:href="@{/order}"  href="/order.html">Купить</a>
+                    <div class="Topup-title" style="color: red" th:if="${status == 'authorized' && bookCartDiscountCost>balance && isCartEmpty == false}">Недостаточно денег на счету</div>
+
+                    <div class="Cart-block" th:if="${status == 'authorized' && bookCartDiscountCost > 0  && bookCartDiscountCost>balance}">
+                        <a class="btn btn_dark btn_md"
+                           th:href="@{'/books/cart'}"
+                           href="/order.html" >Купить
+                        </a>
                     </div>
+
+                    <div class="Cart-block" th:if="${status == 'authorized' && bookCartDiscountCost > 0  && bookCartDiscountCost<=balance  && isCartEmpty == false}">
+                        <a class="btn btn_success btn_md"
+                           th:href="@{'/buy?sum=' + ${bookCartDiscountCost} +'&user='+${curUser.hash}}"
+                           href="/order.html" >Купить
+                        </a>
+                    </div>
+
                 </div>
             </form>
         </main>

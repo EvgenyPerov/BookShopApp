@@ -53,4 +53,8 @@ public class BookstoreUserDetails implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+    public UserEntity getUser() {
+        return user;
+    }
 }

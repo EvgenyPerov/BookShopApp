@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="/assets/css/extra.min.css?v=27449092"/>
 <!--    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>-->
     <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.6.1/html5shiv.js"></script>
-    <script defer  src="/assets/js/scripts.min.js?v=27449092"></script>
+    <script defer src="/assets/js/scripts.min.js?v=27449092"></script>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 
@@ -40,7 +40,7 @@
                 <div class="Login-ins">
                     <div class="Login-step">
                         <div class="form-group">
-                            <label class="form-label Login-title">Введите e-mail или телефон
+                            <label class="form-label Login-title">Выберите и введите e-mail или телефон
 <!--                                <br/>-->
                                 <span th:if="${regOk}">Регистрация прошла успешно!</span>
                             </label>
@@ -76,13 +76,18 @@
                     </div>
                     <div class="Login-step Login-step_hide" data-type="phone">
                         <div class="form-group">
-                            <label class="form-label Login-title">На Ваш телефон отправлено сообщение с кодом
-                                для входа. Введите его:
+                            <label class="form-label Login-title">Сообщение с кодом для входа отправлено в Telegram,
+                                перейдите по ссылке:
+                            </label>
+                            <a class="form-label Login-title" style="color: #0064c9" href="http://t.me/BookshopApp_confirm_user_bot">Bookshop</a>
+                            <label class="form-label Login-title">и введите команду '/start'
+                            </label>
+                            <label class="form-label Login-title">или на телефон будет входящий вызов, последние 4 цифры - это код
                             </label>
                         </div>
                         <div class="form-group form-group_key">
-                            <input class="form-input" id="phonecode" name="phonecode" type="text" placeholder="Код"
-                                   data-validate="key require" data-mask="999 999"/>
+                            <input class="form-input" id="phonecode" name="phonecode" type="text" placeholder="Код в формате ## ##"
+                                   data-validate="key require" data-mask="99 99"/>
                         </div>
                         <div class="form-group form-group_center">
                             <button class="btn btn_primary form-btn" type="button" name="toComeInPhone"

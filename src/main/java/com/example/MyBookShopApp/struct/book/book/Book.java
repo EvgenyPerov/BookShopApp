@@ -66,7 +66,7 @@ public class Book {
     //price_old INT NOT NULL — цена в рублях основная
     @ApiModelProperty(value = "book price without discount")
     @Column(columnDefinition = "INT NOT NULL")
-    private double price;
+    private int price;
 
     //discount (бывший price) TINYINT NOT NULL DEFAULT 0 — скидка в процентах или 0, если её нет
     @ApiModelProperty(value = "discount for book")
@@ -125,7 +125,9 @@ public class Book {
 
     @JsonProperty
     public double discountPrice(){
-        return discount>0 ? price - (price*discount)/100 : price;
+        double var1 = price * discount;
+        double var2 = var1 / 100;
+        return (price - var2);
     }
 
     @JsonGetter("authors")

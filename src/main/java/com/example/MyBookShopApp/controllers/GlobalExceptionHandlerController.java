@@ -64,4 +64,11 @@ public class GlobalExceptionHandlerController {
         return "redirect:/errorspage";
     }
 
+    @ExceptionHandler(PayException.class)
+    public String handlePayException(PayException ex, RedirectAttributes redirectAttributes){
+        redirectAttributes.addFlashAttribute("textError", ex.getLocalizedMessage());
+        System.out.println("Обработчик перехватил PayException");
+        return "redirect:/errorspage";
+    }
+
 }

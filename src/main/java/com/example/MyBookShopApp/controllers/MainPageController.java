@@ -65,6 +65,16 @@ public class MainPageController {
         return otherService.getTagsAndSizesMap();
     }
 
+    @ModelAttribute("myBooks")
+    public int geBookPostponedList() {
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getBooksFromRepoByTypeCodeAndUser("PAID", user).size();
+        } else {
+            return 0;
+        }
+    }
+
     @ModelAttribute("bookPostponedList")
     public List<Book> geBookPostponedList(@CookieValue(name = "postponedContents", required = false) String postponedContents){
         UserEntity user = userService.getCurrentUser();
@@ -90,7 +100,7 @@ public class MainPageController {
                                   Model model) throws EmptySearchException {
         if (searchWordDto != null) {
         model.addAttribute("searchWordDto", searchWordDto);
-        List<Book> searchResults = bookService.getPageOfSearchResultBooks(searchWordDto.getExample(), 0, 20).getContent();
+        List<Book> searchResults = bookService.getPageOfGoogleBooksApiSearchResult(searchWordDto.getExample(), 0, 20);
         model.addAttribute("searchResults",searchResults);
             System.out.println("найдено сначала книг = " + searchResults.size());
         return "/search/index";
@@ -103,7 +113,7 @@ public class MainPageController {
     public BooksPageDto getNextSearchPage(@RequestParam("offset") Integer offset,
                                           @RequestParam("limit") Integer limit,
                                           @PathVariable(value = "searchWord", required = false) SearchWordDto searchWordDto) {
-        List<Book> searchResults =bookService.getPageOfSearchResultBooks(searchWordDto.getExample(), offset, limit).getContent();
+        List<Book> searchResults =bookService.getPageOfGoogleBooksApiSearchResult(searchWordDto.getExample(), offset, limit);
         System.out.println("найдено Pageable книг = " + searchResults.size());
         return new BooksPageDto(searchResults);
     }

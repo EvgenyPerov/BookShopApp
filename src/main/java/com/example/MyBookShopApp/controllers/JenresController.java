@@ -44,6 +44,16 @@ public class JenresController {
         return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
     }
 
+    @ModelAttribute("myBooks")
+    public int geBookPostponedList() {
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getBooksFromRepoByTypeCodeAndUser("PAID", user).size();
+        } else {
+            return 0;
+        }
+    }
+
     @ModelAttribute("bookPostponedList")
     public List<Book> geBookPostponedList(@CookieValue(name = "postponedContents", required = false) String postponedContents){
         UserEntity user = userService.getCurrentUser();

@@ -34,9 +34,9 @@ public class UserEntity {
     private LocalDateTime regTime;
 
     @Column(columnDefinition = "INT NOT NULL")
-    private int balance;
+    private float balance;
 
-    @Column(columnDefinition = "VARCHAR(255) NOT NULL")
+    @Column(columnDefinition = "VARCHAR(255)")
     private String name;
 
 //    @Column(columnDefinition = "VARCHAR(255)")

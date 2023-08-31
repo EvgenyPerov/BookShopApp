@@ -12,4 +12,6 @@ public class RegistrationForm {
     private String phone;
 
     private String pass;
+
+    private String pass2;
 }

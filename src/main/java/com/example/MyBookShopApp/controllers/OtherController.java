@@ -1,20 +1,21 @@
 package com.example.MyBookShopApp.controllers;
 
 import com.example.MyBookShopApp.data.dto.BooksPageDto;
-import com.example.MyBookShopApp.data.services.Book2UserService;
-import com.example.MyBookShopApp.data.services.BookService;
-import com.example.MyBookShopApp.data.services.OtherService;
+import com.example.MyBookShopApp.data.responses.ApiResponse;
+import com.example.MyBookShopApp.data.services.*;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
-import com.example.MyBookShopApp.data.services.UserService;
+import com.example.MyBookShopApp.errs.PayException;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
-
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 @Controller
@@ -27,12 +28,15 @@ public class OtherController {
 
     private final Book2UserService book2UserService;
 
+    private final PaymentServise paymentServise;
+
     @Autowired
-    public OtherController(OtherService otherService, UserService userService, BookService bookService, Book2UserService book2UserService) {
+    public OtherController(OtherService otherService, UserService userService, BookService bookService, Book2UserService book2UserService, PaymentServise paymentServise) {
         this.otherService = otherService;
         this.userService = userService;
         this.bookService = bookService;
         this.book2UserService = book2UserService;
+        this.paymentServise = paymentServise;
     }
 
     @ModelAttribute("searchWordDto")
@@ -43,6 +47,16 @@ public class OtherController {
     @ModelAttribute("status")
     public String authenticationStatus(){
         return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
+    }
+
+    @ModelAttribute("myBooks")
+    public int geBookPostponedList() {
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getBooksFromRepoByTypeCodeAndUser("PAID", user).size();
+        } else {
+            return 0;
+        }
     }
 
     @ModelAttribute("bookPostponedList")
@@ -110,6 +124,52 @@ public class OtherController {
         Page<Book> page = otherService.getPageOfTagBooks(tagId, offset, limit);
         System.out.println("Передача данных популярных книг в JS с параметром offset = "+ offset + " limit= "+ limit);
         return new BooksPageDto(page.getContent());
+    }
+
+    @PostMapping("/deposit")
+    public ResponseEntity<ApiResponse> handleAddDeposit(@RequestParam(value = "sum", required = false) String sum
+            , @RequestParam(value = "user", required = false) String userHash ) throws PayException {
+
+        String paymentUrl="";
+        UserEntity user = userService.getCurrentUser();
+
+        if (user != null && Float.parseFloat(sum)>0) {
+            try {
+                paymentUrl = paymentServise.getPaymentUrl(sum, user.getHash());
+                System.out.println("paymentUrl=" + paymentUrl);
+            } catch (NoSuchAlgorithmException e) {
+                throw new PayException("Проблема с оплатой " + e.getMessage());
+            }
+        }
+        ApiResponse response = new ApiResponse();
+        response.setMessage(paymentUrl);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/buy")
+    public String handleBuyBooks(
+            @RequestParam(value = "sum") String sum
+            ,@RequestParam(value = "user") String userHash) {
+
+        UserEntity user = userService.getUserByHash(userHash);
+        if (user != null) {
+
+            float costOfBooks = Float.parseFloat(sum);
+            System.out.println("Сумма книг в корзине = " + costOfBooks);
+
+            System.out.println("Денег на счете достаточно, совершаем покупку");
+            List<Book> booksFromRepo = book2UserService.getBooksFromRepoByTypeCodeAndUser("CART",user);
+
+            for (Book book : booksFromRepo) {
+                bookService.decreaseCart(book.getId());
+                book2UserService.update("PAID", book, user);
+                userService.changeUserBalanceBuy(user, book);
+            }
+
+            return "redirect:/my";
+        }
+        return "redirect:/books/cart";
     }
 
 }

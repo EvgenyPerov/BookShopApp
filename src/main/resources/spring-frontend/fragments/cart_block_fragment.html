@@ -64,7 +64,7 @@
             <g> </g>
             <g> </g>
             <g> </g></svg>
-        <span class="CartBlock-amount">0</span>
+        <span class="CartBlock-amount" th:text="${myBooks}">0</span>
         </a>
 
         <a class="CartBlock-block" th:href="@{/books/postponed}" href="/postponed.html" >
@@ -99,7 +99,7 @@
             </g>
         </svg>
         <span class="CartBlock-text" th:text="${curUser.name}">Дмитрий Петров</span>
-            <span class="CartBlock-budget" th:text="'На счете '+ ${curUser.balance} + ' рублей'" >На счете 100 рублей</span>
+            <span class="CartBlock-budget" th:text="'На счете '+ ${#numbers.formatDecimal(curUser.balance, 0, 2)} +' р.'" >На счете 100 рублей</span>
         </a>
 
         <a th:href="@{/logout}" th:text="#{title.name-logout}">Выход</a>

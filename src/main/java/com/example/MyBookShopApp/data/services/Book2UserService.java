@@ -34,6 +34,7 @@ public class Book2UserService {
                     "Type = " + book2UserFromRepo.getBook2UserType().getCode() +
                     " BookId = " + book2UserFromRepo.getBook().getId() +
                     " UserID = " + book2UserFromRepo.getUser().getId());
+
             book2UserFromRepo.setTime(LocalDateTime.now());
             book2UserFromRepo.setBook2UserType(book2UserTypeRepository.findByCodeIs(typeBook));
             book2UserRepository.save(book2UserFromRepo);

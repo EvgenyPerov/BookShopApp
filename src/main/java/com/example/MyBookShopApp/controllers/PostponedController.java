@@ -40,6 +40,16 @@ public class PostponedController {
         return new SearchWordDto();
     }
 
+    @ModelAttribute("myBooks")
+    public int geBookPostponedList() {
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getBooksFromRepoByTypeCodeAndUser("PAID", user).size();
+        } else {
+            return 0;
+        }
+    }
+
     @ModelAttribute("bookCartList")
     public List<Book> geBookCartList(@CookieValue(name = "cartContents", required = false) String cartContents){
         UserEntity user = userService.getCurrentUser();

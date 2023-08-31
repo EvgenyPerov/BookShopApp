@@ -1,9 +1,12 @@
 package com.example.MyBookShopApp.data.services;
 
 import com.example.MyBookShopApp.Aop.annotations.SelectRecentDateAnnotation;
+import com.example.MyBookShopApp.data.google.api.books.Item;
+import com.example.MyBookShopApp.data.google.api.books.Root;
 import com.example.MyBookShopApp.data.repo.BookRatingRepository;
 import com.example.MyBookShopApp.data.repo.BookRepository;
 import com.example.MyBookShopApp.errs.BookstoreApiWrongPatameterException;
+import com.example.MyBookShopApp.struct.author.Author;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.book.links.Book2GenreEntity;
 import com.example.MyBookShopApp.struct.book.review.BookRatingEntity;
@@ -11,10 +14,12 @@ import com.example.MyBookShopApp.struct.genre.GenreEntity;
 import com.example.MyBookShopApp.struct.other.Tag;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -25,10 +30,17 @@ import java.util.stream.Collectors;
 
 @Service
 public class BookService {
+
+    @Value("${google.books.api.key}")
+    private String key;
+
     private final UserService userService;
     private final BookRepository bookRepository;
     private final BookRatingRepository bookRatingRepository;
     private final Book2UserService book2UserService;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     @Autowired
     public BookService(UserService userService, BookRepository bookRepository, BookRatingRepository bookRatingRepository, Book2UserService book2UserService) {
@@ -72,6 +84,45 @@ public class BookService {
     public Page<Book> getPageOfSearchResultBooks(String regex, Integer offset, Integer limit){
         Pageable nextPage = PageRequest.of(offset, limit);
         return bookRepository.findBooksByTitleContaining(regex, nextPage);
+    }
+
+    public List<Book> getPageOfGoogleBooksApiSearchResult(String regex, Integer offset, Integer limit){
+        String REQUEST_URL = "https://www.googleapis.com/books/v1/volumes?" +
+                "q=" +regex +
+                "&filter=paid-ebooks" +
+                "&startIndex=" +offset +
+                "&maxResults=" +limit +
+                "&orderBy=relevance" +
+                "&key=" + key;
+
+        Root root = restTemplate.getForEntity(REQUEST_URL, Root.class).getBody();
+
+        List<Book> list = new ArrayList<>();
+
+        if (root != null){
+            for (Item item : root.getItems()){
+                Book book = new Book();
+                    if (item.getVolumeInfo() != null){
+                        book.setAuthor(new Author(item.getVolumeInfo().getAuthors()));
+                        book.setTitle(item.getVolumeInfo().getTitle());
+                        book.setDescription(item.getVolumeInfo().getDescription());
+                        book.setImage(item.getVolumeInfo().getImageLinks().getThumbnail());
+                    }
+                if (item.getSaleInfo() != null){
+                    Double fullPrice = item.getSaleInfo().getListPrice().getAmount();
+                    Double discoutPrice = item.getSaleInfo().getRetailPrice().getAmount();
+                    book.setPrice(fullPrice.intValue());
+
+                    double var1 = discoutPrice/fullPrice; // 720 / 800 = 0.9
+                    double var2 = 1- var1; // 1 - 0.9 = 0.1
+                    double var3 = var2 * 100; // 0.1 * 100 = 10
+
+                    book.setDiscount(var3>0? (int)var3+1 : (int)var3);
+                }
+                list.add(book);
+            }
+        }
+        return list;
     }
 
     // этот метод срабатывает на Главной странице. Книги по умолчанию и далее при карусельной подгрузке
@@ -338,21 +389,25 @@ public class BookService {
         }
     }
 
-    public float getBookCartDiscountCost(List<Book> booksFromCookie) {
-        float summ = 0;
-        if (booksFromCookie != null)
-        for (Book book : booksFromCookie){
-            summ += book.getPrice() - (book.getPrice() * book.getDiscount() / 100);
+    public double getBookCartDiscountCost(List<Book> booksFromCookie) {
+        double summ = 0;
+        if (booksFromCookie != null) {
+            summ = booksFromCookie.stream()
+                    .mapToDouble(Book::discountPrice)
+                    .sum();
         }
+
         return summ;
     }
 
 
-    public Object getBookCartTotalCost(List<Book> booksFromCookie) {
-        float summ = 0;
-        if (booksFromCookie != null)
-        for (Book book : booksFromCookie){
-            summ += book.getPrice();
+    public int getBookCartTotalCost(List<Book> booksFromCookie) {
+        int summ = 0;
+
+        if (booksFromCookie != null) {
+            summ = booksFromCookie.stream()
+                    .mapToInt(Book::getPrice)
+                    .sum();
         }
         return summ;
     }
@@ -452,4 +507,6 @@ public class BookService {
 
         return allBooksTheseGenres;
     }
+
+
 }

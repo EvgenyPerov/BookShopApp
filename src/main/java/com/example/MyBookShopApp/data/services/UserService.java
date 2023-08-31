@@ -8,9 +8,13 @@ import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.book.review.BookRatingEntity;
 import com.example.MyBookShopApp.struct.book.review.BookReviewEntity;
 import com.example.MyBookShopApp.struct.book.review.BookReviewLikeEntity;
+import com.example.MyBookShopApp.struct.payments.BalanceTransactionEntity;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -43,6 +47,8 @@ public class UserService {
 
     private final JwtUtil jwtUtil;
 
+    private final TransactionRepository transactionRepository;
+
     @Autowired
     private BookstoreUserDetailsService bookstoreUserDetailsService;
 
@@ -50,7 +56,7 @@ public class UserService {
     private String expiredMessage;
 
     @Autowired
-    public UserService(UserRepository userRepository, BookRatingRepository bookRatingRepository, BookReviewRepository bookReviewRepository, BookReviewLikeRepository bookReviewLikeRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, BookstoreUserDetailsService userDetailsService, JwtUtil jwtUtil) {
+    public UserService(UserRepository userRepository, BookRatingRepository bookRatingRepository, BookReviewRepository bookReviewRepository, BookReviewLikeRepository bookReviewLikeRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, BookstoreUserDetailsService userDetailsService, JwtUtil jwtUtil, TransactionRepository transactionRepository) {
         this.userRepository = userRepository;
         this.bookRatingRepository = bookRatingRepository;
         this.bookReviewRepository = bookReviewRepository;
@@ -59,11 +65,14 @@ public class UserService {
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
+        this.transactionRepository = transactionRepository;
     }
 
     public UserEntity getUserByName(String name){
         return userRepository.findUserEntityByName(name);
     }
+
+    public UserEntity getUserByHash(String hash){ return userRepository.findByHashIs(hash);}
 
     public boolean setRatingForBook(Book book, UserEntity user, int value) {
 
@@ -219,9 +228,12 @@ public class UserService {
     }
 
     public UserEntity addUser(RegistrationForm form) {
-        UserEntity user = null;
-        if (userRepository.findUserEntityByEmail(form.getEmail()) == null) {
-            user = new UserEntity();
+
+        UserEntity userByEmail = userRepository.findUserEntityByEmail(form.getEmail());
+        UserEntity userByPhone = userRepository.findUserEntityByPhone(form.getPhone());
+
+        if (userByEmail == null && userByPhone == null) {
+            UserEntity user = new UserEntity();
             user.setName(form.getName());
             user.setEmail(form.getEmail());
             user.setPhone(form.getPhone());
@@ -232,9 +244,61 @@ public class UserService {
 
             userRepository.save(user);
             return user;
+        } else {
+            return userByPhone;
         }
-        return null;
     }
+
+    public void changeUserPassword(RegistrationForm form) {
+        UserEntity user = getCurrentUser();
+        user.setPassword(passwordEncoder.encode(form.getPass()));
+        userRepository.save(user);
+    }
+
+    public void changeUserPhone(RegistrationForm form) {
+        UserEntity user = getCurrentUser();
+        user.setPhone(form.getPhone());
+        userRepository.save(user);
+    }
+
+    public void changeUserName(RegistrationForm form) {
+        UserEntity user = getCurrentUser();
+        user.setName(form.getName());
+        userRepository.save(user);
+    }
+
+    public void changeUserBalanceDeposit(UserEntity user, float sum){
+        user.setBalance(user.getBalance() + sum);
+        userRepository.save(user);
+
+        BalanceTransactionEntity transaction = new BalanceTransactionEntity();
+            transaction.setUserId(user.getId());
+            transaction.setValue(sum);
+            transaction.setBookId(0);
+            transaction.setDescription("Пополнение счета");
+            transactionRepository.save(transaction);
+    }
+
+
+    public void changeUserBalanceBuy(UserEntity user, Book book){
+        user.setBalance((float) (user.getBalance() - book.discountPrice()));
+        userRepository.save(user);
+
+        BalanceTransactionEntity transaction = new BalanceTransactionEntity();
+            transaction.setUserId(user.getId());
+            transaction.setValue((float) -book.discountPrice());
+            transaction.setBookId(book.getId());
+            transaction.setDescription("Покупка книги:" + book.getTitle());
+            transactionRepository.save(transaction);
+    }
+
+    public Page<BalanceTransactionEntity> getPageOfBalanceTransactionDesc(UserEntity user, Integer offset, Integer limit){
+        Pageable nextPage = PageRequest.of(offset, limit);
+        Page<BalanceTransactionEntity> page = transactionRepository.findAllByUserIdOrderByTimeDesc(user.getId(), nextPage);
+        return page;
+    }
+
+
 
     public ContactConfirmationResponse login(ContactConfirmationPayload payload) {
         Authentication authentication = authenticationManager.authenticate(
@@ -268,9 +332,13 @@ public class UserService {
         if (bookstoreUserDetailsService.getHandleTokenValid()) {
 
             Object authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null) return null;
+            if (authentication == null) {
+                System.out.println("метод getCurrentUser получил authentication = null");
+                return null;
+            }
 
             Object user = ((Authentication) authentication).getPrincipal();
+
             if (user == null | user == "anonymousUser") {
                 System.out.println("Авторизация не пройдена, User = " + user);
                 return null;
@@ -279,7 +347,14 @@ public class UserService {
             if (!userHasJwtToken(user)) {
                 return userRepository.findUserEntityByEmail(((CustomOAuth2User) user).getEmail());
             } else {
-                return userRepository.findUserEntityByEmail(((BookstoreUserDetails) user).getUsername());
+                String name = ((UserDetails) user).getUsername();
+                if (name.contains("@")) {
+                    System.out.println("Регистрированный клиент по Email - " + name);
+                    return userRepository.findUserEntityByEmail(name);
+                } else {
+                    System.out.println("Регистрированный клиент по Phone - " + name);
+                    return userRepository.findUserEntityByPhone(name);
+                }
             }
         } else {
             System.out.println("<UserService>- " + expiredMessage);
@@ -289,13 +364,29 @@ public class UserService {
 
     public boolean userHasJwtToken(Object user){
          if (user instanceof UserDetails) {
-            System.out.println("Тип = " + user.getClass().getSimpleName() + " Email = " + ((BookstoreUserDetails) user).getUsername());
+            System.out.println("Тип входа = токен " + user.getClass().getSimpleName() + " Email or Phone = " + ((BookstoreUserDetails) user).getUsername());
             return true;
         }
         if (user instanceof OAuth2User) {
-            System.out.println("Тип = " + user.getClass().getSimpleName() + " Email = " + ((CustomOAuth2User) user).getEmail());
+            System.out.println("Тип входа = OAuth2 " + user.getClass().getSimpleName() + " Email = " + ((CustomOAuth2User) user).getEmail());
         }
         return  false;
     }
+
+    public ContactConfirmationResponse jwtLoginByPhoneNumber(ContactConfirmationPayload payload) {
+        RegistrationForm registrationForm = new RegistrationForm();
+        registrationForm.setPhone(payload.getContact());
+        registrationForm.setPass(payload.getCode());
+
+        addUser(registrationForm);
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(payload.getContact());
+        String jwtToken = jwtUtil.generateToken(userDetails);
+        ContactConfirmationResponse response = new ContactConfirmationResponse();
+        response.setResult(jwtToken);
+
+        return response;
+    }
+
 
 }

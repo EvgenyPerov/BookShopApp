@@ -17,15 +17,21 @@ public class BookstoreUserDetailsService implements UserDetailsService {
     private UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        UserEntity user = userRepository.findUserEntityByEmail(email);
-
-        if (user != null) {
-            return new BookstoreUserDetails(user);
+    public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
+        UserEntity user = null;
+        if (s.contains("@")) {
+            System.out.println("bookstoreUserDetailsService метод loadUserByUsername делаем поиск по EMail");
+            user = userRepository.findUserEntityByEmail(s);
+            if (user != null) {
+                return new BookstoreUserDetails(user);
+            } else throw new UsernameNotFoundException("user has`t found");
+        } else {
+            System.out.println("bookstoreUserDetailsService метод loadUserByUsername делаем поиск по Phone");
+            user = userRepository.findUserEntityByPhone(s);
+            if (user != null) {
+                return new BookstoreUserDetailsByPhoneNumber(user);
+            } else throw new UsernameNotFoundException("user has`t found");
         }
-            else {
-                throw new UsernameNotFoundException("user has`t found");
-            }
     }
 
     public void setHandleTokenValid(boolean flag){

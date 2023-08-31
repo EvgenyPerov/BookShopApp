@@ -21,15 +21,15 @@
 <!--        <div th:if="${not #lists.isEmpty(${list})}">-->
         <div class="Cards-footer Cards-footer_center">
             <a class="btn btn_primary"
-               href="#"
-               data-refreshoffset="0"
-               data-refreshlimit="20"
+                   href="#"
+                   data-refreshoffset="0"
+                   data-refreshlimit="20"
 
                th:attr="data-refreshquery=${searchWordDto.example}, data-refreshshow=${category}, data-refreshid=${id} "
 
                data-refreshid="1"
-               data-refreshshow="search"
-               data-refreshquery="new search"
+                   data-refreshshow="search"
+                   data-refreshquery="new search"
              >Показать еще </a>
         </div>
 <!--        th:text="${isEmptyList}"-->

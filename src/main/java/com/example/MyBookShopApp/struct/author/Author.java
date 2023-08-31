@@ -43,6 +43,14 @@ public class Author {
     @OneToMany(mappedBy = "author")
     private List<Book> bookList = new ArrayList<>();
 
+    public Author() {}
+
+    public Author(List<String> authors) {
+        if (authors != null && !authors.isEmpty()){
+            this.name = authors.toString();
+        }
+    }
+
     @Override
     public String toString() {
         return "Author{" +
