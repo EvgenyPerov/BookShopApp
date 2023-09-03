@@ -26,12 +26,10 @@ public class Book2UserEntity {
     private Book2UserTypeEntity book2UserType;
 
     @ManyToOne
-//    @Column(name = "book_id",columnDefinition = "INT NOT NULL")
     @JoinColumn(name = "book_id", referencedColumnName = "id")
     private Book book;
 
     @ManyToOne
-//    @Column(name = "user_id",columnDefinition = "INT NOT NULL")
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private UserEntity user;
 

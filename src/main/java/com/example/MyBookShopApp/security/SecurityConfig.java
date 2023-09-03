@@ -70,7 +70,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/my", "/profile","/myslug").authenticated()//.hasRole("USER")
+                .antMatchers("/my", "/profile","/myslug","/looked").authenticated()//.hasRole("USER")
                 .antMatchers("/**", "/oauth/**").permitAll()
                 .and()
                 .formLogin()

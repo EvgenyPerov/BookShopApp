@@ -284,6 +284,21 @@ public class AuthUserController {
         return "myarchive";
     }
 
+    @ApiOperation("operation to get popular books")
+    @GetMapping("/looked")
+    public String lookedPage(Model model){
+        System.out.println("Переход на страницу Просмотренное");
+//        model.addAttribute("lookedBooks",bookService.getPageOfPopularBooks(0, 20).getContent());
+        UserEntity user = userService.getCurrentUser();
+
+        if (user != null) {
+            model.addAttribute("curUser", user);
+            model.addAttribute("lookedBooks",book2UserService.getLookedBooksByUserLastMonth(user));
+        }
+
+        return "/books/look";
+    }
+
     @GetMapping("/profile")
     public String profilePage(Model model,
                               @RequestParam(value = "isChangeUserData", required = false) boolean isChangeUserData,
@@ -348,7 +363,9 @@ public class AuthUserController {
 
         if (isChangeUserPhone != null && isChangeUserPhone) {
             isChangeUserPhone = false;
-            if (!userService.getCurrentUser().getPhone().equals(form.getPhone())) {
+            String phone = userService.getCurrentUser().getPhone();
+            if ((phone != null && !phone.equals(form.getPhone())) || phone == null)
+            {
                 userService.changeUserPhone(form);
                 isChangeUserData = true;
                 System.out.println("Изменение телефона пользователя выполнены успешно");

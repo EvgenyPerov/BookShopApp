@@ -124,8 +124,9 @@ public class CartController {
         return "cart";
     }
 
-    @PostMapping("/changeBookStatus/CART/{bookIds}")
+    @PostMapping("/changeBookStatus/CART/{bookIds}/{source}")
     public String handleChangeBookStatusCart(@PathVariable(value = "bookIds", required = false) String bookIdString,
+                                             @PathVariable(value = "source", required = false) String source,
                                          @CookieValue(name = "cartContents", required = false) String cartContents,
                                          @CookieValue(name = "postponedContents", required = false) String postponedContents,
                                          HttpServletResponse response,
@@ -168,16 +169,27 @@ public class CartController {
                 }
 
             } else {
-                bookService.increaseCart(Integer.valueOf(bookId));
-                bookService.decreaseKept(Integer.valueOf(bookId));
-                book2UserService.update("CART", bookService.getBookById(Integer.valueOf(bookId)), user);
+                System.out.println("Нажали Купить  с ресурса " + source);
+
+                if (source.equals("postponed")){
+                    System.out.println("Нажали В Корзину из отложенного");
+                    bookService.decreaseKept(Integer.valueOf(bookId));
+                } else {
+                    System.out.println("Нажали Купить из Slug");
+                }
+
+                if (book2UserService.update("CART", bookService.getBookById(Integer.valueOf(bookId)), user)) {
+                    bookService.increaseCart(Integer.valueOf(bookId));
+                }
+
             }
         }
         return "redirect:/books/postponed";
     }
 
-    @PostMapping("/changeBookStatus/UNLINK/CART/{bookId}")
+    @PostMapping("/changeBookStatus/UNLINK/CART/{bookId}/{source}")
     public String handleChangeBookStatusCartRemove(@PathVariable(value = "bookId", required = false) Integer bookId,
+                                                   @PathVariable(value = "source", required = false) String source,
                                    @CookieValue(name = "cartContents", required = false) String cartContents,
                                    HttpServletResponse response,
                                    Model model){

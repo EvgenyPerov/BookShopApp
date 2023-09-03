@@ -53,7 +53,7 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
 
     List<Book> findAllByPubDateAfterOrderByPubDateDesc(Date date);
 
-    @Query(value ="SELECT * FROM books ORDER BY (count_of_buy + 0.7 * count_of_cart + 0.4 * count_of_postponed) DESC", nativeQuery = true)
+    @Query(value ="SELECT * FROM books ORDER BY (count_of_buy + 0.7 * count_of_cart + 0.4 * count_of_postponed + 0.2 * count_of_looked) DESC", nativeQuery = true)
     Page<Book> BooksRatingAndPopulatityService(Pageable nextPage);
 
     Page<Book> findBooksByTagListContains(Tag tag, Pageable nextPage);

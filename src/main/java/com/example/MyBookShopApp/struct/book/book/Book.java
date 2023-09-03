@@ -74,6 +74,10 @@ public class Book {
     private int discount;
 
     @ApiModelProperty(value = "количество пользователей, купивших книгу")
+    @Column(name = "count_of_looked", columnDefinition = "INT NOT NULL DEFAULT 0")
+    private int countOfLooked;
+
+    @ApiModelProperty(value = "количество пользователей, купивших книгу")
     @Column(name = "count_of_buy", columnDefinition = "INT NOT NULL DEFAULT 0")
     private int countOfBuy;
 

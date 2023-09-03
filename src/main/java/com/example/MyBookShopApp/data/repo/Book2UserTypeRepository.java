@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface Book2UserTypeRepository extends JpaRepository<Book2UserTypeEntity, Integer> {
 
     Book2UserTypeEntity findByCodeIs(String code);
+
 }

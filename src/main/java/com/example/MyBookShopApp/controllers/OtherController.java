@@ -158,13 +158,15 @@ public class OtherController {
             float costOfBooks = Float.parseFloat(sum);
             System.out.println("Сумма книг в корзине = " + costOfBooks);
 
-            System.out.println("Денег на счете достаточно, совершаем покупку");
             List<Book> booksFromRepo = book2UserService.getBooksFromRepoByTypeCodeAndUser("CART",user);
 
             for (Book book : booksFromRepo) {
-                bookService.decreaseCart(book.getId());
-                book2UserService.update("PAID", book, user);
-                userService.changeUserBalanceBuy(user, book);
+                boolean isBuy = book2UserService.update("PAID", book, user);
+                if (isBuy) {
+                    bookService.decreaseCart(book.getId());
+                    bookService.increasePaid(book.getId());
+                    userService.changeUserBalanceBuy(user, book);
+                } else System.out.println("Эту книгу уже покупали");
             }
 
             return "redirect:/my";

@@ -98,8 +98,9 @@ public class PostponedController {
         return "postponed";
     }
 
-    @PostMapping("/changeBookStatus/KEPT/{bookId}")
+    @PostMapping("/changeBookStatus/KEPT/{bookId}/{source}")
     public String handleChangeBookStatus(@PathVariable(value = "bookId", required = false) Integer bookId,
+                                         @PathVariable(value = "source", required = false) String source,
                                          @CookieValue(name = "cartContents", required = false) String cartContents,
                                          @CookieValue(name = "postponedContents", required = false) String postponedContents,
                                          HttpServletResponse response,
@@ -134,15 +135,26 @@ public class PostponedController {
                 response.addCookie(cookiesCartNew);
             }
         } else {
-            bookService.increaseKept(bookId);
-            bookService.decreaseCart(bookId);
-            book2UserService.update("KEPT", bookService.getBookById(bookId), user);
+            System.out.println("Нажали Отложить  с ресурса " + source);
+
+            if (source.equals("cart")){
+                System.out.println("Нажали Отложить из Корзины");
+                bookService.decreaseCart(bookId);
+            } else {
+                System.out.println("Нажали Отложить из Slug");
+            }
+
+            if (book2UserService.update("KEPT", bookService.getBookById(bookId), user)) {
+                bookService.increaseKept(bookId);
+            }
+
         }
         return "redirect:/books/" + bookId;
     }
 
-    @PostMapping("/changeBookStatus/UNLINK/KEPT/{bookId}")
+    @PostMapping("/changeBookStatus/UNLINK/KEPT/{bookId}/{source}")
     public String handleCartRemove(@PathVariable(value = "bookId", required = false) Integer bookId,
+                                   @PathVariable(value = "source", required = false) String source,
                                    @CookieValue(name = "postponedContents", required = false) String postponedContents,
                                    HttpServletResponse response,
                                    Model model){

@@ -215,29 +215,39 @@ public class BookService {
             List<Book> paidBooks = book2UserService.getBooksFromRepoByTypeCodeAndUser("PAID", user);
             List<Book> keptBooks = book2UserService.getBooksFromRepoByTypeCodeAndUser("KEPT", user);
             List<Book> cartBooks = book2UserService.getBooksFromRepoByTypeCodeAndUser("CART", user);
+            List<Book> lookedBooks = book2UserService.getBooksFromRepoByTypeCodeAndUser("LOOKED", user);
 
             Set<Integer> allPaidBooksTheseAuthors = getAllBooksIdTheseAuthors(paidBooks);
             Set<Integer> allKeptBooksTheseAuthors = getAllBooksIdTheseAuthors(keptBooks);
             Set<Integer> allCartBooksTheseAuthors = getAllBooksIdTheseAuthors(cartBooks);
+            Set<Integer> allLookedBooksTheseAuthors = getAllBooksIdTheseAuthors(lookedBooks);
 
             Set<Integer> allPaidBooksTheseTags = getAllBooksIdTheseTags(paidBooks);
             Set<Integer> allKeptBooksTheseTags = getAllBooksIdTheseTags(keptBooks);
             Set<Integer> allCartBooksTheseTags = getAllBooksIdTheseTags(cartBooks);
+            Set<Integer> allLookedBooksTheseTags = getAllBooksIdTheseTags(lookedBooks);
 
             Set<Integer> allPaidBooksTheseGenres = getAllBooksIdTheseGenre(paidBooks);
             Set<Integer> allKeptBooksTheseGenres = getAllBooksIdTheseGenre(keptBooks);
             Set<Integer> allCartBooksTheseGenres = getAllBooksIdTheseGenre(cartBooks);
+            Set<Integer> allLookedBooksTheseGenres = getAllBooksIdTheseGenre(lookedBooks);
 
             Set<Integer> allIdBooksThese = new HashSet<>();
+
             allIdBooksThese.addAll(allPaidBooksTheseAuthors);
             allIdBooksThese.addAll(allKeptBooksTheseAuthors);
             allIdBooksThese.addAll(allCartBooksTheseAuthors);
+            allIdBooksThese.addAll(allLookedBooksTheseAuthors);
+
             allIdBooksThese.addAll(allPaidBooksTheseTags);
             allIdBooksThese.addAll(allKeptBooksTheseTags);
             allIdBooksThese.addAll(allCartBooksTheseTags);
+            allIdBooksThese.addAll(allLookedBooksTheseTags);
+
             allIdBooksThese.addAll(allPaidBooksTheseGenres);
             allIdBooksThese.addAll(allKeptBooksTheseGenres);
             allIdBooksThese.addAll(allCartBooksTheseGenres);
+            allIdBooksThese.addAll(allLookedBooksTheseGenres);
 
             List<Integer> listIds = new ArrayList<>();
             listIds.addAll(allIdBooksThese);
@@ -265,7 +275,14 @@ public class BookService {
     public Page<Book> getPageOfPopularBooks(Integer offset, Integer limit){
         Pageable nextPage = PageRequest.of(offset, limit);
         Page<Book> page = bookRepository.BooksRatingAndPopulatityService(nextPage);
-        System.out.println("Количество подгруженных сервисом популярных книг = "+ page.stream().count());
+        System.out.println("Количество подгруженных сервисом популярных книг = "+ page.stream().count()); //
+
+        for (Book book : page.getContent()) {
+            int countOfLookedBooks = book2UserService.getCountOfLookedBooksLastMonth(book);
+            book.setCountOfLooked(countOfLookedBooks);
+            bookRepository.save(book);
+        }
+
         return page;
     }
 
@@ -385,6 +402,14 @@ public class BookService {
         Book book = bookRepository.findById(bookId).get();
         if (book != null & book.getCountOfPostponed() >= 0) {
             book.setCountOfPostponed(book.getCountOfPostponed() + 1);
+            bookRepository.save(book);
+        }
+    }
+
+    public void increasePaid(Integer bookId) {
+        Book book = bookRepository.findById(bookId).get();
+        if (book != null) {
+            book.setCountOfBuy(book.getCountOfBuy() + 1);
             bookRepository.save(book);
         }
     }

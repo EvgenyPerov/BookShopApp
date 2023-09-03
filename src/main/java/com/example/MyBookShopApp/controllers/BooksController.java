@@ -71,6 +71,16 @@ public class BooksController {
         }
     }
 
+    @ModelAttribute("lookedBooks")
+    public List<Book> geBookLookedList() {
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            return book2UserService.getLookedBooksByUserLastMonth(user);
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
     @ModelAttribute("bookPostponedList")
     public List<Book> geBookPostponedList(@CookieValue(name = "postponedContents", required = false) String postponedContents){
         UserEntity user = userService.getCurrentUser();
@@ -121,8 +131,7 @@ public class BooksController {
     @GetMapping("/popular")
     public String popularPage(Model model){
         System.out.println("Переход на страницу Популярное");
-        model.addAttribute("popularBooks",
-                bookService.getPageOfPopularBooks(0, 20).getContent());
+        model.addAttribute("popularBooks",bookService.getPageOfPopularBooks(0, 20).getContent());
         return "/books/popular";
     }
 
@@ -156,8 +165,10 @@ public class BooksController {
 
             model.addAttribute("df", DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"));
 
-            if (authenticationStatus() == "authorized") {
-                model.addAttribute("curUser", userService.getCurrentUser());
+            UserEntity user = userService.getCurrentUser();
+            if (user != null) {
+                book2UserService.addLookedBook(book, user);
+                model.addAttribute("curUser", user);
                 return "/books/slugmy";
             }
 
