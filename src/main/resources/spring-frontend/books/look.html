@@ -26,7 +26,7 @@
 </head>
 <body class="Site">
 <header class="Header"
-        th:replace="~{fragments/common_header_fragment :: head(status='authorized')}"></header>
+        th:replace="~{fragments/common_header_fragment :: head(state='authorized')}"></header>
 <div class="Middle">
     <div class="wrap">
         <main class="Middle-main">
@@ -38,7 +38,7 @@
                     </h1>
                 </div>
                 <div class="Cards Cards_refresh"
-                     th:replace="~{fragments/books_pool_fragment :: pool(category='popular', list=${lookedBooks})}">
+                     th:replace="~{fragments/books_pool_fragment :: pool(category='looked', list=${lookedBooks})}">
 
                 </div>
             </div>

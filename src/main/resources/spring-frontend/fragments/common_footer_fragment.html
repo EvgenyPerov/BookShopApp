@@ -7,13 +7,13 @@
       <div class="row-block"
            th:replace="~{fragments/footer_left_side_info_block_fragment :: block}"></div>
       <div class="row-block"
-           th:replace="~{fragments/footer_center_info_block_fragment :: ${status}}"></div>
+           th:replace="~{fragments/footer_center_info_block_fragment :: ${state}}"></div>
 
       <div class="row-block">
         <ul class="menu menu_vt Footer-menu">
-          <li th:if="${status} == 'unauthorized'" class="menu-item"><a class="menu-link" href="/signin.html" th:href="@{/signin}" th:text="#{title.name-signin}">Войти</a>
+          <li th:if="${state} == 'unauthorized'" class="menu-item"><a class="menu-link" href="/signin.html" th:href="@{/signin}" th:text="#{title.name-signin}">Войти</a>
           </li>
-          <li th:if="${status} == 'authorized'" class="menu-item"><a class="menu-link" th:href="@{/logout}" th:text="#{title.name-logout}">Выход</a>
+          <li th:if="${state} == 'authorized'" class="menu-item"><a class="menu-link" th:href="@{/logout}" th:text="#{title.name-logout}">Выход</a>
           </li>
           <li class="menu-item" ><a class="menu-link" href="/documents/index.html" th:href="@{/documents/index}" th:text="#{bottom-bar.documents}">Документы</a>
           </li>

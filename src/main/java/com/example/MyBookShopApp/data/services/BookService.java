@@ -3,11 +3,13 @@ package com.example.MyBookShopApp.data.services;
 import com.example.MyBookShopApp.Aop.annotations.SelectRecentDateAnnotation;
 import com.example.MyBookShopApp.data.google.api.books.Item;
 import com.example.MyBookShopApp.data.google.api.books.Root;
+import com.example.MyBookShopApp.data.repo.Book2AuthorRepository;
 import com.example.MyBookShopApp.data.repo.BookRatingRepository;
 import com.example.MyBookShopApp.data.repo.BookRepository;
 import com.example.MyBookShopApp.errs.BookstoreApiWrongPatameterException;
 import com.example.MyBookShopApp.struct.author.Author;
 import com.example.MyBookShopApp.struct.book.book.Book;
+import com.example.MyBookShopApp.struct.book.links.Book2AuthorEntity;
 import com.example.MyBookShopApp.struct.book.links.Book2GenreEntity;
 import com.example.MyBookShopApp.struct.book.review.BookRatingEntity;
 import com.example.MyBookShopApp.struct.genre.GenreEntity;
@@ -39,19 +41,23 @@ public class BookService {
     private final BookRatingRepository bookRatingRepository;
     private final Book2UserService book2UserService;
 
+    private final Book2AuthorRepository book2AuthorRepository;
     @Autowired
     private RestTemplate restTemplate;
 
     @Autowired
-    public BookService(UserService userService, BookRepository bookRepository, BookRatingRepository bookRatingRepository, Book2UserService book2UserService) {
+    public BookService(UserService userService, BookRepository bookRepository, BookRatingRepository bookRatingRepository, Book2UserService book2UserService, Book2AuthorRepository book2AuthorRepository) {
         this.userService = userService;
         this.bookRepository = bookRepository;
         this.bookRatingRepository = bookRatingRepository;
         this.book2UserService = book2UserService;
+        this.book2AuthorRepository = book2AuthorRepository;
     }
 
-    public List<Book> getBooksByAuthor(String authorName){
-        return bookRepository.findBooksByAuthorNameContaining(authorName);
+    public List<Book> getBooksByAuthorContaining(String authorName){
+        List<Book2AuthorEntity> book2Author = book2AuthorRepository.findAllByAuthor_NameContaining(authorName);
+        List<Book> books = book2Author.stream().map(Book2AuthorEntity :: getBook).collect(Collectors.toList());
+        return books;
     }
 
     public List<Book> getBooksByTitle(String bookTitle) throws BookstoreApiWrongPatameterException {
@@ -81,9 +87,19 @@ public class BookService {
         return bookRepository.getBooksWithMaxDiscount();
     }
 
-    public Page<Book> getPageOfSearchResultBooks(String regex, Integer offset, Integer limit){
+    public List<Book> getPageOfSearchResultBooks(String regex, Integer offset, Integer limit){
         Pageable nextPage = PageRequest.of(offset, limit);
-        return bookRepository.findBooksByTitleContaining(regex, nextPage);
+        Page<Book> page = bookRepository.findAllByTitleContainingIgnoreCase(regex, nextPage);
+
+        System.out.println("Сервис нашел книг = " + page.getContent().size());
+
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            updateStatusOfBook(page.getContent(), user);
+        } else {
+            updateStatusOfBook(page.getContent(), null);
+        }
+        return page.getContent();
     }
 
     public List<Book> getPageOfGoogleBooksApiSearchResult(String regex, Integer offset, Integer limit){
@@ -99,14 +115,14 @@ public class BookService {
 
         List<Book> list = new ArrayList<>();
 
-        if (root != null){
+        if (root != null && root.getItems() != null){
             for (Item item : root.getItems()){
                 Book book = new Book();
                     if (item.getVolumeInfo() != null){
-                        book.setAuthor(new Author(item.getVolumeInfo().getAuthors()));
                         book.setTitle(item.getVolumeInfo().getTitle());
                         book.setDescription(item.getVolumeInfo().getDescription());
                         book.setImage(item.getVolumeInfo().getImageLinks().getThumbnail());
+//                        book.setAuthor(new Author(item.getVolumeInfo().getAuthors())); //
                     }
                 if (item.getSaleInfo() != null){
                     Double fullPrice = item.getSaleInfo().getListPrice().getAmount();
@@ -121,12 +137,18 @@ public class BookService {
                 }
                 list.add(book);
             }
+            UserEntity user = userService.getCurrentUser();
+            if (user != null) {
+                updateStatusOfBook(list, user);
+            } else {
+                updateStatusOfBook(list, null);
+            }
         }
         return list;
     }
 
     // этот метод срабатывает на Главной странице. Книги по умолчанию и далее при карусельной подгрузке
-    public Page<Book> getRecomendedBooksOnMainPage(String postponedCookies, String cartCookies,Integer offset, Integer limit){
+    public List<Book> getRecomendedBooksOnMainPage(String postponedCookies, String cartCookies,Integer offset, Integer limit){
         Page<Book> resultPage;
         Pageable nextPage = PageRequest.of(offset, limit);
 
@@ -208,6 +230,8 @@ public class BookService {
 
                 System.out.println("Количество найденных рекомендованных книг = "+ listIds.size());
                 resultPage = bookRepository.findBooksByIdInOrderByPubDateDesc(listIds, nextPage);
+
+                updateStatusOfBook(resultPage.getContent(), null);
             }
         } else {
             System.out.println("Авторизация выполнена - " + user.getName());
@@ -264,18 +288,29 @@ public class BookService {
 
             resultPage = bookRepository.findBooksByIdInOrderByPubDateDesc(listIds, nextPage);
 
+            updateStatusOfBook(resultPage.getContent(), user);
+
         }
         System.out.println("Количество подгруженных сервисом рекомендованных книг = "+ resultPage.getContent().size());
-        return resultPage;
+
+        return resultPage.getContent();
     }
 
     //метод срабатывает при карусельной подгрузке на Главное странице +
     // при переходе на Популярное (купленные + в корзине + отложенные  P = B + 0,7*C + 0,4*K) +
     // при карусельной подгрузке в Популярном
-    public Page<Book> getPageOfPopularBooks(Integer offset, Integer limit){
+    public List<Book> getPageOfPopularBooks(Integer offset, Integer limit){
         Pageable nextPage = PageRequest.of(offset, limit);
-        Page<Book> page = bookRepository.BooksRatingAndPopulatityService(nextPage);
+        Page<Book> page = bookRepository.booksRatingAndPopulatityService(nextPage);
         System.out.println("Количество подгруженных сервисом популярных книг = "+ page.stream().count()); //
+
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            updateStatusOfBook(page.getContent(), user);
+        } else {
+            updateStatusOfBook(page.getContent(), null);
+        }
+
 
         for (Book book : page.getContent()) {
             int countOfLookedBooks = book2UserService.getCountOfLookedBooksLastMonth(book);
@@ -283,13 +318,13 @@ public class BookService {
             bookRepository.save(book);
         }
 
-        return page;
+        return page.getContent();
     }
 
     // метод срабатывает выборе при переходе на Новинки и отображаются книги не позднее 1 месяца публикации
     // далее при карусели
     @SelectRecentDateAnnotation
-    public Page<Book> getPageOfRecentBooks(String from, String to, Integer offset, Integer limit){
+    public List<Book> getPageOfRecentBooks(String from, String to, Integer offset, Integer limit){
         SimpleDateFormat Dformat = new SimpleDateFormat("dd.MM.yyyy");
         Page<Book> page;
         Pageable nextPage;
@@ -308,33 +343,73 @@ public class BookService {
             dTo = new Date();
             System.out.println("На главной странице карусель Новинки книг даты не определены, по умолчанию  from " + dFrom +" to= " + dTo);
         }
-        System.out.println("В Сервисе Новинок книг передача запроса в базу с параметрами offset = "+ offset +
-                " limit= "+ limit + " from= "+ dFrom + " to= "+ dTo);
+
         nextPage = PageRequest.of(offset, limit);
         page = bookRepository.findBooksByPubDateBetweenOrderByPubDateDesc(dFrom, dTo, nextPage);
         System.out.println("Количество подгруженных на странице Новинок сервисом книг = " + page.stream().count());
-        page.getContent().forEach(x-> System.out.println(x.getId())); //
 
-        return page;
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            updateStatusOfBook(page.getContent(), user);
+        } else {
+            updateStatusOfBook(page.getContent(), null);
+        }
+
+        return page.getContent();
+
     }
 
-//    public List<Book> getBooksListSortedByRating(List<BookRatingEntity> listBookRatingFromDb){
-//        Map <Book, Double> mapBookAndRating = new LinkedHashMap<>();
-//        List<Book> sortedList = new LinkedList<>();
-//
-//        if (listBookRatingFromDb != null){
-//            for (BookRatingEntity ratingEntity : listBookRatingFromDb){
-//                if (!mapBookAndRating.containsKey(ratingEntity.getBook())) {
-//
-//
-//                     OptionalDouble averageValue = listBookRatingFromDb.stream()
-//                            .filter(obj -> obj.getBook().getId() == ratingEntity.getBook().getId())
-//                            .mapToDouble(BookRatingEntity :: getValue).average();
-//
-//                    mapBookAndRating.put(ratingEntity.getBook(), averageValue.getAsDouble());
-//                }
-//            }
-//
+    public void updateStatusOfBook(List<Book> list, UserEntity user){
+        System.out.println("Обновление статуса у книг");
+        List<Book> booksForUpdate = new ArrayList<>();
+        if (user != null) {
+            List<Book> bookKeptList = book2UserService.getBooksFromRepoByTypeCodeAndUser("KEPT", user);
+            List<Book> bookCartList = book2UserService.getBooksFromRepoByTypeCodeAndUser("CART", user);
+            List<Book> bookPaidList = book2UserService.getBooksFromRepoByTypeCodeAndUser("PAID", user);
+            List<Book> bookArchiveList = book2UserService.getBooksFromRepoByTypeCodeAndUser("ARCHIVED", user);
+
+            for (Book book : list) {
+
+                boolean isFound = false;
+
+                if (bookKeptList.contains(book)) {
+                    book.setStatus("KEPT");
+                    booksForUpdate.add(book);
+                    isFound = true;
+                }
+                if (bookCartList.contains(book)) {
+                    book.setStatus("CART");
+                    booksForUpdate.add(book);
+                    isFound = true;
+                }
+                if (bookPaidList.contains(book)) {
+                    book.setStatus("PAID");
+                    booksForUpdate.add(book);
+                    isFound = true;
+                }
+                if (bookArchiveList.contains(book)) {
+                    book.setStatus("ARCHIVED");
+                    booksForUpdate.add(book);
+                    isFound = true;
+                }
+                if (!isFound && book.getStatus() != null) {
+                    book.setStatus(null);
+                    booksForUpdate.add(book);
+                }
+            }
+        } else {
+            for (Book book : list) {
+                if (book.getStatus() != null) {
+                    book.setStatus(null);
+                    booksForUpdate.add(book);
+                }
+            }
+        }
+        if (!booksForUpdate.isEmpty()) {
+            bookRepository.saveAll(booksForUpdate);
+        }
+    }
+
 //            // сортировка по значению по убыванию "-v.getValue()"
 //            Map <Book, Double> sortedMap = mapBookAndRating.entrySet().stream()
 //                    .sorted(Comparator.comparingDouble(v -> -v.getValue()))
@@ -344,13 +419,6 @@ public class BookService {
 //                            (a,b) -> {throw new AssertionError();},
 //                            LinkedHashMap ::new
 //                    ));
-//
-//            sortedMap.values().forEach(v -> System.out.println(v));
-//
-//            sortedList = sortedMap.keySet().stream().collect(Collectors.toList());
-//        }
-//        return sortedList;
-//    }
 
     public Book getBookById(Integer id){
         return bookRepository.findById(id).get();
@@ -462,21 +530,43 @@ public class BookService {
         return  resultList;
     }
 
-     Set<Integer> getAllBooksIdTheseAuthors(List<Book> statusBooks){
-        Set<Integer> allBooksTheseAuthors = new HashSet<>();
-        if (statusBooks != null & !statusBooks.isEmpty()) {
-            Set<String> authorNameSet = statusBooks.stream().map(Book::authorName).collect(Collectors.toSet());
+     Set<Integer> getAllBooksIdTheseAuthors(List<Book> books){
+        Set<Integer> allBooksIdTheseAuthors = new HashSet<>();
+        if (books != null & !books.isEmpty()) {
+
+            Set<String> authorNameSet = new HashSet<>();
+//                    = statusBooks.stream().map(Book::authorName).collect(Collectors.toSet());
 //            authorNameSet.forEach(System.out::println); //
 
-            List<Book> allBooks = bookRepository.findAll();
-            for (String name : authorNameSet) {
-                allBooksTheseAuthors.addAll(allBooks.stream().filter(i -> i.getAuthor()
-                        .getName().equalsIgnoreCase(name)).map(Book::getId).collect(Collectors.toList()));
-            }
+            List<Book2AuthorEntity> book2AuthorEntityListByBooks = book2AuthorRepository.findAllByBookIn(books);
+
+            Set<Author> authors = book2AuthorEntityListByBooks.stream().map(Book2AuthorEntity :: getAuthor).collect(Collectors.toSet());
+
+            List<Book2AuthorEntity>  book2AuthorEntityListByAuthors = book2AuthorRepository.findAllByAuthorIn(authors);
+
+            allBooksIdTheseAuthors = book2AuthorEntityListByAuthors.stream().map(Book2AuthorEntity :: getBook).map(Book :: getId).collect(Collectors.toSet());
+
+//            for(Book book : books){
+//
+//                for(String name : book.allAuthorsNameList()){
+//                    authorNameSet.add(name);
+//                }
+
+
+//                for(String name : book.allAuthorsNameList()){
+//                    authorNameSet.add(name);
+////                }
+//            }
+//
+//            List<Book> allBooks = bookRepository.findAll();
+//            for (String name : authorNameSet) {
+//                allBooksIdTheseAuthors.addAll(allBooks.stream().filter(i -> i.getAuthor()
+//                        .getName().equalsIgnoreCase(name)).map(Book::getId).collect(Collectors.toList()));
+//            }
         }
-        System.out.println("Найдено рекомендованных книг по авторам - "+ allBooksTheseAuthors.size());
+        System.out.println("Найдено рекомендованных книг по авторам - "+ allBooksIdTheseAuthors.size());
 //        allBooksByAuthor.forEach(book -> System.out.println("Книга № " +book.getId()+" Автор - "+book.getAuthor().getName())); //
-        return allBooksTheseAuthors;
+        return allBooksIdTheseAuthors;
     }
 
     Set<Integer> getAllBooksIdTheseTags(List<Book> statusBooks){
@@ -501,7 +591,6 @@ public class BookService {
             }
         }
         System.out.println("Найдено рекомендованных книг по тэгам - "+ allBooksTheseTags.size());
-//        allBooksTheseTags.forEach(book -> System.out.println(book.getTitle())); //
 
         return allBooksTheseTags;
     }
@@ -528,7 +617,6 @@ public class BookService {
             }
         }
         System.out.println("Найдено рекомендованных книг по жанрам - "+ allBooksTheseGenres.size());
-//        allBooksTheseGenres.forEach(book -> System.out.println(book.getTitle())); //
 
         return allBooksTheseGenres;
     }

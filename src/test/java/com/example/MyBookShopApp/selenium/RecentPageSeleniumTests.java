@@ -31,14 +31,17 @@ class RecentPageSeleniumTests {
     @Test
     @DisplayName("Выбор даты в Новинках")
     public void recentPageChangeDateTest() throws InterruptedException {
-        String yearFrom = "2023", monthFrom = "2", dayFrom = "11";
-        String yearTo = "2023", monthTo = "2", dayTo = "11";
+        String yearFrom = "2023", monthFrom = "08", dayFrom = "17";
+        String yearTo = "2023", monthTo = "09", dayTo = "17";
 
         RecentPage recentPage = new RecentPage(driver);
         recentPage
                 .callPage()
                 .pause()
+                .pause()
                 .clickDateFrom()
+                .pause()
+                .pause()
                 .pause()
                 .clickDateMonthsFrom()
                 .pause()
@@ -63,7 +66,7 @@ class RecentPageSeleniumTests {
                 .setDateDayTo(dayTo)
                 .pause()
                 .pause();
-        Assertions.assertTrue(driver.getPageSource().contains("Moebius"));
+        Assertions.assertTrue(driver.getPageSource().contains("Born Romantic"));
     }
 
 }

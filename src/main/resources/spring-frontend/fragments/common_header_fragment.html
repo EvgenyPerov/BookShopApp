@@ -20,7 +20,8 @@
                             </g>
                         </svg>
                     </div>
-                    <div class="Header-search">
+                    <div class="Header-search ">
+
                         <div class="search">
                             <form class="form form_search" action="#" method="post" data-searchlimit="20" th:object="${searchWordDto}" >
                                 <input class="search-input" id="query" name="query" type="text"
@@ -28,10 +29,11 @@
                                 <button class="search-button" type="submit" name="search" id="search">Поиск </button>
                             </form>
                         </div>
+
                     </div>
                     <span th:if="${searchError}" th:text="${searchError}" style="color: red"> </span>
                 </div>
-                <div class="row-block Header-cart" th:replace="~{fragments/cart_block_fragment :: ${status}}"></div>
+                <div class="row-block Header-cart" th:replace="~{fragments/cart_block_fragment :: ${state}}"></div>
                 <div class="row-block Header-trigger"><a class="menuTrigger" href="#navigate">
                     <div class="menuTrigger-content">Показать навигацию
                     </div>
@@ -58,7 +60,7 @@
                     <li class="menu-item" th:class="${authors}"><a class="menu-link"
                                                                    href="/authors/index.html" th:href="@{/authors}" th:text="#{top-bar.authors}">Авторы</a>
                     </li>
-                    <li class="menu-item" th:class="${look}" ><a class="menu-link" th:href="@{/looked}" th:text="#{top-bar.look}">Просмотренное</a>
+                    <li class="menu-item" th:class="${look}" ><a class="menu-link" th:href="@{/books/looked}" th:text="#{top-bar.look}">Просмотренное</a>
                     </li>
                 </ul>
             </nav>

@@ -6,17 +6,15 @@ import com.example.MyBookShopApp.struct.book.links.Book2UserEntity;
 import com.example.MyBookShopApp.struct.book.links.Book2UserTypeEntity;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,12 +22,14 @@ public class Book2UserService {
 
   private Book2UserRepository book2UserRepository;
   private Book2UserTypeRepository book2UserTypeRepository;
+  private final BookRepository bookRepository;
 
   @Autowired
-    public Book2UserService(Book2UserRepository book2UserRepository, Book2UserTypeRepository book2UserTypeRepository) {
+    public Book2UserService(Book2UserRepository book2UserRepository, Book2UserTypeRepository book2UserTypeRepository, BookRepository bookRepository) {
         this.book2UserRepository = book2UserRepository;
         this.book2UserTypeRepository = book2UserTypeRepository;
-    }
+      this.bookRepository = bookRepository;
+  }
 
     public void addLookedBook(Book book, UserEntity user) {
         System.out.println("Сервис добавления книги в LOOKED");
@@ -63,24 +63,25 @@ public class Book2UserService {
     public boolean update(String code, Book book, UserEntity user) {
         System.out.println("Сервис обновления book2User");
 
-//        Book2UserEntity book2UserFromRepo = book2UserRepository.findByBookAndUserIs(book, user);
         List<Book2UserEntity> book2UserEntityList = book2UserRepository.findAllByBookAndUser(book, user);
 
         Book2UserEntity book2UserKeptOrCart = null;
-        Book2UserEntity book2UserPaidOrArchive = null;
+
+        boolean isKeptOrCart = false;
+        boolean isPaidOrArchive = false;
 
         for (Book2UserEntity book2User : book2UserEntityList){
-            book2UserPaidOrArchive = book2User.getBook2UserType().getCode().equals("PAID")
-                    ||book2User.getBook2UserType().getCode().equals("ARCHIVED")
-                    ? book2User : null;
-            book2UserKeptOrCart = book2User.getBook2UserType().getCode().equals("KEPT")
-                    ||book2User.getBook2UserType().getCode().equals("CART")
-                    ? book2User : null;
+            if (book2User.getBook2UserType().getCode().equals("PAID") ||book2User.getBook2UserType().getCode().equals("ARCHIVED")) {
+                isPaidOrArchive = true;
+            }
+            if (book2User.getBook2UserType().getCode().equals("KEPT") ||book2User.getBook2UserType().getCode().equals("CART")) {
+                isKeptOrCart = true;
+                book2UserKeptOrCart = book2User;
+            }
         }
 
-        if (book2UserKeptOrCart != null && book2UserPaidOrArchive == null) {
+        if (isKeptOrCart && !isPaidOrArchive) {
             System.out.println("В репозитории book2User уже имеется запись CART или KEPT");
-
             Book2UserTypeEntity typeBook = book2UserTypeRepository.findByCodeIs(code);
             book2UserKeptOrCart.setTime(LocalDateTime.now());
             book2UserKeptOrCart.setBook2UserType(typeBook);
@@ -88,7 +89,7 @@ public class Book2UserService {
             return true;
         }
 
-        if (book2UserKeptOrCart == null && book2UserPaidOrArchive == null) {
+        if (!isKeptOrCart  && !isPaidOrArchive) {
             createBook2UserEntity(code, book, user);
             return true;
         }
@@ -108,23 +109,44 @@ public class Book2UserService {
         book2UserRepository.save(newBook2UserEntity);
     }
 
-    public void delete(Book book, UserEntity user) {
+    public boolean delete(Book book, UserEntity user) {
         System.out.println("Сервис удаления записи book2UserEntity");
-        Book2UserEntity getBook2UserFromRepo = book2UserRepository.findByBookAndUserIs(book, user);
-        if (getBook2UserFromRepo != null) {
-            book2UserRepository.delete(getBook2UserFromRepo);
+        List<Book2UserEntity> book2UserList  = book2UserRepository.findAllByBookAndUser(book, user);
+
+        Optional<Book2UserEntity> book2User = book2UserList.stream().
+                filter(entity -> entity.getBook2UserType().getCode().equals("KEPT") || entity.getBook2UserType().getCode().equals("CART")).
+                findFirst();
+
+//        Book2UserEntity getBook2UserFromRepo = book2UserRepository.findByBookAndUserIs(book, user);
+        if (book2User.isPresent()) {
+            book2UserRepository.delete(book2User.get());
+            return true;
         }
+        return false;
     }
 
     public List<Book> getBooksFromRepoByTypeCodeAndUser(String bookTypeCode, UserEntity user) {
         Book2UserTypeEntity typeEntity = book2UserTypeRepository.findByCodeIs(bookTypeCode);
-        List<Book2UserEntity> book2UserList = null;
-        if (typeEntity != null) {
-            book2UserList = book2UserRepository.findAllByBook2UserType_IdAndUser_Id(typeEntity.getId(), user.getId());
+        List<Book2UserEntity> book2UserList = book2UserRepository.findAllByBook2UserTypeAndUser(typeEntity, user);
+
+        if (book2UserList != null) {
+            List<Book> list = book2UserList.stream().map(Book2UserEntity::getBook).collect(Collectors.toList());
+            return list;
         }
-        if (book2UserList != null)
-            return book2UserList.stream().map(Book2UserEntity::getBook).collect(Collectors.toList());
       return new ArrayList<>();
+    }
+
+    public List<Book> getPageOfBooksFromRepoByTypeCodeAndUser(Integer offset, Integer limit, String bookTypeCode, UserEntity user) {
+        Pageable nextPage = PageRequest.of(offset, limit);
+        Book2UserTypeEntity typeEntity = book2UserTypeRepository.findByCodeIs(bookTypeCode);
+        List<Book2UserEntity> book2UserList = book2UserRepository.findAllByBook2UserTypeAndUser(typeEntity, user, nextPage).getContent();
+
+        if (book2UserList != null) {
+            List<Book> list = book2UserList.stream().map(Book2UserEntity::getBook).collect(Collectors.toList());
+            if (user != null) {updateStatusOfBook(list, user);}
+            return list;
+        }
+        return new ArrayList<>();
     }
 
     public int getCountOfLookedBooksLastMonth(Book book){
@@ -133,17 +155,96 @@ public class Book2UserService {
       return book2UserRepository.countAllByBookAndBook2UserTypeAndTimeAfter(book, typeEntity, date);
     }
 
-    public List<Book> getLookedBooksByUserLastMonth(UserEntity user){
+
+    public List<Book> getPageOfLookedBooksByUserLastMonth(Integer offset, Integer limit, UserEntity user){
+        Pageable nextPage = PageRequest.of(offset, limit);
+
         Book2UserTypeEntity typeEntity = book2UserTypeRepository.findByCodeIs("LOOKED");
         LocalDateTime date = LocalDateTime.now().minusMonths(1);
-        Set<Book> set = book2UserRepository
-                .findAllByUserAndBook2UserTypeAndTimeAfter(user, typeEntity, date)
+        List<Book> list = book2UserRepository
+                .findAllByUserAndBook2UserTypeAndTimeAfter(user, typeEntity, date, nextPage)
                 .stream()
                 .map(Book2UserEntity::getBook)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
+        System.out.println("Количество подгруженных сервисом просмотренных книг = "+ list.size()); //
 
-        return new ArrayList<>(set);
+        if (user != null) {updateStatusOfBook(list, user);}
+
+        return list;
     }
+
+    public void updateStatusOfBook(List<Book> list, UserEntity user) {
+        System.out.println("Обновление статуса у книг");
+        List<Book> booksForUpdate = new ArrayList<>();
+        if (user != null) {
+            List<Book> bookKeptList = getBooksFromRepoByTypeCodeAndUser("KEPT", user);
+            List<Book> bookCartList = getBooksFromRepoByTypeCodeAndUser("CART", user);
+            List<Book> bookPaidList = getBooksFromRepoByTypeCodeAndUser("PAID", user);
+
+            for (Book book : list) {
+
+                boolean isFound = false;
+
+                if (bookKeptList.contains(book)) {
+                    book.setStatus("KEPT");
+                    booksForUpdate.add(book);
+                    isFound = true;
+                }
+                if (bookCartList.contains(book)) {
+                    book.setStatus("CART");
+                    booksForUpdate.add(book);
+                    isFound = true;
+                }
+                if (bookPaidList.contains(book)) {
+                    book.setStatus("PAID");
+                    booksForUpdate.add(book);
+                    isFound = true;
+                }
+                if (!isFound && book.getStatus() != null) {
+                    book.setStatus(null);
+                    booksForUpdate.add(book);
+                }
+            }
+        } else {
+            for (Book book : list) {
+                if (book.getStatus() != null) {
+                    book.setStatus(null);
+                    booksForUpdate.add(book);
+                }
+            }
+        }
+        if (!booksForUpdate.isEmpty()) {
+            bookRepository.saveAll(booksForUpdate);
+        }
+    }
+
+    public boolean updateStatusOfBookPaidOrArchived(Book book, UserEntity user) {
+        System.out.println("Обновление статуса у книги Куплено или В архиве");
+
+            Book2UserTypeEntity typeEntityPaid = book2UserTypeRepository.findByCodeIs("PAID");
+            Book2UserTypeEntity typeEntityArchived = book2UserTypeRepository.findByCodeIs("ARCHIVED");
+
+            List<Book2UserEntity> list = book2UserRepository.findAllByBookAndUserAndBook2UserType(book, user, typeEntityPaid);
+            if (list != null && !list.isEmpty()) {
+                Optional<Book2UserEntity> Book2User = list.stream().findFirst();
+            if (Book2User.isPresent()){
+                Book2User.get().setBook2UserType(typeEntityArchived);
+                book2UserRepository.save(Book2User.get());
+                return true;
+            }
+        } else {
+                list = book2UserRepository.findAllByBookAndUserAndBook2UserType(book, user, typeEntityArchived);
+                Optional<Book2UserEntity> Book2User = list.stream().findFirst();
+                if (Book2User.isPresent()){
+                    Book2User.get().setBook2UserType(typeEntityPaid);
+                    book2UserRepository.save(Book2User.get());
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
 
 }
 

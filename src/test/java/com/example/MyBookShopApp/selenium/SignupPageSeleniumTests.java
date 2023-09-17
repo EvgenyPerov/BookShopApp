@@ -28,9 +28,9 @@ class SignupPageSeleniumTests {
     }
 
     @Test
-    @DisplayName("Регистрация")
+    @DisplayName("Регистрация - метод не работает до конца, потому что негде взять коды из СМС и Email")
     public void signupPageTest() throws InterruptedException {
-        String name = "TestUserName",  phone = "+79015554433", mail = "test@mail.ru", pass = "1234567";
+        String name = "Samanta",  phone = "+79109893005", mail = "My@mail.ru", pass = "1234567";
         SignupPage page = new SignupPage(driver);
         page
                 .callPageSignup()
@@ -62,12 +62,14 @@ class SignupPageSeleniumTests {
     @Test
     @DisplayName("Вход, профиль, выход")
     public void signinProfileLogoutPageTest() throws InterruptedException {
-        String name = "TestUserName", mail = "test@mail.ru", pass = "1234567";
+        String name = "testName", mail = "Testmail@mail.com", pass = "1234567";
         SignupPage page = new SignupPage(driver);
         page
                 .callPageSignin()
                 .pause()
+                .pause()
                 .setTypeAuth()
+                .pause()
                 .pause()
                 .inputmail(mail)
                 .pause()
@@ -77,7 +79,10 @@ class SignupPageSeleniumTests {
                 .pause()
                 .clickSignin()
                 .pause()
-                .clickProfile()
+                .pause()
+//                .clickProfile()
+                .callPageProfile()
+                .pause()
                 .pause()
                 .clickLogout()
                 .pause()

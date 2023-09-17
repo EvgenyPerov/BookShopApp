@@ -22,7 +22,7 @@
 </head>
 <body class="Site">
 <header class="Header"
-        th:replace="~{fragments/common_header_fragment :: head(status='unauthorized')}"></header>
+        th:replace="~{fragments/common_header_fragment :: head(state='unauthorized')}"></header>
 <div class="Middle">
     <div class="Middle-top">
         <div class="wrap">
@@ -56,22 +56,24 @@
                         <div class="Contacts-form">
                             <h2>Напишите нам:
                             </h2>
-                            <form class="form" action="#" method="post">
-                                <div class="form-group">
-                                    <input class="form-input" id="name" name="name" type="text"
-                                           placeholder="Введите Имя" data-validate="require"/>
-                                </div>
-                                <div class="form-group">
-                                    <input class="form-input form-input_mail" id="mail" name="mail" type="text"
-                                           placeholder="Введите e-mail" data-validate="mail require"/>
+                            <form class="form" action="#" method="post" th:action="@{/contacts}" th:object="${contactMessageDto}">
+                                <div th:if="${state == 'unauthorized'}">
+                                    <div class="form-group">
+                                        <input class="form-input" id="name" name="name" type="text"
+                                               placeholder="Введите Имя" th:field="*{name}" data-validate="require"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <input class="form-input form-input_mail" id="mail" name="mail" type="text"
+                                               placeholder="Введите e-mail" th:field="*{email}" data-validate="mail require"/>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <input class="form-input" id="topic" name="topic" type="text"
-                                           placeholder="Введите тему" data-validate="require"/>
+                                           placeholder="Введите тему" th:field="*{subject}" data-validate="require"/>
                                 </div>
                                 <div class="form-group">
                                     <textarea class="form-textarea Contacts-message" name="message" id="message"
-                                              placeholder="Введите сообщение" data-validate="require"></textarea>
+                                              placeholder="Введите сообщение" th:field="*{text}" data-validate="require"></textarea>
                                 </div>
                                 <div class="form-group">
                                     <button class="btn btn_primary form-btn" type="submit" name="sendMessage"

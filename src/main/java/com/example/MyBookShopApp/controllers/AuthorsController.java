@@ -50,8 +50,8 @@ public class AuthorsController {
         return new SearchWordDto();
     }
 
-    @ModelAttribute("status")
-    public String authenticationStatus(){
+    @ModelAttribute("state")
+    public String authenticationState(){
         return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
     }
 
@@ -102,23 +102,23 @@ public class AuthorsController {
     @GetMapping("/authors/slug/{authorId}")
     public String getAuthors(Model model,
                                 @PathVariable(value = "authorId", required = false) Integer authorId){
-        Page<Book> page = authorService.getBooksByAuthorId(authorId, 0,10);
-        System.out.println("Найдено книг автора = " + page.getContent().size());
-        model.addAttribute("authorBooks",page.getContent());
+        List<Book> list = authorService.getBooksByAuthorId(authorId, 0,10);
+        System.out.println("Найдено книг автора = " + list.size());
+        model.addAttribute("authorBooks",list);
         model.addAttribute("id",authorId);
         model.addAttribute("countOfBooks", authorService.getCountBooksByAuthorId(authorId));
-        model.addAttribute("name",authorService.getAuthorNameById(authorId));
+        model.addAttribute("author",authorService.getAuthorById(authorId));
         return "/authors/slug";
     }
 
     @GetMapping("/books/author/{authorId}")
     public String getAuthorPage(Model model,
                              @PathVariable(value = "authorId", required = false) Integer authorId){
-        Page<Book> page = authorService.getBooksByAuthorId(authorId, 0,5);
-        System.out.println("Найдено дополнительно книг автора = " + page.getContent().size());
-        model.addAttribute("authorBooks",page.getContent());
+        List<Book> list = authorService.getBooksByAuthorId(authorId, 0,20);
+        System.out.println("Найдено дополнительно книг автора = " + list.size());
+        model.addAttribute("authorBooks",list);
         model.addAttribute("id",authorId);
-        model.addAttribute("name",authorService.getAuthorNameById(authorId));
+        model.addAttribute("author",authorService.getAuthorById(authorId));
         return "/books/author";
     }
     @ApiOperation("этот метод постраничная загрузка книг найденных по Автору")
@@ -128,8 +128,8 @@ public class AuthorsController {
              @PathVariable(value = "authorId", required = false) Integer authorId
             , @RequestParam(value ="offset", required = false) Integer offset
             , @RequestParam(value ="limit", required = false) Integer limit){
-        Page<Book> page = authorService.getBooksByAuthorId(authorId, offset, limit);
-        return new BooksPageDto(page.getContent());
+        List<Book> list = authorService.getBooksByAuthorId(authorId, offset, limit);
+        return new BooksPageDto(list);
     }
 
 

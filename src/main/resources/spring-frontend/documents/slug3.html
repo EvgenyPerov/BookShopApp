@@ -18,7 +18,7 @@
 </head>
 <body class="Site">
 <header class="Header"
-        th:replace="~{fragments/common_header_fragment :: head(main='menu-item menu-item_ACTIVE', status='unauthorized')}"></header>
+        th:replace="~{fragments/common_header_fragment :: head(main='menu-item menu-item_ACTIVE', state='unauthorized')}"></header>
 <div class="Middle">
     <div class="Middle-top">
         <div class="wrap">
@@ -29,13 +29,13 @@
     <div class="wrap">
         <main class="Middle-main">
             <ul class="breadcrumbs"
-                th:replace="~{fragments/breadcrumb_fragment :: breadcrumps(category='Политика обработки персональных данных')}"></ul>
-            <h1 class="Middle-title">Политика обработки персональных данных
+                th:replace="~{fragments/breadcrumb_fragment :: breadcrumps(category= ${doc.title})}"></ul>
+            <h1 class="Middle-title" th:text="${doc.title}">Политика обработки персональных данных
             </h1>
             <article class="Article">
                 <div class="sdf">
                 </div>
-                <div class="pict pict_left"><img src="/assets/img/content/documents/2.jpg" alt="2.jpg"/>
+                <div class="pict pict_left"><img src="/assets/img/content/documents/3.jpg" alt="3.jpg"/>
                 </div>
                 <div th:replace="~{fragments/politics_text_fragment :: block}"></div>
             </article>

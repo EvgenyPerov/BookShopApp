@@ -10,4 +10,6 @@ public interface TransactionRepository extends JpaRepository<BalanceTransactionE
 
    Page<BalanceTransactionEntity> findAllByUserIdOrderByTimeDesc(int userId , Pageable nextPage);
 
+   Page<BalanceTransactionEntity> findAllByUserIdOrderByTimeAsc(int userId , Pageable nextPage);
+
 }

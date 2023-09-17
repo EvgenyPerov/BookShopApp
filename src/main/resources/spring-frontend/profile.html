@@ -29,7 +29,7 @@
 </head>
 <body class="Site">
 <header class="Header"
-        th:replace="~{fragments/common_header_fragment :: head(status='authorized')}"></header>
+        th:replace="~{fragments/common_header_fragment :: head(state='authorized')}"></header>
 <div class="Middle">
     <div class="Middle-top">
         <div class="wrap">
@@ -150,11 +150,12 @@
                                 </table>
                             </div>
                             <div class="Transactions-footer Transactions-footer_center" >
-                                <a class=  "btn btn_primary Transactions-get" href="#"
+                                <a class= "btn btn_primary Transactions-get" id="showTransaction" style="display: -moz-box"
+                                   href="#"
                                     data-transactionoffset="0"
                                     data-transactionlimit="5"
                                     data-transactionsort="desc"
-                                    th:attr="data-transactionoffset=${0}, data-transactionlimit=${5}, data-transactionsort=${'desc'}"
+                                    th:attr="data-transactionoffset=${0}, data-transactionlimit=${2}, data-transactionsort=${'desc'}"
                                      >Показать еще
                                 </a>
                             </div>

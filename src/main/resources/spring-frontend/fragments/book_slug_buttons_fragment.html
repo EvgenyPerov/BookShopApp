@@ -4,8 +4,8 @@
     <div class="ProductCard-cart">
         <div class="ProductCard-cartElement">
             <button class="btn btn_primary btn_outline" data-sendstatus="KEPT"
-                    data-bookid="[1111]" th:attr="data-bookid = ${bookId}, data-source=${'slug'}" id="KEPT"
-                    data-btntype="check" data-btnradio="buyblock" data-check="false"
+                    data-bookid="[1111]" th:attr="data-bookid = ${book.id}, data-source=${'slug'}" id="KEPT"
+                    data-btntype="check" data-btnradio="buyblock" data-check="true"
                     data-alttext="Отложена"><span class="btn-icon"><img
                     src="/assets/img/icons/heart.svg" alt="heart.svg"/></span><span
                     class="btn-content">Отложить</span>
@@ -13,15 +13,16 @@
         </div>
         <div class="ProductCard-cartElement">
             <button class="btn btn_primary btn_outline" data-sendstatus="CART"
-                    data-bookid="[1111]" th:attr="data-bookid = ${bookId}, data-source=${'slug'}" id="CART"
-                    data-btntype="check" data-btnradio="buyblock" data-check="false"
+                    data-bookid="[1111]" th:attr="data-bookid = ${book.id}, data-source=${'slug'}" id="CART"
+                    data-btntype="check" data-btnradio="buyblock" data-check="true"
                     data-alttext="В корзине"><span class="btn-icon"><img
                     src="/assets/img/icons/shopping-basket.svg"
                     alt="shopping-basket.svg"/></span><span class="btn-content">Купить</span>
             </button>
         </div>
     </div>
-    <div class="ProductCard-cart">
+
+    <div class="ProductCard-cart" th:if="${state == 'authorized' && (book.status == 'PAID' || book.status == 'ARCHIVED')}">
         <div class="ProductCard-cartElement">
             <a class="btn btn_primary btn_outline" href="#">
                 <span class="btn-icon"><img src="/assets/img/icons/download.svg" alt="download.svg"/>  </span>
@@ -30,21 +31,34 @@
         </div>
         <div class="ProductCard-cartElement">
             <button class="btn btn_primary btn_outline" data-sendstatus="ARCHIVED"
-                    data-bookid="[1111]" data-btntype="check" data-btnradio="buyblock" id="ARCHIVED"
-                    data-check="false" data-alttext="Вернуть из архива"><span class="btn-icon"><img
-                    src="/assets/img/icons/archive.svg" alt="archive.svg"/></span><span
-                    class="btn-content">В архив</span>
+                    data-bookid="[1111]" th:attr="data-bookid = ${book.id}, data-check = ${book.status == 'PAID' ? 'true' : 'false' } "
+                    data-btntype="check" data-btnradio="buyblock" id="ARCHIVED"
+                    data-check="true" data-alttext="Вернуть из архива" >
+                <span class="btn-icon"><img src="/assets/img/icons/archive.svg" alt="archive.svg"/></span>
+                <span class="btn-content" th:text="${book.status == 'PAID' ? 'В архив' : 'Вернуть из архива'}">В архив </span>
             </button>
         </div>
         <div id="myPopup">
-            <p> Ссылки для скачивания:</p>
-            <div th:each="bookFile: ${slugBook.bookFileList}" >
-                <a  href="#" th:href="${'/books/download/'+ bookFile.hash}"
-                    th:text="${bookFile.getExtensionStringByTypeId()}"> </a>
+            <div th:if="${countFileDownload < 3}">
+                <p> Ссылки для скачивания:</p>
+                <!--            th:text="${bookFile.getExtensionString()}"-->
+                <div th:each="bookFile: ${book.bookFileList}">
+                    <a href="#" th:href="${'/books/download/'+ bookFile.hash}"
+                       th:text="${bookFile.bookFileTypeEntity.name + ' файл размер - ' + bookFile.size}"> </a>
+                </div>
+            </div>
+
+            <div th:if="${countFileDownload > 2}">
+                <span th:text=" ${'Было скачано ' + countFileDownload + ' раза. Вы превысили лимит скачивания данной книги.'}"></span>
+                <a th:href="${'/contacts'}">Обратитесь в техподдержку </a>
+                <p>если хотите скачать книгу снова.<p>
+
             </div>
             <span id="myPopup_close" class="close">❎</span>
         </div>
+
         <div id="myOverlay">  </div>
     </div>
+
 </div>
 </html>

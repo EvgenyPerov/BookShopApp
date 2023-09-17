@@ -30,12 +30,15 @@ public class RecentPage {
 
     public RecentPage clickDateFrom() {
         WebElement webElementFrom = driver.findElement(By.id("fromdaterecent"));
+//        By.xpath("/html/body/div[1]/div/main/div/div[1]/form/div[1]/input")
+
         webElementFrom.click();
         return this;
     }
 
     public RecentPage clickDateMonthsFrom() {
         WebElement webElementFrom = driver.findElement(By.xpath("//*[@id=\"datepickers-container\"]/div[1]/nav/div[2]"));
+                                                                             //*[@id="datepickers-container"]/div[1]/nav/div[2]
         webElementFrom.click();
         return this;
     }

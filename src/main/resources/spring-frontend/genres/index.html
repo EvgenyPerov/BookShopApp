@@ -20,19 +20,22 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 
     <script th:replace="~{fragments/common_js_fragment :: jsFragment}"> </script>
+
 </head>
 <body class="Site">
-<header class="Header" th:replace="~{fragments/common_header_fragment :: head(genres='menu-item menu-item_ACTIVE', status='unauthorized')}">
+<header class="Header" th:replace="~{fragments/common_header_fragment :: head(genres='menu-item menu-item_ACTIVE', state='unauthorized')}">
 </header>
 <div class="Middle">
     <div class="wrap">
         <main class="Middle-main">
             <h1 class="Middle-title">Жанры
             </h1>
-            <div class="Section">
+            <div class="Section" >
                 <div class="Tags Tags_genres"
                      th:replace="~{fragments/genre_fragment :: genreFragment}">
                 </div>
+
+
             </div>
         </main>
     </div>

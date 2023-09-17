@@ -13,13 +13,18 @@
                     <div class="Card">
                         <a class="Card-picture" href="/books/slug.html" th:href="@{'/books/'+${book.id}}"><img
                                 th:src="${book.image}"  alt="card.jpg"/>
+                            <div class="Card-sale" th:if="${book.discount > 0}" th:text="${book.discount} + '% скидка'"> </div>
+                            <div class="Card-ribbon" th:if="${book.isBestseller == 1}"><span class="Card-ribbonText">Бестселлер</span></div>
+                            <a class="Card-status" title="Куплена" th:if="${book.status == 'PAID'}"><img src="/assets/img/icons/check.svg" alt="Куплена"></a>
+                            <a class="Card-status" title="В корзине" th:if="${book.status == 'CART'}"><img src="/assets/img/icons/shopping-basket.svg" alt="В корзине"></a>
+                            <a class="Card-status" title="Отложена" th:if="${book.status == 'KEPT'}"><img src="/assets/img/icons/heart.svg" alt="Отложена"></a>
                         </a>
                         <div class="Card-content">
                             <strong class="Card-title"><a href="/books/slug.html" th:href="@{'/books/'+${book.id}}"
                                                           th:text="${book.title}">Техника</a>
                             </strong>
-                            <div class="Card-description" th:text="${book.author.name}">Кондратенко Валерий Петрович
-                            </div>
+                            <div class="Card-link-author" th:text="${book.allAuthorsNameString()}">Кондратенко Валерий Петрович  </div>
+                            <div class="Card-description" th:text="${book.description}">  </div>
                             <div class="Card-cost">
                                 <span class="Card-priceOld"
                                       th:text="(${book.discount != 0} ? ${'₽'+ book.price})"></span>

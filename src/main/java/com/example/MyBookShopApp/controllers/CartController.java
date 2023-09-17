@@ -73,12 +73,12 @@ public class CartController {
                               @RequestParam(value = "result", required = false) Boolean isPaymentOk,
                               @RequestParam(value = "error", required = false) String errorMessage) {
 
-        String status;
+        String state;
         List<Book> books = new ArrayList<>();
         UserEntity user = userService.getCurrentUser();
 
         if (user == null) {
-            status = "unauthorized";
+            state = "unauthorized";
             System.out.println("страница Отложенное, берем Cookie из запроса, нет пользователя");
 
             if (cartContents == null || cartContents.isBlank()) {
@@ -89,7 +89,7 @@ public class CartController {
                 books = bookService.getBooksFromCookies(cartContents);
             }
         } else {
-            status = "authorized";
+            state = "authorized";
             System.out.println("страница Корзина, берем Cookie из БД для пользователя "+ user.getName());
             model.addAttribute("curUser", user);
             books = book2UserService.getBooksFromRepoByTypeCodeAndUser("CART",user);
@@ -97,9 +97,9 @@ public class CartController {
             if (books.isEmpty()) {
                 model.addAttribute("isCartEmpty", true);
             } else {
+                book2UserService.updateStatusOfBook(books, user);
                 model.addAttribute("isCartEmpty", false);
                 model.addAttribute("balance", user.getBalance());
-                System.out.println("Баланс=  "+ user.getBalance());
                 if (isPaymentOk != null && isPaymentOk){
                     for (Book book : books) {
                         book2UserService.update("PAID", book, user);
@@ -115,7 +115,7 @@ public class CartController {
 
             model.addAttribute("bookCartTotalCost", bookService.getBookCartTotalCost(books));
 
-            model.addAttribute("status", status);
+            model.addAttribute("state", state);
 
             model.addAttribute("PaymentOk", isPaymentOk);
 
@@ -165,10 +165,9 @@ public class CartController {
                     cookiesKeptNew.setPath("/");
                     cookiesKeptNew.setHttpOnly(true);
                     response.addCookie(cookiesKeptNew);
-
                 }
-
             } else {
+
                 System.out.println("Нажали Купить  с ресурса " + source);
 
                 if (source.equals("postponed")){

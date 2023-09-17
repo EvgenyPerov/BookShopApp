@@ -22,25 +22,30 @@
 </head>
 <body class="Site">
 <header class="Header"
-        th:replace="~{fragments/common_header_fragment :: head(status=${status})}"></header>
+        th:replace="~{fragments/common_header_fragment :: head(state=${state})}"></header>
 <div class="Middle">
     <div class="wrap">
         <main class="Middle-main">
-            <h1 class="Middle-title">Корзина
-            </h1>
+            <h1 class="Middle-title">Корзина </h1>
             <h3 th:if="${isCartEmpty}">Корзина пуста 😭</h3>
+
             <form class="form Cart" action="#" method="post">
                 <div class="Cart-product" th:each="book : ${bookCartList}">
-                    <div class="Cart-block Cart-block_row">
-                        <div class="Cart-block Cart-block_pict">
-                            <a class="Cart-pict" href="#"><img class="Cart-img"
-                                                               src="/assets/img/content/main/card.jpg"
-                                                               th:src="${book.image}"
-                                                               alt="card.jpg"/></a>
+                    <div class="Cart-block Cart-block_row ProductCard">
+                        <div class="Cart-block Cart-block_pict ProductCard-look">
+                            <a class="Cart-pict" href="#" th:href="@{${'/books/'} + ${book.id}}" >
+                                <img   src="/assets/img/content/main/card.jpg" th:src="${book.image}" alt="card.jpg"/>
+
+                                <div class="Card-sale" th:if="${book.discount > 0}" th:text="${book.discount} + '% скидка'"> </div>
+                                <div class="Card-ribbon" th:if="${book.isBestseller == 1}"><span class="Card-ribbonText">Бестселлер</span></div>
+                                <a class="Card-status" title="Куплена" th:if="${book.status == 'PAID'}"><img src="/assets/img/icons/check.svg" alt="Куплена"></a>
+                                <a class="Card-status" title="В корзине" th:if="${book.status == 'CART'}"><img src="/assets/img/icons/shopping-basket.svg" alt="В корзине"></a>
+                                <a class="Card-status" title="Отложена" th:if="${book.status == 'KEPT'}"><img src="/assets/img/icons/heart.svg" alt="Отложена"></a>
+                            </a>
                         </div>
                         <div class="Cart-block Cart-block_row">
                             <div class="Cart-block Cart-block_info">
-                                <div class="Cart-author"><a href="#" th:text="${book.authorName()}">Борис Васильевич Бедный</a>
+                                <div class="Cart-author"><a href="#" th:text="${book.allAuthorsNameString()}">Борис Васильевич Бедный</a>
                                 </div>
                                 <div class="Cart-title"><a href="#" th:text="${book.title}">Жизнь</a>
                                 </div>
@@ -123,7 +128,7 @@
                                 <div class="Cart-priceTitle">Цена: </div>
                                 <span class="Cart-price Cart-price_old" th:text="(${book.discount != 0} ? ${'₽'+ book.price})">254 р. </span>
                                 <span class="Cart-price" th:text="${'₽'+ book.discountPrice()}">230 р. </span>
-                                <span class="Cart-sale" th:text="(${book.discount != 0} ? ${'-'+ book.discount + '%'})"  >-10% </span>
+<!--                                <span class="Cart-sale" th:text="(${book.discount != 0} ? ${'-'+ book.discount + '%'})"  >-10% </span>-->
                             </div>
                         </div>
                     </div>
@@ -136,20 +141,20 @@
                         <span class="Cart-price_old" th:text="(${bookCartDiscountCost != bookCartTotalCost} ? ${bookCartTotalCost+' р.'} :'')">658 р.</span>
                     </div>
 
-                    <div class="Cart-block" th:if="${status == 'unauthorized'}">
+                    <div class="Cart-block" th:if="${state == 'unauthorized'}">
                         <a class="btn btn_success btn_md" th:href="@{/signin}" href="/order.html">Купить</a>
                     </div>
 
-                    <div class="Topup-title" style="color: red" th:if="${status == 'authorized' && bookCartDiscountCost>balance && isCartEmpty == false}">Недостаточно денег на счету</div>
+                    <div class="Topup-title" style="color: red" th:if="${state == 'authorized' && bookCartDiscountCost>balance && isCartEmpty == false}">Недостаточно денег на счету</div>
 
-                    <div class="Cart-block" th:if="${status == 'authorized' && bookCartDiscountCost > 0  && bookCartDiscountCost>balance}">
+                    <div class="Cart-block" th:if="${state == 'authorized' && bookCartDiscountCost > 0  && bookCartDiscountCost>balance}">
                         <a class="btn btn_dark btn_md"
                            th:href="@{'/books/cart'}"
                            href="/order.html" >Купить
                         </a>
                     </div>
 
-                    <div class="Cart-block" th:if="${status == 'authorized' && bookCartDiscountCost > 0  && bookCartDiscountCost<=balance  && isCartEmpty == false}">
+                    <div class="Cart-block" th:if="${state == 'authorized' && bookCartDiscountCost > 0  && bookCartDiscountCost<=balance  && isCartEmpty == false}">
                         <a class="btn btn_success btn_md"
                            th:href="@{'/buy?sum=' + ${bookCartDiscountCost} +'&user='+${curUser.hash}}"
                            href="/order.html" >Купить

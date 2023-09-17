@@ -32,13 +32,13 @@ class MainPageControllerTests {
 
 
     @Test
-    @DisplayName("Поиск по слову 'Born'")
+    @DisplayName("Поиск по слову 'Patt'")
     public void searchTest() throws Exception{
-        mockMvc.perform(MockMvcRequestBuilders.get("/search/Born"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/search/Patt"))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers
-                        .xpath("/html/body/div/div/main/div[2]/div/div[1]/div[2]/strong/a")
-                        .string("Born Romantic"));
+                        .xpath("/html/body/div/div/main/div/div/div/div[2]/strong/a")
+                        .string("Patton"));
 
     }
 

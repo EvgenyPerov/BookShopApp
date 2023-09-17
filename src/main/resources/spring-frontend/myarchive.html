@@ -18,7 +18,7 @@
 </head>
 <body class="Site">
 <header class="Header"
-        th:replace="~{fragments/common_header_fragment :: head(status='authorized')}"></header>
+        th:replace="~{fragments/common_header_fragment :: head(state='authorized')}"></header>
 <div class="Middle">
     <div class="wrap">
         <main class="Middle-main">
@@ -35,7 +35,7 @@
                     <h1 class="Section-title">Мои книги
                     </h1>
                     <div class="Section-header-links"><a class="Section-header-link"
-                                                         href="/my.html" th:href="@{/my}">Непрочитанные</a><span
+                                                         href="/my.html" th:href="@{/books/my}">Непрочитанные</a><span
                             class="Section-header-link Section-header-link_ACTIVE">Архив</span>
                     </div>
                 </div>

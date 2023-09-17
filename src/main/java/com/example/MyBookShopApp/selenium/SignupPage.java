@@ -9,6 +9,8 @@ public class SignupPage {
     private String urlSignup = "http://localhost:8085/signup";
     private String urlSignin = "http://localhost:8085/signin";
 
+    private String urlProfile = "http://localhost:8085/profile";
+
     private ChromeDriver driver;
     public SignupPage(ChromeDriver driver) {
         this.driver = driver;
@@ -114,9 +116,13 @@ public class SignupPage {
         return this;
     }
 
-    public SignupPage clickProfile() {
-        WebElement webElement = driver.findElement(By.xpath("/html/body/header/div[1]/div/div/div[3]/div/a[4]/span[1]"));
-        webElement.click();
+//    public SignupPage clickProfile() {
+//        WebElement webElement = driver.findElement(By.xpath("/html/body/header/div[1]/div/div/div[3]/div/a[4]/svg"));
+//        webElement.click();
+//        return this;
+//    }
+    public SignupPage callPageProfile() {
+        driver.get(urlProfile);
         return this;
     }
 

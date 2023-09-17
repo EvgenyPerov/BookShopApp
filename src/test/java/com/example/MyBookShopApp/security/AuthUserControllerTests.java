@@ -23,9 +23,9 @@ class AuthUserControllerTests {
     private MockMvc mockMvc;
 
     @Test
-    @DisplayName("Доступ к 'my' только для регист users")
+    @DisplayName("Нет доступа к 'my' для не регист users")
     public void accessOnliAuthorizedPageFailTest() throws Exception{
-        mockMvc.perform(MockMvcRequestBuilders.get("/my"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/books/my"))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
                 .andExpect(MockMvcResultMatchers.redirectedUrl("http://localhost/signin"));
@@ -42,10 +42,10 @@ class AuthUserControllerTests {
     }
 
     @Test
-    @DisplayName("Доступ к странице 'profile' только для регист users")
+    @DisplayName("Доступ к странице 'my' только для регист users")
     @WithUserDetails("My@mail.ru")
     public void testAuthentificatedAccessToProfilePage() throws Exception{
-        mockMvc.perform(MockMvcRequestBuilders.get("/profile"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/books/my"))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(SecurityMockMvcResultMatchers.authenticated())
                 .andExpect(MockMvcResultMatchers

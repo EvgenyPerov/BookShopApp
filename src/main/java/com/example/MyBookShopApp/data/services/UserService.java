@@ -292,9 +292,13 @@ public class UserService {
             transactionRepository.save(transaction);
     }
 
-    public Page<BalanceTransactionEntity> getPageOfBalanceTransactionDesc(UserEntity user, Integer offset, Integer limit){
+    public Page<BalanceTransactionEntity> getPageOfBalanceTransactionDesc(UserEntity user, Integer offset, Integer limit, String sort){
         Pageable nextPage = PageRequest.of(offset, limit);
-        Page<BalanceTransactionEntity> page = transactionRepository.findAllByUserIdOrderByTimeDesc(user.getId(), nextPage);
+
+        Page<BalanceTransactionEntity> page = sort.equalsIgnoreCase("desc")?
+                transactionRepository.findAllByUserIdOrderByTimeDesc(user.getId(), nextPage) :
+                transactionRepository.findAllByUserIdOrderByTimeAsc(user.getId(), nextPage);
+
         return page;
     }
 
@@ -312,6 +316,7 @@ public class UserService {
     }
 
     public ContactConfirmationResponse jwtLogin(ContactConfirmationPayload payload) {
+        System.out.println("Пароль не верный, вход выполнен - " + payload.getCode()); //
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(payload.getContact(), payload.getCode()));
 
@@ -324,7 +329,37 @@ public class UserService {
 
         ContactConfirmationResponse response = new ContactConfirmationResponse();
         response.setResult(jwtToken);
+
+
+
         return response;
+    }
+
+
+    public ContactConfirmationResponse jwtLoginByPhoneNumber(ContactConfirmationPayload payload) {
+        RegistrationForm registrationForm = new RegistrationForm();
+        registrationForm.setPhone(payload.getContact());
+        registrationForm.setPass(payload.getCode());
+
+        addUser(registrationForm);
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(payload.getContact());
+        String jwtToken = jwtUtil.generateToken(userDetails);
+        ContactConfirmationResponse response = new ContactConfirmationResponse();
+        response.setResult(jwtToken);
+
+        return response;
+    }
+
+    public boolean userHasJwtToken(Object user){
+        if (user instanceof UserDetails) {
+            System.out.println("Тип входа = токен " + user.getClass().getSimpleName() + " Email or Phone = " + ((BookstoreUserDetails) user).getUsername());
+            return true;
+        }
+        if (user instanceof OAuth2User) {
+            System.out.println("Тип входа = OAuth2 " + user.getClass().getSimpleName() + " Email = " + ((CustomOAuth2User) user).getEmail());
+        }
+        return  false;
     }
 
     public UserEntity getCurrentUser()  {
@@ -361,32 +396,5 @@ public class UserService {
             throw new myJwtException(expiredMessage);
         }
     }
-
-    public boolean userHasJwtToken(Object user){
-         if (user instanceof UserDetails) {
-            System.out.println("Тип входа = токен " + user.getClass().getSimpleName() + " Email or Phone = " + ((BookstoreUserDetails) user).getUsername());
-            return true;
-        }
-        if (user instanceof OAuth2User) {
-            System.out.println("Тип входа = OAuth2 " + user.getClass().getSimpleName() + " Email = " + ((CustomOAuth2User) user).getEmail());
-        }
-        return  false;
-    }
-
-    public ContactConfirmationResponse jwtLoginByPhoneNumber(ContactConfirmationPayload payload) {
-        RegistrationForm registrationForm = new RegistrationForm();
-        registrationForm.setPhone(payload.getContact());
-        registrationForm.setPass(payload.getCode());
-
-        addUser(registrationForm);
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(payload.getContact());
-        String jwtToken = jwtUtil.generateToken(userDetails);
-        ContactConfirmationResponse response = new ContactConfirmationResponse();
-        response.setResult(jwtToken);
-
-        return response;
-    }
-
 
 }

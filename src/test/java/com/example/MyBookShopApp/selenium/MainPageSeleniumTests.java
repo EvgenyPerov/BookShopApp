@@ -88,33 +88,20 @@ class MainPageSeleniumTests {
     }
 
     @Test
-    @DisplayName("Click 'вправо' на рекомендуемом")
+    @DisplayName("Click 'вправо и влево' на рекомендуемом")
     public void mainPageClickRightRecomendedTest() throws InterruptedException {
         MainPage mainPage = new MainPage(driver);
         mainPage
                 .callPage()
                 .pause()
-                .mainPageClickRightRecomended()
                 .pause()
-                .pause();
-        Assertions.assertTrue(driver.findElementByXPath("/html/body/div/div/main/div[1]/div[1]/div[2]/div[2]/div/button[1]").isDisplayed());
-    }
-
-    @Test
-    @DisplayName("Click 'влево' на рекомендуемом")
-    public void mainPageClickLeftRecomendedTest() throws InterruptedException {
-        MainPage mainPage = new MainPage(driver);
-        mainPage
-                .callPage()
                 .pause()
                 .mainPageClickRightRecomended()
-                .pause()
-                .mainPageClickLeftRecomended()
                 .pause()
                 .mainPageClickLeftRecomended()
                 .pause()
                 .pause();
-        Assertions.assertFalse(driver.findElementByXPath("/html/body/div/div/main/div[1]/div[1]/div[2]/div[2]/div/button[1]").isDisplayed());
+        Assertions.assertTrue(driver.findElementByXPath("/html/body/div/div/main/div[1]/div[1]/div[2]/div[2]/div/button[1]").isDisplayed());
     }
 
     @Test

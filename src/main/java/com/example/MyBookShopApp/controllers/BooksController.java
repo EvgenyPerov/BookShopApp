@@ -51,8 +51,8 @@ public class BooksController {
         return new SearchWordDto();
     }
 
-    @ModelAttribute("status")
-    public String authenticationStatus(){
+    @ModelAttribute("state")
+    public String authenticationState(){
         return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
     }
 
@@ -71,15 +71,15 @@ public class BooksController {
         }
     }
 
-    @ModelAttribute("lookedBooks")
-    public List<Book> geBookLookedList() {
-        UserEntity user = userService.getCurrentUser();
-        if (user != null) {
-            return book2UserService.getLookedBooksByUserLastMonth(user);
-        } else {
-            return new ArrayList<>();
-        }
-    }
+//    @ModelAttribute("lookedBooks")
+//    public List<Book> geBookLookedList() {
+//        UserEntity user = userService.getCurrentUser();
+//        if (user != null) {
+//            return book2UserService.getLookedBooksByUserLastMonth(user);
+//        } else {
+//            return new ArrayList<>();
+//        }
+//    }
 
     @ModelAttribute("bookPostponedList")
     public List<Book> geBookPostponedList(@CookieValue(name = "postponedContents", required = false) String postponedContents){
@@ -107,7 +107,7 @@ public class BooksController {
     public String recentFirstPage(Model model) {
         System.out.println("Переход на страницу Новинки");
         model.addAttribute("recentResults",
-                bookService.getPageOfRecentBooks(null, null, 0, 20).getContent());
+                bookService.getPageOfRecentBooks(null, null, 0, 20));
         return "/books/recent";
     }
 
@@ -121,9 +121,7 @@ public class BooksController {
             , @RequestParam(value ="to", required = false) String to
             , @RequestParam(value ="offset", required = false) Integer offset
             , @RequestParam(value ="limit", required = false) Integer limit) {
-        System.out.println("Передача данных Новинок книг в JS с параметрами offset = "+ offset +
-                " limit= "+ limit + " from= "+ from + " to= "+ to);
-        return new BooksPageDto(bookService.getPageOfRecentBooks(from, to, offset, limit).getContent());
+        return new BooksPageDto(bookService.getPageOfRecentBooks(from, to, offset, limit));
     }
 
     // метод срабатывает выборе в главном меню
@@ -131,7 +129,7 @@ public class BooksController {
     @GetMapping("/popular")
     public String popularPage(Model model){
         System.out.println("Переход на страницу Популярное");
-        model.addAttribute("popularBooks",bookService.getPageOfPopularBooks(0, 20).getContent());
+        model.addAttribute("popularBooks",bookService.getPageOfPopularBooks(0, 20));
         return "/books/popular";
     }
 
@@ -141,8 +139,7 @@ public class BooksController {
     @GetMapping("/page/popular")
     public BooksPageDto getPopularBooksPage(@RequestParam("offset") Integer offset,
                                             @RequestParam("limit") Integer limit) {
-        System.out.println("Передача данных популярных книг в JS с параметрами offset = "+ offset + " limit= "+ limit);
-        return new BooksPageDto(bookService.getPageOfPopularBooks(offset,limit).getContent());
+        return new BooksPageDto(bookService.getPageOfPopularBooks(offset,limit));
     }
 
 
@@ -153,11 +150,6 @@ public class BooksController {
         System.out.println("Переход на страницу SLUG book Id = " + bookId + " Тип- "+bookId.getClass());
         try {
             Book book = bookService.getBookById(bookId);
-            model.addAttribute("slugBook", book);
-
-            System.out.println("Средний рейтинг = " + userService.getRatingMapByBookId(bookId).get(100));
-
-            System.out.println("Количество голосов = " + userService.getRatingMapByBookId(bookId).get(200));
 
             model.addAttribute("ratingMap", userService.getRatingMapByBookId(bookId));
 
@@ -168,10 +160,18 @@ public class BooksController {
             UserEntity user = userService.getCurrentUser();
             if (user != null) {
                 book2UserService.addLookedBook(book, user);
+
+                List<Book> list = new ArrayList<>();
+                list.add(book);
+                bookService.updateStatusOfBook(list , user);
+
+                model.addAttribute("book", book);
                 model.addAttribute("curUser", user);
+                model.addAttribute("countFileDownload", storage.getCountFileDownloadByUser(book, user));
                 return "/books/slugmy";
             }
 
+            model.addAttribute("book", book);
             return "/books/slug";
 
         } catch (TypeMismatchException e){ //MethodArgumentTypeMismatchException NumberFormatException TypeMismatchException
@@ -207,6 +207,12 @@ public class BooksController {
 
         byte[] data = storage.getBookFileByteArray(hash);
 
+        // В описание файла добавить размер в Мбайтах
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {
+            storage.addFileDownload(hash, user);
+        }
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + path.getFileName().toString())
                 .contentType(mediaType)
@@ -218,7 +224,7 @@ public class BooksController {
     public String handleChangeBookStatusRating(@PathVariable(value = "bookId", required = true) Integer bookId,
                                         @RequestParam(value = "value", required = false) int value) {
 
-    if (authenticationStatus() == "authorized"){
+    if (authenticationState() == "authorized"){
         UserEntity user = userService.getCurrentUser();
         Book book = bookService.getBookById(bookId);
         userService.setRatingForBook(book, user, value);
@@ -231,7 +237,7 @@ public class BooksController {
     public String handleChangeBookStatusReview(@PathVariable(value = "reviewId", required = true) Integer reviewId,
                                                @PathVariable(value = "value", required = true) short value) {
 
-        if (authenticationStatus() == "authorized"){
+        if (authenticationState() == "authorized"){
             UserEntity user = userService.getCurrentUser();
             userService.setReviewLikeForBook(reviewId, user, value);
             System.out.println("Лайки для отзыва = " + reviewId + " оценка = " + value);
@@ -243,7 +249,7 @@ public class BooksController {
     public String saveNewReviewForBook(@PathVariable(value = "bookId") Integer bookId,
                                        @PathVariable(value = "text") String text) {
 
-        if (authenticationStatus() == "authorized") {
+        if (authenticationState() == "authorized") {
             UserEntity user = userService.getCurrentUser();
             userService.addReviewForBook(bookService.getBookById(bookId), user, text);
             System.out.println("Оставляем отзыв для книги " + bookId + " : " + text);

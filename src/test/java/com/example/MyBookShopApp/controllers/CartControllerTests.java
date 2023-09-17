@@ -27,7 +27,7 @@ class CartControllerTests {
     @DisplayName("Добавление книги в корзину не авториз user")
     void handleChangeBookStatusCart() throws Exception {
         int  bookId = 3;
-        mockMvc.perform(SecurityMockMvcRequestBuilders.formLogin("/books/changeBookStatus/CART/"+bookId))
+        mockMvc.perform(SecurityMockMvcRequestBuilders.formLogin("/books/changeBookStatus/CART/"+bookId+"/slug"))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
                 .andExpect(MockMvcResultMatchers.redirectedUrl("/books/postponed"))

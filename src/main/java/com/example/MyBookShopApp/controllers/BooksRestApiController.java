@@ -1,17 +1,18 @@
 package com.example.MyBookShopApp.controllers;
 
+import com.example.MyBookShopApp.data.repo.Book2AuthorRepository;
 import com.example.MyBookShopApp.data.responses.ApiResponse;
 import com.example.MyBookShopApp.data.services.BookService;
 import com.example.MyBookShopApp.errs.BookstoreApiWrongPatameterException;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.List;
 
 @Api(description = "book data api")
@@ -28,7 +29,7 @@ public class BooksRestApiController {
     @ApiOperation("operation to get books by author name")
     @GetMapping("/by-author")
     public ResponseEntity<List<Book>> booksByAuthor(@RequestParam("author") String name){
-        return ResponseEntity.ok(bookService.getBooksByAuthor(name));
+        return ResponseEntity.ok(bookService.getBooksByAuthorContaining(name));
     }
 
     @ApiOperation("operation to get books by title")

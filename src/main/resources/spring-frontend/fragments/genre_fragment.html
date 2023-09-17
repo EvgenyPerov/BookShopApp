@@ -1,19 +1,14 @@
-<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<div th:fragment="genreFragment" th:remove="tag">
-<!--    < th:each="genre : ${#sort(genreList, 'countBooks')}">-->
-<!--    <div th:each="genre : ${@genreService.sortGenresByCountBooks(genreList)}">-->
+<div th:fragment="genreFragment" >
     <div th:each="genre : ${@genreService.sortGenresByCountBooks(genreList)}" th:class="${genre.children.isEmpty()? 'Tags': 'Tags Tags_embed'}">
         <div class="Tags-title">
-            <div class="Tag">
-                <a href="/genres/slug.html"
-                   th:href="@{${'/genres/slug/'}+${genre.id}}"
-                   th:text="${genre.name}">
+            <div th:class="${genre.children.isEmpty()? '' : 'Tag'}">
+                <a class="Tag" th:href="@{'/genres/slug/' + ${genre.id}}"
+                   th:text="${genre.name + ' ('+ genre.countBooks +')'}">
                 </a>
-                <span class="undefined-amount" th:text="'('+${genre.countBooks}+')'">(934)</span>
             </div>
         </div>
-        <div th:class='Tag' th:with="genreList=${genre.children}"
+        <div th:with="genreList=${genre.children}"
              th:insert="~{fragments/genre_fragment :: genreFragment}" th:remove="tag">
         </div>
     </div>

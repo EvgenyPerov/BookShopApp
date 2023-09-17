@@ -1,8 +1,11 @@
 package com.example.MyBookShopApp.struct.book.file;
 
+import com.example.MyBookShopApp.struct.book.book.Book;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -18,5 +21,10 @@ public class BookFileTypeEntity {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @OneToMany(mappedBy = "bookFileTypeEntity")
+    private List<BookFileEntity> bookFileList = new ArrayList<>();
+
+
 
 }

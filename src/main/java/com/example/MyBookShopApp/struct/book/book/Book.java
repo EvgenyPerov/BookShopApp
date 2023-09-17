@@ -2,6 +2,7 @@ package com.example.MyBookShopApp.struct.book.book;
 
 import com.example.MyBookShopApp.struct.author.Author;
 import com.example.MyBookShopApp.struct.book.file.BookFileEntity;
+import com.example.MyBookShopApp.struct.book.links.Book2AuthorEntity;
 import com.example.MyBookShopApp.struct.book.links.Book2GenreEntity;
 import com.example.MyBookShopApp.struct.book.links.Book2UserEntity;
 import com.example.MyBookShopApp.struct.book.review.BookRatingEntity;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "books")
@@ -89,11 +91,13 @@ public class Book {
     @Column(name = "count_of_postponed",columnDefinition = "INT NOT NULL DEFAULT 0")
     private int countOfPostponed;
 
-    @JsonIgnore
-    @ManyToOne
-    @JoinColumn(name = "author_id", referencedColumnName = "id")
-    private Author author;
+//    @JsonIgnore
+//    @ManyToOne
+//    @JoinColumn(name = "author_id", referencedColumnName = "id")
+//    private Author author;
 
+    @ApiModelProperty(value = "статус книги для конкретного пользователя")
+    private String status;
 
     @JsonIgnore
     @ManyToMany
@@ -109,6 +113,10 @@ public class Book {
     @JsonIgnore
     @OneToMany(mappedBy = "book")
     private List<Book2UserEntity> book2UserEntities = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(fetch = FetchType.EAGER,mappedBy = "book" , cascade = CascadeType.ALL)
+    private List<Book2AuthorEntity> book2AuthorEntities = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "book")
@@ -135,12 +143,22 @@ public class Book {
     }
 
     @JsonGetter("authors")
-    public String authorName(){
-        return author.getName();
+    public String allAuthorsNameString(){
+        if (book2AuthorEntities.size()<1) return "";
+        List<String> names = book2AuthorEntities.stream()
+                .filter(x -> x.getBook().getId() == this.id)
+                .map(Book2AuthorEntity :: getAuthor)
+                .map(Author::getName)
+                .collect(Collectors.toList());
+        return names.size()>1? names.get(0) +  " ... и другие" : names.get(0);
     }
 
-    public Integer authorId(){
-        return author.getId();
+    public List<Author> allAuthorsList(){
+        if (book2AuthorEntities.size()<1) return new ArrayList<>();
+        return book2AuthorEntities.stream()
+                .filter(x -> x.getBook().getId() == this.id)
+                .map(Book2AuthorEntity :: getAuthor)
+                .collect(Collectors.toList());
     }
 
     @Override

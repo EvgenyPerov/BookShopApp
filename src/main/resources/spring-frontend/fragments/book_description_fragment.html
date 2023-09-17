@@ -2,11 +2,15 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <div class="ProductCard-desc" th:fragment="bookDesc">
     <div class="ProductCard-header">
-        <h1 class="ProductCard-title" th:text="${slugBook.title}">Мара и морок
+        <h1 class="ProductCard-title" th:text="${book.title}">Мара и морок
         </h1>
-        <div class="ProductCard-author"><span class="ProductCard-titleProp">Автор:</span>&#32;
-            <a href="#" th:href="${'/authors/slug/'}+${slugBook.authorId()}"
-                th:text="${slugBook.authorName()}">Лия Арден</a>
+        <div class="ProductCard-author">
+            <span class="ProductCard-titleProp">Автор:</span>&#32;
+
+            <div th:each="author : ${book.allAuthorsList()}">
+                <a href="#" th:href="@{'/authors/slug/'+${author.id}}" th:text="${author.name}">Лия Арден
+                </a>
+            </div>
         </div>
         <div class="ProductCard-rating">
             <span class="ProductCard-titleProp">Рейтинг:</span>
@@ -306,10 +310,10 @@
             </button>
         </div>
         <div class="ProductCard-assessment"><span class="ProductCard-titleProp">Оцените книгу:</span>
-            <span class="Rating Rating_input" data-bookid="2121" th:attr="data-bookid=${slugBook.id}">
+            <span class="Rating Rating_input" data-bookid="2121" th:attr="data-bookid=${book.id}">
 
                 <span class="Rating-stars">
-                    <span class="Rating-star">
+                    <span class="Rating-star Rating-star_view">
                         <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                           <g>
                             <g>
@@ -321,7 +325,7 @@
                     </span>
                     <input name="rating" type="radio" value="1"/>
 
-                    <span class="Rating-star">
+                    <span class="Rating-star Rating-star_view">
                         <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                           <g>
                             <g>
@@ -333,7 +337,7 @@
                     </span>
                     <input name="rating" type="radio" value="2"/>
 
-                    <span class="Rating-star">
+                    <span class="Rating-star Rating-star_view">
                         <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                           <g>
                             <g>
@@ -345,7 +349,7 @@
                     </span>
                     <input name="rating" type="radio" value="3"/>
 
-                    <span class="Rating-star">
+                    <span class="Rating-star Rating-star_view">
                         <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                           <g>
                             <g>
@@ -357,7 +361,7 @@
                     </span>
                     <input name="rating" type="radio" value="4"/>
 
-                    <span class="Rating-star">
+                    <span class="Rating-star Rating-star_view">
                         <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18">
                           <g>
                             <g>
@@ -374,18 +378,18 @@
 
         <div class="ProductCard-tags" >
             <span class="ProductCard-titleProp">Тэги:</span>
-            <div th:each="tag: ${slugBook.tagList}">
+            <div th:each="tag: ${book.tagList}">
                 <a href="/tags/" th:href="@{${'/tags/index/'}+${tag.id}}"
                    th:text="${tag.name}" >Современные</a>
             </div>
         </div>
 
         <div class="ProductCard-cost"><span class="ProductCard-titleProp">Цена:</span><span
-                class="ProductCard-priceOld" th:text="(${slugBook.discountPrice() != slugBook.price} ? ${slugBook.price}) ">₽300</span><span class="ProductCard-price" th:text="${slugBook.discountPrice()}">₽180</span>
+                class="ProductCard-priceOld" th:text="(${book.discountPrice() != book.price} ? ${book.price}) ">₽300</span><span class="ProductCard-price" th:text="${book.discountPrice()}">₽180</span>
         </div>
     </div>
     <div class="ProductCard-text">
-        <p th:text="${slugBook.description}">Таких, как я, называют Марами - отмеченными самой богиней смерти Мораной. Когда-то у меня
+        <p th:text="${book.description}">Таких, как я, называют Марами - отмеченными самой богиней смерти Мораной. Когда-то у меня
             и моих шести сестер был свой путь. Тогда люди нас уважали и просили о милосердии. Они
             приносили нам подношения и молились нам. Но 200 лет назад все изменилось, когда принц
             Серата осмелился поднять руку на одну из нас. Я пыталась отомстить, но погибли мы все.
@@ -394,6 +398,6 @@
             кого я никогда не пойду. Таких, как он, называют Морок, и их боятся абсолютно все.
         </p>
     </div>
-    <div th:replace="~{fragments/book_slug_buttons_fragment :: panel}"></div>
+    <div th:replace="~{fragments/book_slug_buttons_fragment :: panel(state=${state})}"></div>
 </div>
 </html>

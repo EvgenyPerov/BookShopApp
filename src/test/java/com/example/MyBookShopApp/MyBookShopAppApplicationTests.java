@@ -21,7 +21,6 @@ class MyBookShopAppApplicationTests {
 	@Test
 	@DisplayName("Это тест показывает что приложение не равно Null")
 	void contextLoads() {
-//		assertNotNull(appApplication);
 		Assertions.assertNotNull(appApplication);
 	}
 

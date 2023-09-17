@@ -61,6 +61,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                                 .buildDetails(httpServletRequest));
 
                         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+
                     }
                 }
             } catch (ExpiredJwtException e ){

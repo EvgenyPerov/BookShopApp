@@ -1,5 +1,6 @@
 package com.example.MyBookShopApp.security;
 
+import com.example.MyBookShopApp.data.dto.BooksPageDto;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
 import com.example.MyBookShopApp.data.dto.TransactionsPageDto;
 import com.example.MyBookShopApp.data.services.Book2UserService;
@@ -20,12 +21,18 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -71,8 +78,8 @@ public class AuthUserController {
         return new SearchWordDto();
     }
 
-    @ModelAttribute("status")
-    public String authenticationStatus(){
+    @ModelAttribute("state")
+    public String authenticationState(){
         return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
     }
 
@@ -107,9 +114,8 @@ public class AuthUserController {
     }
 
     @GetMapping("/signin")
-    public String signInPage(){
+    public String signInPage(Model model){
         System.out.println("Переход на страницу Вход");
-//        System.out.println("Авторизован - " + SecurityContextHolder.getContext().getAuthentication() != null);
         return "signin";
     }
 
@@ -171,7 +177,12 @@ public class AuthUserController {
 
         if (smsService.verifySmsCode(payload.getCode())) {
             response.setResult("true");
+
+                System.out.println("Код верный, выход выполнен"); //
+
         }
+        else System.out.println("Код не верный, выход не выполнен"); //
+
         return response;
     }
 
@@ -205,11 +216,15 @@ public class AuthUserController {
         return "redirect:/signin";
     }
 
-    @PostMapping("/login")
+    @PostMapping("/login-by-email")
     @ResponseBody
     public ContactConfirmationResponse handleLogin(@RequestBody ContactConfirmationPayload payload,
                                                    HttpServletResponse httpServletResponse){
+        System.out.println("@PostMapping(/login-by-email)"); //
+
         ContactConfirmationResponse loginResponse = userService.jwtLogin(payload);
+        System.out.println("loginResponse = !!!"); //
+
 
         if (jwtService.isTokenInBlacklist(loginResponse.getResult())){
             System.out.println("Токен недействителен");
@@ -225,7 +240,9 @@ public class AuthUserController {
     @PostMapping("/login-by-phone-number")
     @ResponseBody
     public ContactConfirmationResponse handleLoginByPhoneNumber(@RequestBody ContactConfirmationPayload payload,
-                                                   HttpServletResponse httpServletResponse) {
+                                                 HttpServletResponse response,
+                                                 @CookieValue(name = "tryLoginPhone", required = false) String cookieLogin) {
+
 
         if (smsService.verifySmsCode(payload.getCode())) {
             ContactConfirmationResponse loginResponse = userService.jwtLoginByPhoneNumber(payload);
@@ -236,13 +253,15 @@ public class AuthUserController {
             }
 
             Cookie cookie = new Cookie("token", loginResponse.getResult());
-            httpServletResponse.addCookie(cookie);
-
+            response.addCookie(cookie);
             return loginResponse;
-        } else return null;
+
+        } else {
+                        return null;
+        }
     }
 
-    @GetMapping("/my")
+    @GetMapping("/books/my")
     public String myPage(Model model,
                          @CookieValue(name = "cartContents", required = false) String cartContents,
                          @CookieValue(name = "postponedContents", required = false) String postponedContents){
@@ -252,8 +271,10 @@ public class AuthUserController {
         UserEntity user = userService.getCurrentUser();
         if (user != null) {
             model.addAttribute("curUser", user);
-            model.addAttribute("myPaidBooks", book2UserService.getBooksFromRepoByTypeCodeAndUser("PAID", user));
+            List<Book> list = book2UserService.getPageOfBooksFromRepoByTypeCodeAndUser(0, 20,"PAID", user);
+            model.addAttribute("myPaidBooks", list);
 
+            // после авторизации все отложенные и корзины книги перезаписываются в базу данных к этому пользователю
             List<Book> booksPostponed = bookService.getBooksFromCookies(postponedContents);
                 if (booksPostponed != null) {
                     for (Book book : booksPostponed) {
@@ -271,6 +292,36 @@ public class AuthUserController {
         return "my";
     }
 
+    @ApiOperation("operation to get my books by page")
+    @GetMapping("/books/page/my")
+    @ResponseBody
+    public BooksPageDto myBooksPage(Model model,
+                                    @RequestParam(value ="offset", required = false) Integer offset,
+                                    @RequestParam(value ="limit", required = false) Integer limit){
+        UserEntity user = userService.getCurrentUser();
+
+        if (user != null) {
+            model.addAttribute("curUser", user);
+
+            List<Book> list = book2UserService.getPageOfBooksFromRepoByTypeCodeAndUser(offset, limit,"PAID", user);
+            return new BooksPageDto(list);
+        }
+        return new BooksPageDto(new ArrayList<>());
+    }
+
+    @PostMapping("/changeBookStatus/ARCHIVED/{bookId}")
+    public String handleChangeBookStatusCart(@PathVariable(value = "bookId", required = false) String bookId){
+        System.out.println("Сработал контроллер /changeBookStatus/ARCHIVED/" + bookId);
+
+        Book book = bookService.getBookById(Integer.parseInt(bookId));
+        UserEntity user = userService.getCurrentUser();
+
+        if (user != null) {
+            boolean isChangeArchived = book2UserService.updateStatusOfBookPaidOrArchived(book, user);
+        }
+        return "redirect:/books/" + bookId;
+    }
+
     @GetMapping("/my/archive")
     public String myPage(Model model) {
         System.out.println("Переход на страницу MyArchive");
@@ -284,19 +335,35 @@ public class AuthUserController {
         return "myarchive";
     }
 
-    @ApiOperation("operation to get popular books")
-    @GetMapping("/looked")
-    public String lookedPage(Model model){
+    @ApiOperation("operation to get looked books")
+    @GetMapping("/books/looked")
+    public String lookedBooks(Model model){
         System.out.println("Переход на страницу Просмотренное");
 //        model.addAttribute("lookedBooks",bookService.getPageOfPopularBooks(0, 20).getContent());
         UserEntity user = userService.getCurrentUser();
 
         if (user != null) {
             model.addAttribute("curUser", user);
-            model.addAttribute("lookedBooks",book2UserService.getLookedBooksByUserLastMonth(user));
+            model.addAttribute("lookedBooks",book2UserService.getPageOfLookedBooksByUserLastMonth(0, 20, user));
         }
 
         return "/books/look";
+    }
+
+    @ApiOperation("operation to get looked books by page")
+    @GetMapping("/books/page/looked")
+    @ResponseBody
+    public BooksPageDto lookedBooksPage(Model model,
+                                        @RequestParam(value ="offset", required = false) Integer offset
+                                      , @RequestParam(value ="limit", required = false) Integer limit){
+        UserEntity user = userService.getCurrentUser();
+
+        if (user != null) {
+            model.addAttribute("curUser", user);
+            return new BooksPageDto(book2UserService.getPageOfLookedBooksByUserLastMonth(offset, limit, user));
+        }
+
+        return new BooksPageDto(new ArrayList<>());
     }
 
     @GetMapping("/profile")
@@ -321,7 +388,6 @@ public class AuthUserController {
                 isPaymentOk = false;
                 errorMessage = "Пополнение не выполнено";
             }
-//            TimeUnit.SECONDS.sleep(2);
             return "redirect:/profile";
         }
 
@@ -330,7 +396,7 @@ public class AuthUserController {
         model.addAttribute("ChangeOk", isChangeUserData);
         model.addAttribute("PaymentOk", isPaymentOk);
         model.addAttribute("errorMessage", errorMessage);
-        model.addAttribute("transactions", userService.getPageOfBalanceTransactionDesc(userService.getCurrentUser(),0,5).getContent());
+        model.addAttribute("transactions", userService.getPageOfBalanceTransactionDesc(userService.getCurrentUser(),0,2 , "desc").getContent());
 
 
         return "profile";
@@ -339,14 +405,16 @@ public class AuthUserController {
     @ApiOperation("этот метод мапинга нужен для JS файла, постраничная загрузка истории транзакций")
     @ResponseBody
     @GetMapping("/transactions")
-    public TransactionsPageDto getTransactionsNextPage(Model model,
-            @RequestParam(value ="sort", required = false) String sort
+    public TransactionsPageDto getTransactionsNextPage(
+              @RequestParam(value ="sort", required = false) String sort
             , @RequestParam(value ="offset", required = false) Integer offset
             , @RequestParam(value ="limit", required = false) Integer limit) {
         System.out.println("Передача данных истории транзакций в JS с параметрами offset = "+ offset +
                 " limit= "+ limit + " sort= "+ sort);
 
-        List<BalanceTransactionEntity> list = userService.getPageOfBalanceTransactionDesc(userService.getCurrentUser(), offset, limit).getContent();
+        List<BalanceTransactionEntity> list =
+                userService.getPageOfBalanceTransactionDesc(userService.getCurrentUser(), offset, limit, sort).getContent();
+
         System.out.println("Список транзакций = " + list.size() + " пустой - "+ list.isEmpty());
         return new TransactionsPageDto(list);
     }

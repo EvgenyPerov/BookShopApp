@@ -1,11 +1,13 @@
 package com.example.MyBookShopApp.controllers;
 
 import com.example.MyBookShopApp.data.dto.BooksPageDto;
+import com.example.MyBookShopApp.data.dto.ContactMessageDto;
 import com.example.MyBookShopApp.data.responses.ApiResponse;
 import com.example.MyBookShopApp.data.services.*;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
 import com.example.MyBookShopApp.errs.PayException;
 import com.example.MyBookShopApp.struct.book.book.Book;
+import com.example.MyBookShopApp.struct.other.DocumentEntity;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,8 +46,8 @@ public class OtherController {
         return new SearchWordDto();
     }
 
-    @ModelAttribute("status")
-    public String authenticationStatus(){
+    @ModelAttribute("state")
+    public String authenticationState(){
         return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
     }
 
@@ -79,10 +81,23 @@ public class OtherController {
         }
     }
 
+    @ModelAttribute("contactMessageDto")
+    public ContactMessageDto handleContactMessageDto(){
+        return new ContactMessageDto();
+    }
+
     @GetMapping("/documents/index")
-    public String documentsPage(){
+    public String documentsPage(Model model){
         System.out.println("Переход на страницу Документы");
+        model.addAttribute("documents",otherService.getAllDocuments());
         return "/documents/index";
+    }
+
+    @GetMapping("/documents/{slug}")
+    public String documentsPage(Model model, @PathVariable(value = "slug", required = false) String slug){
+        System.out.println("Переход на страницу Конкретного документа");
+        model.addAttribute("doc",otherService.getDocumentBySlug(slug));
+        return "/documents/" + slug;
     }
 
     @GetMapping("/about")
@@ -92,8 +107,9 @@ public class OtherController {
     }
 
     @GetMapping("/faq")
-    public String faqPage(){
+    public String faqPage(Model model){
         System.out.println("Переход на страницу Помощь");
+        model.addAttribute("faqMap",otherService.getMapAllFaq());
         return "/faq";
     }
 
@@ -103,13 +119,20 @@ public class OtherController {
         return "/contacts";
     }
 
+    @PostMapping("/contacts")
+    public String sendMessageToContacts(ContactMessageDto form){
+        System.out.println("Отправка сообщения в поддержку");
+        otherService.addMessageToSupport(form);
+        return "redirect:/contacts";
+    }
+
     @ApiOperation("этот метод изначально при переходе с главной страницы на Тэг")
     @GetMapping("/tags/index/{tagId}")
     public String getTags(Model model,
                           @PathVariable(value = "tagId", required = false) Integer tagId) {
         System.out.println("Переход на страницу тэгов");
-        Page<Book> page = otherService.getPageOfTagBooks(tagId, 0, 5);
-        model.addAttribute("bookListByTag",page.getContent());
+        List<Book> list = otherService.getPageOfTagBooks(tagId, 0, 20);
+        model.addAttribute("bookListByTag",list);
         model.addAttribute("tagName",otherService.getTagNameById(tagId));
         model.addAttribute("id",tagId);
     return "/tags/index";
@@ -121,9 +144,8 @@ public class OtherController {
     public BooksPageDto getRecentNextPage(@PathVariable(value = "tagId", required = false) Integer tagId
             ,@RequestParam(value ="offset", required = false) Integer offset
             , @RequestParam(value ="limit", required = false) Integer limit){
-        Page<Book> page = otherService.getPageOfTagBooks(tagId, offset, limit);
-        System.out.println("Передача данных популярных книг в JS с параметром offset = "+ offset + " limit= "+ limit);
-        return new BooksPageDto(page.getContent());
+        List<Book> list = otherService.getPageOfTagBooks(tagId, offset, limit);
+        return new BooksPageDto(list);
     }
 
     @PostMapping("/deposit")
@@ -169,7 +191,7 @@ public class OtherController {
                 } else System.out.println("Эту книгу уже покупали");
             }
 
-            return "redirect:/my";
+            return "redirect:/books/my";
         }
         return "redirect:/books/cart";
     }

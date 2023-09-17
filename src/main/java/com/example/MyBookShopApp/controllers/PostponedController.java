@@ -63,12 +63,12 @@ public class PostponedController {
     @GetMapping("/postponed")
     public String postponedPage(Model model,
                                 @CookieValue(name = "postponedContents", required = false) String postponedContents){
-        String status;
-        List<Book> booksFromCookie = new ArrayList<>();
+        String state;
+        List<Book> books = new ArrayList<>();
         UserEntity user = userService.getCurrentUser();
 
         if (user == null) {
-            status = "unauthorized";
+            state = "unauthorized";
             System.out.println("страница Отложенное, берем Cookie из запроса, нет пользователя");
 
             if (postponedContents == null || postponedContents.isBlank()) {
@@ -76,24 +76,29 @@ public class PostponedController {
             } else {
                 model.addAttribute("isPostponedEmpty", false);
 
-                booksFromCookie = bookService.getBooksFromCookies(postponedContents);
+                books = bookService.getBooksFromCookies(postponedContents);
             }
 
         } else {
-            status = "authorized";
+            state = "authorized";
             System.out.println("страница Отложенное, берем Cookie из БД для пользователя "+ user.getName());
             model.addAttribute("curUser", user);
-            booksFromCookie = book2UserService.getBooksFromRepoByTypeCodeAndUser("KEPT",user);
+            books = book2UserService.getBooksFromRepoByTypeCodeAndUser("KEPT",user);
 
-            if (booksFromCookie.isEmpty()) model.addAttribute("isPostponedEmpty", true);
-            else model.addAttribute("isPostponedEmpty", false);
+            if (books.isEmpty()) {
+                model.addAttribute("isPostponedEmpty", true);
+            }
+            else {
+                model.addAttribute("isPostponedEmpty", false);
+                book2UserService.updateStatusOfBook(books, user);
+            }
         }
 
-        model.addAttribute("bookPostponedList", booksFromCookie);
+        model.addAttribute("bookPostponedList", books);
 
-        model.addAttribute("idListPostponedBooks", bookService.getIdListPostponedBooks(booksFromCookie));
+        model.addAttribute("idListPostponedBooks", bookService.getIdListPostponedBooks(books));
 
-        model.addAttribute("status", status);
+        model.addAttribute("state", state);
 
         return "postponed";
     }
@@ -163,6 +168,7 @@ public class PostponedController {
         if (user != null) {
             bookService.decreaseKept(bookId);
             book2UserService.delete(bookService.getBookById(bookId), user);
+
         } else {
 
             if (postponedContents != null && !postponedContents.isBlank()) {

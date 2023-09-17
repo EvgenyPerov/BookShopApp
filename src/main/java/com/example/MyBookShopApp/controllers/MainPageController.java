@@ -42,12 +42,12 @@ public class MainPageController {
 
     @ModelAttribute("recentedBooks")
     public List<Book> recentedBooks(){
-        return bookService.getPageOfRecentBooks(null,null, 0, 6).getContent();
+        return bookService.getPageOfRecentBooks(null,null, 0, 6);
     }
 
     @ModelAttribute("popularBooks")
     public List<Book> popularBooks(){
-        return bookService.getPageOfPopularBooks(0,6).getContent();
+        return bookService.getPageOfPopularBooks(0,6);
     }
 
     @ModelAttribute("searchResults")
@@ -55,8 +55,8 @@ public class MainPageController {
         return new ArrayList<>();
     }
 
-    @ModelAttribute("status")
-    public String authenticationStatus(){
+    @ModelAttribute("state")
+    public String authenticationState(){
         return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
     }
 
@@ -100,7 +100,8 @@ public class MainPageController {
                                   Model model) throws EmptySearchException {
         if (searchWordDto != null) {
         model.addAttribute("searchWordDto", searchWordDto);
-        List<Book> searchResults = bookService.getPageOfGoogleBooksApiSearchResult(searchWordDto.getExample(), 0, 20);
+//        List<Book> searchResults = bookService.getPageOfGoogleBooksApiSearchResult(searchWordDto.getExample(), 0, 20);
+        List<Book> searchResults = bookService.getPageOfSearchResultBooks(searchWordDto.getExample(), 0, 20);
         model.addAttribute("searchResults",searchResults);
             System.out.println("найдено сначала книг = " + searchResults.size());
         return "/search/index";
@@ -112,8 +113,12 @@ public class MainPageController {
     @ResponseBody
     public BooksPageDto getNextSearchPage(@RequestParam("offset") Integer offset,
                                           @RequestParam("limit") Integer limit,
-                                          @PathVariable(value = "searchWord", required = false) SearchWordDto searchWordDto) {
-        List<Book> searchResults =bookService.getPageOfGoogleBooksApiSearchResult(searchWordDto.getExample(), offset, limit);
+                                          @PathVariable(value = "searchWord", required = false) SearchWordDto searchWordDto,
+                                          Model model) {
+//        List<Book> searchResults =bookService.getPageOfGoogleBooksApiSearchResult(searchWordDto.getExample(), offset, limit);
+        List<Book> searchResults =bookService.getPageOfSearchResultBooks(searchWordDto.getExample(), offset, limit);
+        model.addAttribute("searchWordDto", searchWordDto);
+        System.out.println("searchWordDto = " + searchWordDto.getExample()); //
         System.out.println("найдено Pageable книг = " + searchResults.size());
         return new BooksPageDto(searchResults);
     }
@@ -125,7 +130,7 @@ public class MainPageController {
         System.out.println("Переход на страницу Главная");
         model.addAttribute("searchWordDto", new SearchWordDto());
         model.addAttribute("recommendedBooks",
-                bookService.getRecomendedBooksOnMainPage(postponedContents, cartContents, 0,6).getContent());
+                bookService.getRecomendedBooksOnMainPage(postponedContents, cartContents, 0,6));
         return "/index";
     }
 
@@ -139,7 +144,7 @@ public class MainPageController {
                                                  @RequestParam(value ="limit" , required = false) Integer limit) {
         System.out.println("Передача данных рекомендованных книг в JS с параметрами offset = "+ offset + " limit= "+ limit);
         return new BooksPageDto(bookService.
-                getRecomendedBooksOnMainPage(postponedContents, cartContents, offset,limit).getContent());
+                getRecomendedBooksOnMainPage(postponedContents, cartContents, offset,limit));
     }
 
 }

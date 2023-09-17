@@ -70,8 +70,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/my", "/profile","/myslug","/looked").authenticated()//.hasRole("USER")
-                .antMatchers("/**", "/oauth/**").permitAll()
+                .antMatchers("/books/my", "/books/page/my", "/my/archive", "/profile","/myslug","/books/looked","/books/page/looked").authenticated()//.hasRole("USER")
+                .antMatchers("/**", "/oauth/**", "/books/*/img/save").permitAll()
                 .and()
                 .formLogin()
                 .loginPage("/signin").failureUrl("/signin")
@@ -108,7 +108,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
                         oauthUserService.addOAuthUser(oauthUser);
 
-                        response.sendRedirect("/my");
+                        response.sendRedirect("/books/my");
                     }
                 })
                 .failureHandler(new AuthenticationFailureHandler() {

@@ -22,13 +22,13 @@
     <script th:replace="~{fragments/common_js_fragment :: jsFragment}"> </script>
 </head>
 <body class="Site">
-<header class="Header" th:replace="~{fragments/common_header_fragment :: head(status='unauthorized')}"></header>
+<header class="Header" th:replace="~{fragments/common_header_fragment :: head(state='unauthorized')}"></header>
 <div class="Middle">
     <div class="wrap">
         <main class="Middle-main">
             <ul class="breadcrumbs"
-                th:replace="~{fragments/breadcrumb_fragment :: breadcrumps(category=${name})}"></ul>
-            <h1 class="Middle-title" th:text="${name}">Борис Васильевич Бедный
+                th:replace="~{fragments/breadcrumb_fragment :: breadcrumps(category=${author.name})}"></ul>
+            <h1 class="Middle-title" th:text="${author.name}">Борис Васильевич Бедный
             </h1>
             <div class="Section">
                 <div class="Cards Cards_refresh"

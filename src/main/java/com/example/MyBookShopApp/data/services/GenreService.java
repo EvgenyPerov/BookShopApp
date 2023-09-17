@@ -6,6 +6,7 @@ import com.example.MyBookShopApp.data.repo.GenreRepository;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.book.links.Book2GenreEntity;
 import com.example.MyBookShopApp.struct.genre.GenreEntity;
+import com.example.MyBookShopApp.struct.user.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,11 +21,17 @@ public class GenreService {
 
     private Book2GenreRepository book2GenreRepository;
 
+    private final UserService userService;
+
+    private final BookService bookService;
+
     @Autowired
-    public GenreService(BookRepository bookRepository, GenreRepository genreRepository, Book2GenreRepository book2GenreRepository) {
+    public GenreService(BookRepository bookRepository, GenreRepository genreRepository, Book2GenreRepository book2GenreRepository, UserService userService, BookService bookService) {
         this.bookRepository = bookRepository;
         this.genreRepository = genreRepository;
         this.book2GenreRepository = book2GenreRepository;
+        this.userService = userService;
+        this.bookService = bookService;
     }
 
     public String getGenreNameById(Integer id){
@@ -69,7 +76,7 @@ public class GenreService {
     }
 
 
-    public Page<Book> getPageOfGenreBooks(Integer id, Integer offset, Integer limit){
+    public List<Book> getPageOfGenreBooks(Integer id, Integer offset, Integer limit){
         Pageable nextPage = PageRequest.of(offset, limit);
         List<Integer> idBookList = new ArrayList<>();
         List<Book2GenreEntity> listIdBookByIdGenre = book2GenreRepository.findAllByGenreIdIs(id);
@@ -78,7 +85,12 @@ public class GenreService {
            idBookList.add(entity.getBook().getId());
         }
         Page<Book> page = bookRepository.findBooksByIdIn(idBookList,nextPage);
-        return page;
+
+
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {bookService.updateStatusOfBook(page.getContent(), user);}
+
+        return page.getContent();
 
     }
 

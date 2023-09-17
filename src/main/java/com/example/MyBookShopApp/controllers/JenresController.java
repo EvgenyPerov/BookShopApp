@@ -39,8 +39,8 @@ public class JenresController {
         return new SearchWordDto();
     }
 
-    @ModelAttribute("status")
-    public String authenticationStatus(){
+    @ModelAttribute("state")
+    public String authenticationState(){
         return (userService.getCurrentUser() == null)? "unauthorized" : "authorized";
     }
 
@@ -85,8 +85,8 @@ public class JenresController {
     @GetMapping("/genres/slug/{jenreId}")
     public String getGenrePages(Model model,
                                 @PathVariable(value = "jenreId", required = false) Integer jenreId){
-        Page<Book> page = genreService.getPageOfGenreBooks(jenreId, 0,5);
-        model.addAttribute("jenrePagesBooks",page.getContent());
+        List<Book> list = genreService.getPageOfGenreBooks(jenreId, 0,20);
+        model.addAttribute("jenrePagesBooks",list);
         model.addAttribute("id",jenreId);
         model.addAttribute("name",genreService.getGenreNameById(jenreId));
         return "/genres/slug";
@@ -99,8 +99,8 @@ public class JenresController {
             ,@PathVariable(value = "jenreId", required = false) Integer jenreId
             ,@RequestParam(value ="offset", required = false) Integer offset
             , @RequestParam(value ="limit", required = false) Integer limit){
-        Page<Book> page = genreService.getPageOfGenreBooks(jenreId, offset, limit);
-        return new BooksPageDto(page.getContent());
+        List<Book> list = genreService.getPageOfGenreBooks(jenreId, offset, limit);
+        return new BooksPageDto(list);
     }
 
 }

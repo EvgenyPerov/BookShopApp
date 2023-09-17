@@ -1,7 +1,12 @@
 package com.example.MyBookShopApp.struct.book.links;
 
+import com.example.MyBookShopApp.struct.author.Author;
+import com.example.MyBookShopApp.struct.book.book.Book;
+import lombok.Data;
+
 import javax.persistence.*;
 
+@Data
 @Entity
 @Table(name = "book2author")
 public class Book2AuthorEntity {
@@ -10,44 +15,16 @@ public class Book2AuthorEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(columnDefinition = "INT NOT NULL")
-    private int bookId;
+    @ManyToOne
+    @JoinColumn(name = "book_id", referencedColumnName = "id")
+    private Book book;
 
-    @Column(columnDefinition = "INT NOT NULL")
-    private int authorId;
+    @ManyToOne
+    @JoinColumn(name = "author_id", referencedColumnName = "id")
+    private Author author;
+
 
     @Column(columnDefinition = "INT NOT NULL  DEFAULT 0")
     private int sortIndex;
 
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public int getBookId() {
-        return bookId;
-    }
-
-    public void setBookId(int bookId) {
-        this.bookId = bookId;
-    }
-
-    public int getAuthorId() {
-        return authorId;
-    }
-
-    public void setAuthorId(int authorId) {
-        this.authorId = authorId;
-    }
-
-    public int getSortIndex() {
-        return sortIndex;
-    }
-
-    public void setSortIndex(int sortIndex) {
-        this.sortIndex = sortIndex;
-    }
 }
