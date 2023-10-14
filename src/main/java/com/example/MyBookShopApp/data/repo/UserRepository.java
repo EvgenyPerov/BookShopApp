@@ -7,6 +7,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 
     UserEntity findByHashIs(String hash);
 
+    UserEntity findUserEntityById(Integer id);
+
     UserEntity findUserEntityByEmail(String email);
 
     UserEntity findUserEntityByName(String name);

@@ -1,26 +1,24 @@
 package com.example.MyBookShopApp.controllers;
 
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
+import com.example.MyBookShopApp.data.responses.ResponseResultOrError;
 import com.example.MyBookShopApp.data.services.Book2UserService;
 import com.example.MyBookShopApp.data.services.BookService;
-import com.example.MyBookShopApp.data.services.PaymentServise;
 import com.example.MyBookShopApp.data.services.UserService;
-import com.example.MyBookShopApp.errs.PayException;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.logging.Logger;
 
 @Controller
 @RequestMapping("/books")
@@ -32,14 +30,15 @@ public class CartController {
 
     private UserService userService;
 
-    private final PaymentServise paymentServise;
+    private Logger logger = Logger.getLogger(this.getClass().getName());
+
+    private static final String IS_CART_EMPTY = "isCartEmpty";
 
     @Autowired
-    public CartController(BookService bookService, Book2UserService book2UserService, UserService userService, PaymentServise paymentServise) {
+    public CartController(BookService bookService, Book2UserService book2UserService, UserService userService) {
         this.bookService = bookService;
         this.book2UserService = book2UserService;
         this.userService = userService;
-        this.paymentServise = paymentServise;
     }
 
     @ModelAttribute("searchWordDto")
@@ -79,26 +78,26 @@ public class CartController {
 
         if (user == null) {
             state = "unauthorized";
-            System.out.println("страница Отложенное, берем Cookie из запроса, нет пользователя");
+            logger.info("страница Отложенное, берем Cookie из запроса, нет пользователя");
 
             if (cartContents == null || cartContents.isBlank()) {
-                model.addAttribute("isCartEmpty", true);
+                model.addAttribute(IS_CART_EMPTY, true);
             } else {
-                model.addAttribute("isCartEmpty", false);
+                model.addAttribute(IS_CART_EMPTY, false);
 
                 books = bookService.getBooksFromCookies(cartContents);
             }
         } else {
             state = "authorized";
-            System.out.println("страница Корзина, берем Cookie из БД для пользователя "+ user.getName());
+            logger.info("страница Корзина, берем Cookie из БД для пользователя "+ user.getName());
             model.addAttribute("curUser", user);
             books = book2UserService.getBooksFromRepoByTypeCodeAndUser("CART",user);
 
             if (books.isEmpty()) {
-                model.addAttribute("isCartEmpty", true);
+                model.addAttribute(IS_CART_EMPTY, true);
             } else {
                 book2UserService.updateStatusOfBook(books, user);
-                model.addAttribute("isCartEmpty", false);
+                model.addAttribute(IS_CART_EMPTY, false);
                 model.addAttribute("balance", user.getBalance());
                 if (isPaymentOk != null && isPaymentOk){
                     for (Book book : books) {
@@ -125,12 +124,16 @@ public class CartController {
     }
 
     @PostMapping("/changeBookStatus/CART/{bookIds}/{source}")
-    public String handleChangeBookStatusCart(@PathVariable(value = "bookIds", required = false) String bookIdString,
+    @ResponseBody
+    public ResponseResultOrError handleChangeBookStatusCart(@PathVariable(value = "bookIds", required = false) String bookIdString,
                                              @PathVariable(value = "source", required = false) String source,
                                          @CookieValue(name = "cartContents", required = false) String cartContents,
                                          @CookieValue(name = "postponedContents", required = false) String postponedContents,
-                                         HttpServletResponse response,
+                                         HttpServletResponse httpServletResponse,
                                          Model model){
+        var response = new ResponseResultOrError();
+        response.setError("Error");
+        response.setResult(true);
         UserEntity user = userService.getCurrentUser();
 
         String[] strArray = bookIdString.split(",");
@@ -140,41 +143,34 @@ public class CartController {
             if (user == null) {
 
                 if (cartContents == null || cartContents.isBlank()) {
-                    Cookie cookieCart = new Cookie("cartContents", String.valueOf(bookId));
+                    var cookieCart = new Cookie("cartContents", String.valueOf(bookId));
                     cookieCart.setPath("/");
                     cookieCart.setHttpOnly(true);
-                    response.addCookie(cookieCart);
-                    model.addAttribute("isCartEmpty", false);
+                    httpServletResponse.addCookie(cookieCart);
+                    model.addAttribute(IS_CART_EMPTY, false);
 
                 } else if (!cartContents.contains(String.valueOf(bookId))) {
-                    StringJoiner stringJoiner = new StringJoiner("/");
+                    var stringJoiner = new StringJoiner("/");
                     stringJoiner.add(cartContents).add(String.valueOf(bookId));
-                    Cookie cookieCart = new Cookie("cartContents", stringJoiner.toString());
+                    var cookieCart = new Cookie("cartContents", stringJoiner.toString());
                     cookieCart.setPath("/");
                     cookieCart.setHttpOnly(true);
-                    response.addCookie(cookieCart);
-                    model.addAttribute("isCartEmpty", false);
+                    httpServletResponse.addCookie(cookieCart);
+                    model.addAttribute(IS_CART_EMPTY, false);
                 }
 
                 if (postponedContents != null && !postponedContents.isBlank()) {
 
-                    System.out.println("Нажали Купить из отложенного");
                     ArrayList<String> cookiesKeptOld = new ArrayList<>(Arrays.asList(postponedContents.split("/")));
                     cookiesKeptOld.remove(String.valueOf(bookId));
-                    Cookie cookiesKeptNew = new Cookie("postponedContents", String.join("/", cookiesKeptOld));
+                    var cookiesKeptNew = new Cookie("postponedContents", String.join("/", cookiesKeptOld));
                     cookiesKeptNew.setPath("/");
                     cookiesKeptNew.setHttpOnly(true);
-                    response.addCookie(cookiesKeptNew);
+                    httpServletResponse.addCookie(cookiesKeptNew);
                 }
             } else {
-
-                System.out.println("Нажали Купить  с ресурса " + source);
-
                 if (source.equals("postponed")){
-                    System.out.println("Нажали В Корзину из отложенного");
                     bookService.decreaseKept(Integer.valueOf(bookId));
-                } else {
-                    System.out.println("Нажали Купить из Slug");
                 }
 
                 if (book2UserService.update("CART", bookService.getBookById(Integer.valueOf(bookId)), user)) {
@@ -183,16 +179,21 @@ public class CartController {
 
             }
         }
-        return "redirect:/books/postponed";
+        return response;
     }
 
     @PostMapping("/changeBookStatus/UNLINK/CART/{bookId}/{source}")
-    public String handleChangeBookStatusCartRemove(@PathVariable(value = "bookId", required = false) Integer bookId,
+    @ResponseBody
+    public ResponseResultOrError handleChangeBookStatusCartRemove(@PathVariable(value = "bookId", required = false) Integer bookId,
                                                    @PathVariable(value = "source", required = false) String source,
                                    @CookieValue(name = "cartContents", required = false) String cartContents,
-                                   HttpServletResponse response,
+                                   HttpServletResponse httpServletResponse,
                                    Model model){
-        System.out.println("Удаляем книгу из Корзины");
+        logger.info("Удаляем книгу из Корзины");
+        var response = new ResponseResultOrError();
+        response.setError("Error");
+        response.setResult(true);
+
         UserEntity user = userService.getCurrentUser();
         if (user != null) {
             bookService.decreaseCart(bookId);
@@ -201,26 +202,24 @@ public class CartController {
 
             if (cartContents != null && !cartContents.isBlank()) {
                 ArrayList<String> cookies = new ArrayList<>(Arrays.asList(cartContents.split("/")));
-                System.out.println("было кук = " + cookies.size());
                 cookies.remove(String.valueOf(bookId));
-                System.out.println("стало кук = " + cookies.size());
-                Cookie cookie = new Cookie("cartContents", String.join("/", cookies));
+                var cookie = new Cookie("cartContents", String.join("/", cookies));
 
                 if (!cookies.isEmpty()) {
-                    model.addAttribute("isCartEmpty", false);
+                    model.addAttribute(IS_CART_EMPTY, false);
                 } else {
-                    model.addAttribute("isCartEmpty", true);
+                    model.addAttribute(IS_CART_EMPTY, true);
                 }
 
                 cookie.setPath("/");
                 cookie.setHttpOnly(true);
-                response.addCookie(cookie);
+                httpServletResponse.addCookie(cookie);
             } else {
-                model.addAttribute("isCartEmpty", true);
+                model.addAttribute(IS_CART_EMPTY, true);
             }
         }
 
-        return "redirect:/books/cart";
+        return response;
     }
 
    }

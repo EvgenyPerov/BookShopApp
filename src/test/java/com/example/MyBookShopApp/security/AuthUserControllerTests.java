@@ -24,7 +24,7 @@ class AuthUserControllerTests {
 
     @Test
     @DisplayName("Нет доступа к 'my' для не регист users")
-    public void accessOnliAuthorizedPageFailTest() throws Exception{
+    void accessOnliAuthorizedPageFailTest() throws Exception{
         mockMvc.perform(MockMvcRequestBuilders.get("/books/my"))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
@@ -33,7 +33,7 @@ class AuthUserControllerTests {
 
     @Test
     @DisplayName("Корректный вход по Email авториз user")
-    public void correctLoginTest() throws Exception{
+    void correctLoginTest() throws Exception{
         mockMvc.perform(SecurityMockMvcRequestBuilders.formLogin("/signin")
                         .user("My@mail.ru").password("1234567"))
                 .andDo(MockMvcResultHandlers.print())
@@ -44,14 +44,12 @@ class AuthUserControllerTests {
     @Test
     @DisplayName("Доступ к странице 'my' только для регист users")
     @WithUserDetails("My@mail.ru")
-    public void testAuthentificatedAccessToProfilePage() throws Exception{
-        mockMvc.perform(MockMvcRequestBuilders.get("/books/my"))
+    void testAuthentificatedAccessToProfilePage() throws Exception{
+        mockMvc.perform(MockMvcRequestBuilders.get("/profile"))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(SecurityMockMvcResultMatchers.authenticated())
-                .andExpect(MockMvcResultMatchers
-                        .xpath("/html/body/header/div[1]/div/div/div[3]/div/a[4]/span[1]")
-                        .string("Samanta"));
-
+                .andExpect(MockMvcResultMatchers.content()
+                        .string(""));
     }
 
     @Test

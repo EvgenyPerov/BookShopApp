@@ -15,14 +15,14 @@ public class LocaleChangeConfig implements WebMvcConfigurer {
 
     @Bean
     public LocaleResolver localeResolver(){
-        SessionLocaleResolver localeResolver = new SessionLocaleResolver();
+        var localeResolver = new SessionLocaleResolver();
         localeResolver.setDefaultLocale(Locale.ENGLISH);
         return localeResolver;
     }
 
     @Bean
     public LocaleChangeInterceptor localeChangeInterceptor(){
-        LocaleChangeInterceptor localeChangeInterceptor = new LocaleChangeInterceptor();
+        var localeChangeInterceptor = new LocaleChangeInterceptor();
         localeChangeInterceptor.setParamName("lang");
         return localeChangeInterceptor;
     }

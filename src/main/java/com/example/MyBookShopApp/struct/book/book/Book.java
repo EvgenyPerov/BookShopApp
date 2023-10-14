@@ -7,7 +7,6 @@ import com.example.MyBookShopApp.struct.book.links.Book2GenreEntity;
 import com.example.MyBookShopApp.struct.book.links.Book2UserEntity;
 import com.example.MyBookShopApp.struct.book.review.BookRatingEntity;
 import com.example.MyBookShopApp.struct.book.review.BookReviewEntity;
-import com.example.MyBookShopApp.struct.genre.GenreEntity;
 import com.example.MyBookShopApp.struct.other.Tag;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -15,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import lombok.ToString;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -91,11 +89,6 @@ public class Book {
     @Column(name = "count_of_postponed",columnDefinition = "INT NOT NULL DEFAULT 0")
     private int countOfPostponed;
 
-//    @JsonIgnore
-//    @ManyToOne
-//    @JoinColumn(name = "author_id", referencedColumnName = "id")
-//    private Author author;
-
     @ApiModelProperty(value = "статус книги для конкретного пользователя")
     private String status;
 
@@ -115,7 +108,7 @@ public class Book {
     private List<Book2UserEntity> book2UserEntities = new ArrayList<>();
 
     @JsonIgnore
-    @OneToMany(fetch = FetchType.EAGER,mappedBy = "book" , cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "book" , cascade = CascadeType.ALL)
     private List<Book2AuthorEntity> book2AuthorEntities = new ArrayList<>();
 
     @JsonIgnore
@@ -125,7 +118,7 @@ public class Book {
     @JsonIgnore
     @ManyToMany
     @JoinColumn(name = "rating_id", referencedColumnName = "id")
-    private  List<BookRatingEntity> RatingEntity = new ArrayList<>();
+    private  List<BookRatingEntity> ratingEntity = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "book")
@@ -137,14 +130,14 @@ public class Book {
 
     @JsonProperty
     public double discountPrice(){
-        double var1 = price * discount;
+        double var1 = (double) price * (double) discount;
         double var2 = var1 / 100;
-        return (price - var2);
+        return ((double) price - var2);
     }
 
     @JsonGetter("authors")
     public String allAuthorsNameString(){
-        if (book2AuthorEntities.size()<1) return "";
+        if (book2AuthorEntities.isEmpty()) return "";
         List<String> names = book2AuthorEntities.stream()
                 .filter(x -> x.getBook().getId() == this.id)
                 .map(Book2AuthorEntity :: getAuthor)
@@ -154,7 +147,7 @@ public class Book {
     }
 
     public List<Author> allAuthorsList(){
-        if (book2AuthorEntities.size()<1) return new ArrayList<>();
+        if (book2AuthorEntities.isEmpty()) return new ArrayList<>();
         return book2AuthorEntities.stream()
                 .filter(x -> x.getBook().getId() == this.id)
                 .map(Book2AuthorEntity :: getAuthor)
@@ -165,7 +158,7 @@ public class Book {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Book book = (Book) o;
+        var book = (Book) o;
         return id == book.id;
     }
 
@@ -189,6 +182,10 @@ public class Book {
                 ", countOfBuy=" + countOfBuy +
                 ", countOfCart=" + countOfCart +
                 ", countOfPostponed=" + countOfPostponed +
+                ", bookFileList=" + bookFileList +
+                ", book2GenreEntities=" + book2GenreEntities +
+                ", tagList=" + tagList +
+                ", book2AuthorEntities=" + book2AuthorEntities +
                 '}';
     }
 }

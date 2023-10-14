@@ -27,7 +27,7 @@ class CartPageSeleniumTests {
 
     @Test
     @DisplayName("Отложить книгу 'Heartbeat' из Корзины")
-    public void cartPageClickPostponeTest() throws InterruptedException {
+    void cartPageClickPostponeTest() throws InterruptedException {
         CartPage cartPage = new CartPage(driver);
         cartPage
                 .callPageBook()
@@ -47,7 +47,7 @@ class CartPageSeleniumTests {
 
     @Test
     @DisplayName("Удалить книгу 'Heartbeat' из Корзины")
-    public void cartPageClickDeleteTest() throws InterruptedException {
+    void cartPageClickDeleteTest() throws InterruptedException {
         CartPage cartPage = new CartPage(driver);
         cartPage
                 .callPageBook()

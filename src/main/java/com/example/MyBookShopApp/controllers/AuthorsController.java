@@ -13,13 +13,13 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 @Controller
 @ApiModel(description = "data model of authors entity")
@@ -31,6 +31,8 @@ public class AuthorsController {
     private final BookService bookService;
 
     private final Book2UserService book2UserService;
+
+    private Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Autowired
     public AuthorsController(AuthorService authorService, UserService userService, BookService bookService, Book2UserService book2UserService) {
@@ -87,8 +89,7 @@ public class AuthorsController {
 
     @GetMapping("/authors")
     public String authorsPage(){
-        System.out.println("Переход на страницу Авторы");
-        System.out.println("Количество авторов = " + authorService.getAuthorsMap().size());
+        logger.info("Переход на страницу Авторы");
         return "/authors/index";
     }
     @ApiOperation("method to get map of authors")
@@ -103,7 +104,7 @@ public class AuthorsController {
     public String getAuthors(Model model,
                                 @PathVariable(value = "authorId", required = false) Integer authorId){
         List<Book> list = authorService.getBooksByAuthorId(authorId, 0,10);
-        System.out.println("Найдено книг автора = " + list.size());
+        logger.info("Найдено книг автора = " + list.size());
         model.addAttribute("authorBooks",list);
         model.addAttribute("id",authorId);
         model.addAttribute("countOfBooks", authorService.getCountBooksByAuthorId(authorId));
@@ -115,7 +116,7 @@ public class AuthorsController {
     public String getAuthorPage(Model model,
                              @PathVariable(value = "authorId", required = false) Integer authorId){
         List<Book> list = authorService.getBooksByAuthorId(authorId, 0,20);
-        System.out.println("Найдено дополнительно книг автора = " + list.size());
+        logger.info("Найдено дополнительно книг автора = " + list.size());
         model.addAttribute("authorBooks",list);
         model.addAttribute("id",authorId);
         model.addAttribute("author",authorService.getAuthorById(authorId));
@@ -131,6 +132,5 @@ public class AuthorsController {
         List<Book> list = authorService.getBooksByAuthorId(authorId, offset, limit);
         return new BooksPageDto(list);
     }
-
 
 }

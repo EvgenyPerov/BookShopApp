@@ -1,7 +1,5 @@
 package com.example.MyBookShopApp.struct.genre;
 
-import com.example.MyBookShopApp.struct.author.Author;
-import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.book.links.Book2GenreEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -59,5 +57,16 @@ public class GenreEntity implements Comparable {
     public int compareTo(Object o) {
         GenreEntity entity = (GenreEntity) o;
         return Integer.compare(entity.getCountBooks(), this.getCountBooks());
+    }
+
+    @Override
+    public String toString() {
+        return "GenreEntity{" +
+                "id=" + id +
+                ", parentId=" + parentId +
+                ", slug='" + slug + '\'' +
+                ", nameGenre='" + name + '\'' +
+                ", countBooks=" + countBooks +
+                '}';
     }
 }

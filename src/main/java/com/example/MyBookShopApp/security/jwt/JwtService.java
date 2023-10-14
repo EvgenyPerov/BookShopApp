@@ -3,11 +3,9 @@ package com.example.MyBookShopApp.security.jwt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.List;
 
 @Service
 public class JwtService {
@@ -19,7 +17,7 @@ public class JwtService {
         clearOldTokenFromBlacklist();
 
         if (jwtTokenRepository.findByTokenHashIs(token.hashCode()) == null) {
-            JwtEntity jwt = new JwtEntity();
+            var jwt = new JwtEntity();
             jwt.setDate(new Date());
             jwt.setTokenHash(token.hashCode());
 
@@ -31,9 +29,9 @@ public class JwtService {
     }
 
     private void clearOldTokenFromBlacklist(){
-        final LocalDateTime now = LocalDateTime.now();
-        final Instant updateDateBlacklistInstant = now.minusDays(33).atZone(ZoneId.systemDefault()).toInstant();
-        Date pastDate = Date.from(updateDateBlacklistInstant);
+        final var now = LocalDateTime.now();
+        final var updateDateBlacklistInstant = now.minusDays(33).atZone(ZoneId.systemDefault()).toInstant();
+        var pastDate = Date.from(updateDateBlacklistInstant);
 
         jwtTokenRepository.deleteOldJwtToken(pastDate);
     }

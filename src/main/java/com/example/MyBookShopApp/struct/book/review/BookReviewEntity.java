@@ -41,6 +41,9 @@ public class BookReviewEntity {
     @Column(columnDefinition = "TEXT NOT NULL")
     private String text;
 
+    @Column(name = "is_checked", columnDefinition = "SMALLINT DEFAULT 0")
+    private int isChecked;
+
     @JsonIgnore
     @OneToMany(mappedBy = "review")
     private List<BookReviewLikeEntity> bookReviewLikeEntities = new ArrayList<>();

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<div th:fragment="selectAuthorCreateBook">
+    <div class="ProductCard-desc">
+        <form name="ciselectAuthorCreateBookty" method="post" action="#">
+            <div class="form-group form-group_row">
+                <div class="form-group">
+                    <input class="form-control select2-single"
+                           style="background : #999999; margin-top: 1.5rem; margin-top: 1.85rem; color: blue"
+                           placeholder="Здесь введите фильтр..." type="text" id="searchAuthor"
+                           onkeyup="filterFunctionAuthor(this.id)">
+                </div>
+                <div class="form-group">
+                    <input type="hidden" id="hiddenInputAuthor">
+                    <input type="hidden" id="selectedValueAuthor" >
+                    <div class="dropdown">
+                        <select class="form-control select2-single" id="itemDropdownAuthor" style="margin-top: 0.3rem"
+                                onchange="updateSelectedValueAuthor(this.value)">
+                            <option th:each="item : ${list}" th:value="${item}"
+                                    th:text="${item}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn_primary form-btn" style="width: auto" type="button"
+                            th:onclick="displayResultAuthor('author')" >Выбрать автора
+                    </button>
+                    <input type="button" value="Создать автора" style="width: 8rem; background: #87d256;" onClick='location.href="/admin/author"' >
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div th:fragment="selectGenre">
+    <div class="ProductCard-desc">
+        <form name="selectGenre" method="post" action="#">
+            <div class="form-group form-group_row">
+                <div class="form-group">
+                    <input class="form-control select2-single"
+                           style="background : #999999; margin-top: 1.5rem; color: blue; width: 1rem"
+                           placeholder="Здесь введите фильтр..." type="text" id="searchGenre"
+                           onkeyup="filterFunctionGenre(this.id)">
+                </div>
+                <div class="form-group">
+                    <input type="hidden" id="hiddenInputGenre">
+                    <input type="hidden" id="selectedValueGenre" >
+                    <div class="dropdown">
+                        <select class="form-control select2-single" id="itemDropdownGenre"
+                                onchange="updateSelectedValueGenre(this.value)">
+                            <option th:each="item : ${list}" th:value="${item}"
+                                    th:text="${item}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn_primary form-btn" style="width: auto; margin-top: 0rem" type="button"
+                            th:onclick="displayResultGenre('genre')" >Выбрать жанр
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div th:fragment="selectTag">
+    <div class="ProductCard-desc">
+        <form name="selectTag" method="post" action="#">
+            <div class="form-group form-group_row">
+                <div class="form-group">
+                    <input class="form-control select2-single"
+                           style="background : #999999; margin-top: 1.5rem; color: blue; width: 7rem"
+                           placeholder="Здесь введите фильтр..." type="text" id="searchTag"
+                           onkeyup="filterFunctionTag(this.id)">
+                </div>
+                <div class="form-group">
+                    <input type="hidden" id="hiddenInputTag">
+                    <input type="hidden" id="selectedValueTag" >
+                    <div class="dropdown">
+                        <select class="form-control select2-single" id="itemDropdownTag"
+                                onchange="updateSelectedValueTag(this.value)">
+                            <option th:each="item : ${list}" th:value="${item}"
+                                    th:text="${item}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn_primary form-btn" style="width: auto; margin-top: 0rem" type="button"
+                            th:onclick="displayResultTag('tag')" >Выбрать тэг
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div th:fragment="selectBook">
+    <div class="ProductCard-desc">
+            <div class="form-group form-group_row">
+                <div class="form-group">
+                    <input class="form-control select2-single"
+                           style="background : #999999; margin-top: 1.5rem; color: blue; width: 7rem"
+                           placeholder="Здесь введите фильтр..." type="text" id="searchBook"
+                           onkeyup="filterFunctionBook(this.id)">
+                </div>
+                <div class="form-group">
+                    <input type="hidden" id="hiddenInputBook">
+                    <input type="hidden" id="selectedValueBook" >
+                    <div class="dropdown">
+                        <select class="form-control select2-single" id="itemDropdownBook"
+                                onchange="updateSelectedValueBook(this.value)">
+                            <option th:each="item : ${list}" th:value="${item}"
+                                    th:text="${item.title}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn_primary form-btn" style="width: auto; margin-top: 0rem" type="button"
+                            th:onclick="displayResultBookEdit()" >Выбрать книгу
+                    </button>
+                </div>
+            </div>
+    </div>
+
+</div>
+
+
+</html>

@@ -1,13 +1,11 @@
 package com.example.MyBookShopApp.selenium;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 public class PostponedPage {
 
     private String urlBook13 = "http://localhost:8085/books/13";
-    private String urlBook2 = "http://localhost:8085/books/2";
     private String urlPost = "http://localhost:8085/books/postponed";
 
     private String urlCart = "http://localhost:8085/books/cart";
@@ -40,7 +38,7 @@ public class PostponedPage {
     }
 
     public PostponedPage changeBookStatus(String bookStatus) {
-        WebElement webElement = driver.findElement(By.id(bookStatus));
+        var webElement = driver.findElement(By.id(bookStatus));
         webElement.click();
         return this;
     }

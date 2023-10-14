@@ -1,13 +1,11 @@
 package com.example.MyBookShopApp.data.services;
 
-import com.example.MyBookShopApp.struct.book.book.Book;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
 
 @Service
 public class PaymentServise {
@@ -20,13 +18,11 @@ public class PaymentServise {
 
     public String getPaymentUrl(String sum, String userHash) throws NoSuchAlgorithmException {
 
-        MessageDigest md = MessageDigest.getInstance("MD5");
+        var md = MessageDigest.getInstance("MD5");
         md.update((merchantLogin + ":" + sum + ":" + userHash + ":" + firstTestPass).getBytes());
         String signatureValue= DatatypeConverter.printHexBinary(md.digest()).toUpperCase();
 
-        System.out.println("createSignatureValue="+ signatureValue); //
-
-        String REQUEST_URL = "https://auth.robokassa.ru/Merchant/Index.aspx" +
+        return  "https://auth.robokassa.ru/Merchant/Index.aspx" +
                 "?MerchantLogin=" + merchantLogin +
                 "&InvId=" + userHash +
                 "&Culture=ru" +
@@ -34,12 +30,10 @@ public class PaymentServise {
                 "&OutSum=" + sum +
                 "&SignatureValue=" + signatureValue +
                 "&IsTest=1";
-
-        return REQUEST_URL;
     }
 
     public String createSignatureValue(String sum, String userHash) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("MD5");
+        var md = MessageDigest.getInstance("MD5");
         md.update((sum + ":" + userHash + ":" + firstTestPass).getBytes());
         return DatatypeConverter.printHexBinary(md.digest()).toUpperCase();
     }

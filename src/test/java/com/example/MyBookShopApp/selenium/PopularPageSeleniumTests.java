@@ -29,7 +29,7 @@ class PopularPageSeleniumTests {
 
     @Test
     @DisplayName("Click по книге 'Heartbeat' из Популярного")
-    public void popularPageTest() throws InterruptedException {
+    void popularPageTest() throws InterruptedException {
         PopularPage popularPage = new PopularPage(driver);
         popularPage
                 .callPage()
@@ -37,7 +37,7 @@ class PopularPageSeleniumTests {
                 .clickBook()
                 .pause()
                 .pause();
-        Assertions.assertTrue(driver.findElementByXPath("/html/body/div/div/main/div/div[1]/div[2]/div[1]/h1").getText().equals("Heartbeat"));
+        Assertions.assertEquals("Heartbeat", driver.findElementByXPath("/html/body/div/div/main/div/div[1]/div[2]/div[1]/h1").getText());
     }
 
 }

@@ -1,7 +1,6 @@
 package com.example.MyBookShopApp.selenium;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 public class PopularPage {
@@ -25,7 +24,7 @@ public class PopularPage {
     }
 
     public PopularPage clickBook() {
-        WebElement webElement = driver.findElement(By.xpath("//*[contains(text(), 'Heartbeat')]"));
+        var webElement = driver.findElement(By.xpath("//*[contains(text(), 'Heartbeat')]"));
         webElement.click();
         return this;
     }

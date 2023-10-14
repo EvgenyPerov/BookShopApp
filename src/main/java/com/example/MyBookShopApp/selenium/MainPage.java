@@ -1,7 +1,7 @@
 package com.example.MyBookShopApp.selenium;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 public class MainPage {
@@ -16,6 +16,8 @@ public class MainPage {
 
     public MainPage callPage() {
         driver.get(url);
+        JavascriptExecutor js =  driver;
+        js.executeScript("document.body.style.zoom='80%'");
         return this;
     }
 
@@ -25,50 +27,49 @@ public class MainPage {
     }
 
     public MainPage setSearchToken(String search) {
-        WebElement webElement = driver.findElement(By.id("query"));
+        var webElement = driver.findElement(By.id("query"));
         webElement.sendKeys(search);
         return this;
     }
 
     public MainPage submit() {
-        WebElement webElement = driver.findElement(By.id("search"));
+        var webElement = driver.findElement(By.id("search"));
         webElement.submit();
         return this;
     }
 
     public MainPage clickTag() {
-//        WebElement webElement = driver.findElement(By.xpath("/html/body/div/div/main/div[2]/div[45]/div/p/a"));
-        WebElement webElement = driver.findElement(By.xpath("//*[contains(text(), 'сказка')]"));
+        var webElement = driver.findElement(By.xpath("//*[contains(text(), 'сказка')]"));
         webElement.click();
         return this;
     }
 
     public MainPage changeLanguage(String lang) {
-        WebElement webElement = driver.findElement(By.id("locales"));
+        var webElement = driver.findElement(By.id("locales"));
         webElement.sendKeys(lang);
         return this;
     }
 
     public MainPage mainPageClickRightRecomended() {
-        WebElement webElement = driver.findElement(By.xpath("/html/body/div/div/main/div[1]/div[1]/div[2]/div[2]/div/button[2]"));
+        var webElement = driver.findElement(By.xpath("/html/body/div/div/main/div[1]/div[1]/div[2]/div[2]/div/button[2]"));
         webElement.click();
         return this;
     }
 
     public MainPage mainPageClickLeftRecomended() {
-        WebElement webElement = driver.findElement(By.xpath("/html/body/div/div/main/div[1]/div[1]/div[2]/div[2]/div/button[1]"));
+        var webElement = driver.findElement(By.xpath("/html/body/div/div/main/div[1]/div[1]/div[2]/div[2]/div/button[1]"));
         webElement.click();
         return this;
     }
 
     public MainPage mainPageCickRightRecent() {
-        WebElement webElement = driver.findElement(By.xpath("/html/body/div/div/main/div[1]/div[2]/div[2]/div[2]/div/button[2]"));
+        var webElement = driver.findElement(By.xpath("/html/body/div/div/main/div[1]/div[2]/div[2]/div[2]/div/button[2]"));
         webElement.click();
         return this;
     }
 
     public MainPage mainPageCickRightPopular() {
-        WebElement webElement = driver.findElement(By.xpath("/html/body/div/div/main/div[1]/div[3]/div[2]/div[2]/div/button[2]"));
+        var webElement = driver.findElement(By.xpath("/html/body/div/div/main/div[1]/div[3]/div[2]/div[2]/div/button[2]"));
         webElement.click();
         return this;
     }

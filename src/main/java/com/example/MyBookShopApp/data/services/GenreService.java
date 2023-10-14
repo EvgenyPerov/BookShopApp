@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class GenreService {
@@ -38,6 +39,8 @@ public class GenreService {
         return genreRepository.findGenreEntityById(id).getName();
     }
 
+    public List<GenreEntity> getAllGenre(){return genreRepository.findAll();}
+
     public List<GenreEntity> getGenreList(){
         List<GenreEntity> genreEntityTotalList = genreRepository.findAll();
         List<GenreEntity> listResult = new ArrayList<>();
@@ -45,12 +48,12 @@ public class GenreService {
 
         if (genreEntityTotalList != null) {
             for (GenreEntity parent : genreEntityTotalList) {
-                Integer id = parent.getId();
+                int id = parent.getId();
                 parent.setCountBooks(getCountBooksByGenreId(id));
 
                 for (GenreEntity child : genreEntityTotalList) {
-                    Integer parentId = child.getParentId();
-                    if (parentId != null & parentId == id) {
+                    int parentId = child.getParentId();
+                    if (parentId != 0 && parentId == id) {
                         parent.getChildren().add(child);
                         listRepeatGenresDelete.add(child);
                     }
@@ -91,7 +94,15 @@ public class GenreService {
         if (user != null) {bookService.updateStatusOfBook(page.getContent(), user);}
 
         return page.getContent();
+    }
 
+    public List<String> getAllGenresName(){
+        List<String> list =  getAllGenre().stream()
+                .map(GenreEntity::getName)
+                .sorted()
+                .collect(Collectors.toList());
+        list.add(0,"");
+        return list;
     }
 
 }

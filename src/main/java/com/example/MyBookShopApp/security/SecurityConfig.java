@@ -12,10 +12,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -24,12 +22,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    private Logger logger = Logger.getLogger(this.getClass().getName());
     private final BookstoreUserDetailsService bookstoreUserDetailsService;
     private final JwtRequestFilter filter;
     private final CustomOAuth2UserService oauthUserService;
@@ -70,8 +70,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/books/my", "/books/page/my", "/my/archive", "/profile","/myslug","/books/looked","/books/page/looked").authenticated()//.hasRole("USER")
-                .antMatchers("/**", "/oauth/**", "/books/*/img/save").permitAll()
+                .antMatchers("/books/my", "/books/page/my", "/my/archive", "/profile","/myslug","/books/looked","/books/page/looked").hasRole("USER")
+                .antMatchers("/admin/**").hasRole("ADMIN")
+                .antMatchers("/oauth/**", "/**").permitAll()
+//                .anyRequest().permitAll()
                 .and()
                 .formLogin()
                 .loginPage("/signin").failureUrl("/signin")
@@ -80,7 +82,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .addLogoutHandler((httpServletRequest, httpServletResponse, authentication) -> {
                     Cookie[] cookies = httpServletRequest.getCookies();
                     if (cookies != null){
-                        Cookie cookieToken = Arrays.stream(cookies)
+                        var cookieToken = Arrays.stream(cookies)
                                 .filter(item -> item.getName().equals("token"))
                                 .findFirst()
                                 .orElse(null);
@@ -92,8 +94,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 })
                 .deleteCookies("token","postponedContents", "cartContents")
                 .and().oauth2Client()
-                .and().oauth2Login().
-                loginPage("/signin")
+                .and().oauth2Login()
+                .loginPage("/signin")
                 .userInfoEndpoint()
                 .userService(oauthUserService)
                 .and().successHandler(new AuthenticationSuccessHandler() {
@@ -101,8 +103,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     @Override
                     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                                         Authentication authentication) throws IOException {
-                        System.out.println("Google AuthenticationSuccessHandler invoked:");
-                        System.out.println("Google Authentication name: " + authentication.getName());
+                        logger.info("Google AuthenticationSuccessHandler invoked -  name: " + authentication.getName());
 
                         CustomOAuth2User oauthUser = (CustomOAuth2User) authentication.getPrincipal();
 
@@ -111,13 +112,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         response.sendRedirect("/books/my");
                     }
                 })
-                .failureHandler(new AuthenticationFailureHandler() {
-                    @Override
-                    public void onAuthenticationFailure(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AuthenticationException e) {
-                        System.out.println("Google AuthenticationFailureHandler invoked Failure:");
-                        System.out.println("Google Authentication exception: " + e);
-                    }
-                })
+                .failureHandler((httpServletRequest, httpServletResponse, e) -> logger.info("Google AuthenticationFailureHandler invoked Failure:"))
                 .and()
                 .exceptionHandling().accessDeniedPage("/403")
                 .and()

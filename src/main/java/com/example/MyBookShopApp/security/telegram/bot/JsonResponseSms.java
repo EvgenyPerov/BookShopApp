@@ -18,7 +18,7 @@ public class JsonResponseSms {
     private String code;
 
     @JsonProperty("call_id")
-    private String call_id;
+    private String callId;
 
     @JsonProperty("cost")
     private Double cost;

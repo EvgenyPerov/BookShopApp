@@ -1,6 +1,7 @@
 package com.example.MyBookShopApp.controllers;
 
 import com.example.MyBookShopApp.data.dto.BooksPageDto;
+import com.example.MyBookShopApp.data.responses.ResponseResultOrError;
 import com.example.MyBookShopApp.data.services.Book2UserService;
 import com.example.MyBookShopApp.data.services.ResourceStorage;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
@@ -16,18 +17,18 @@ import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Path;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.logging.Logger;
 
-@Api(description = " entity book")
+@Api("entity book")
 @Controller
 @RequestMapping("/books")
 public class BooksController {
@@ -37,6 +38,8 @@ public class BooksController {
     private UserService userService;
 
     private final Book2UserService book2UserService;
+
+    private Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Autowired
     public BooksController(BookService bookService, ResourceStorage storage, UserService userService, Book2UserService book2UserService) {
@@ -71,16 +74,6 @@ public class BooksController {
         }
     }
 
-//    @ModelAttribute("lookedBooks")
-//    public List<Book> geBookLookedList() {
-//        UserEntity user = userService.getCurrentUser();
-//        if (user != null) {
-//            return book2UserService.getLookedBooksByUserLastMonth(user);
-//        } else {
-//            return new ArrayList<>();
-//        }
-//    }
-
     @ModelAttribute("bookPostponedList")
     public List<Book> geBookPostponedList(@CookieValue(name = "postponedContents", required = false) String postponedContents){
         UserEntity user = userService.getCurrentUser();
@@ -105,7 +98,7 @@ public class BooksController {
     @ApiOperation("operation to get recent books")
     @GetMapping("/recent")
     public String recentFirstPage(Model model) {
-        System.out.println("Переход на страницу Новинки");
+        logger.info("Переход на страницу Новинки");
         model.addAttribute("recentResults",
                 bookService.getPageOfRecentBooks(null, null, 0, 20));
         return "/books/recent";
@@ -128,7 +121,7 @@ public class BooksController {
     @ApiOperation("operation to get popular books")
     @GetMapping("/popular")
     public String popularPage(Model model){
-        System.out.println("Переход на страницу Популярное");
+        logger.info("Переход на страницу Популярное");
         model.addAttribute("popularBooks",bookService.getPageOfPopularBooks(0, 20));
         return "/books/popular";
     }
@@ -146,14 +139,14 @@ public class BooksController {
     @ApiOperation("operation to get SLUG books")
     @GetMapping("/{bookId}")
     public String getSlugOfBook(Model model,
-                                @PathVariable(value = "bookId", required = false) Integer bookId) throws Exception {
-        System.out.println("Переход на страницу SLUG book Id = " + bookId + " Тип- "+bookId.getClass());
+                                @PathVariable(value = "bookId", required = false) Integer bookId) throws BadRequestException, NotExistBookException {
+        logger.info("Переход на страницу SLUG book Id = " + bookId + " Тип- "+bookId.getClass());
         try {
-            Book book = bookService.getBookById(bookId);
+            var book = bookService.getBookById(bookId);
 
             model.addAttribute("ratingMap", userService.getRatingMapByBookId(bookId));
 
-            model.addAttribute("reviewMap", userService.getReviewMapByBookId(bookId));
+            model.addAttribute("reviewMap", userService.getReviewMapByBookId(book));
 
             model.addAttribute("df", DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"));
 
@@ -175,35 +168,24 @@ public class BooksController {
             return "/books/slug";
 
         } catch (TypeMismatchException e){ //MethodArgumentTypeMismatchException NumberFormatException TypeMismatchException
-            System.out.println("bookController поймал ошибку NumberFormatException");
+            logger.info("bookController поймал ошибку NumberFormatException");
             throw new BadRequestException("Введен недопустимый формат данных");
         } catch (NoSuchElementException e){
-            System.out.println("bookController поймал ошибку NoSuchElementException");
+            logger.info("bookController поймал ошибку NoSuchElementException");
             throw new NotExistBookException("Не существует книги с таким номером");
         }
     }
 
-    @PostMapping("/{bookId}/img/save")
-    public String saveNewBookImage(@RequestParam("file") MultipartFile file,
-                                   @PathVariable(value = "bookId", required = false) Integer bookId ){
-        System.out.println("Переход на страницу выбора обложки для книги");
-        String savePath = storage.saveNewBookImage(file, bookService.getBookSlugById(bookId));
-        Book book =  bookService.getBookById(bookId);
-        book.setImage(savePath);
-        bookService.update(book);
-        System.out.println("Обновлена обложка для книги = " + book.getTitle());
-
-        return "redirect:/books/" + bookId;
-    }
-
     @ApiOperation("operation to download books")
     @GetMapping("/download/{hash}")
-    public ResponseEntity<ByteArrayResource> getSlugOfBook(@PathVariable(value = "hash", required = false) String hash){
-        System.out.println("Переход на страницу download = " + hash);
+    public ResponseEntity<ByteArrayResource> getSlugOfBook(@PathVariable(value = "hash", required = false) String hash) throws UnsupportedEncodingException {
+        logger.info("Переход на страницу download = " + hash);
 
-        Path path = storage.getBookPathFile(hash);
+        var path = storage.getBookPathFile(hash);
+        var fileName = path.getFileName().toString();
+        var encodedFileName = URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
 
-        MediaType mediaType = storage.getBookFileMime(hash);
+        var mediaType = storage.getBookFileMime(hash);
 
         byte[] data = storage.getBookFileByteArray(hash);
 
@@ -214,47 +196,70 @@ public class BooksController {
         }
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + path.getFileName().toString())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + encodedFileName)
                 .contentType(mediaType)
                 .contentLength(data.length)
                 .body(new ByteArrayResource(data));
     }
 
 @PostMapping("/changeBookStatus/rating/{bookId}")
-    public String handleChangeBookStatusRating(@PathVariable(value = "bookId", required = true) Integer bookId,
-                                        @RequestParam(value = "value", required = false) int value) {
+@ResponseBody
+    public ResponseResultOrError handleChangeBookStatusRating(@PathVariable(value = "bookId", required = true) Integer bookId,
+                                                              @RequestParam(value = "value", required = false) int value) {
+    var response = new ResponseResultOrError();
 
-    if (authenticationState() == "authorized"){
-        UserEntity user = userService.getCurrentUser();
-        Book book = bookService.getBookById(bookId);
-        userService.setRatingForBook(book, user, value);
+    if (authenticationState().equals("authorized")){
+        var user = userService.getCurrentUser();
+        var book = bookService.getBookById(bookId);
+        boolean isSetRatingForBook = userService.setRatingForBook(book, user, value);
+        if (isSetRatingForBook){
+            response.setResult(true);
+        }
     }
-    return "redirect:/books/" + bookId;
+    return response;
     }
 
 
     @PostMapping("/rateBookReview/{reviewId}/{value}")
-    public String handleChangeBookStatusReview(@PathVariable(value = "reviewId", required = true) Integer reviewId,
-                                               @PathVariable(value = "value", required = true) short value) {
+    @ResponseBody
+    public ResponseResultOrError handleChangeBookStatusReview(@PathVariable(value = "reviewId") Integer reviewId,
+                                                              @PathVariable(value = "value") short value) {
+        logger.info("Ставим лайки для отзыва");
+        var response = new ResponseResultOrError();
 
-        if (authenticationState() == "authorized"){
-            UserEntity user = userService.getCurrentUser();
-            userService.setReviewLikeForBook(reviewId, user, value);
-            System.out.println("Лайки для отзыва = " + reviewId + " оценка = " + value);
+        if (authenticationState().equals("authorized")){
+            var user = userService.getCurrentUser();
+            boolean isSetReviewLikeForBook = userService.setReviewLikeForBook(reviewId, user, value);
+            if (isSetReviewLikeForBook){
+                response.setResult(true);
+            }
         }
-        return "redirect:/books/" + userService.getBookByReviewId(reviewId);
+        return response;
     }
 
     @PostMapping("/bookReview/{bookId}/{text}")
-    public String saveNewReviewForBook(@PathVariable(value = "bookId") Integer bookId,
-                                       @PathVariable(value = "text") String text) {
+    @ResponseBody
+    public ResponseResultOrError saveNewReviewForBook(@PathVariable(value = "bookId") Integer bookId,
+                                                      @PathVariable(value = "text") String text) {
+        var response = new ResponseResultOrError();
+        if (authenticationState().equals("authorized")) {
+            var user = userService.getCurrentUser();
+            if (user.getStatus() == 0 ) {
+                response.setError("Вы заблокированы и не можете оставлять комментарии. Обратитесь в службу поддержки на странице 'Contacts'");
+                return response;
+            }
 
-        if (authenticationState() == "authorized") {
-            UserEntity user = userService.getCurrentUser();
-            userService.addReviewForBook(bookService.getBookById(bookId), user, text);
-            System.out.println("Оставляем отзыв для книги " + bookId + " : " + text);
+            if (text.length() > 15) {
+                boolean isAddReviewForBook = userService.addReviewForBook(bookService.getBookById(bookId), user, text);
+                if (isAddReviewForBook) {
+                    response.setResult(true);
+                    response.setError("OK");
+                }
+            } else {
+                response.setError("Отзыв слишком короткий. Напишите, пожалуйста, более развёрнутый отзыв");
+            }
         }
-        return "redirect:/books/" + bookId;
+        return response;
     }
 
 }

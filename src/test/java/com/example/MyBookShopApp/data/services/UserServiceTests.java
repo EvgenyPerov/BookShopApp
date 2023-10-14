@@ -82,7 +82,7 @@ class UserServiceTests {
                 .findUserEntityByEmail(registrationForm.getEmail());
 
         UserEntity user = userService.addUser(registrationForm);
-        Assertions.assertNull(user);
+        Assertions.assertEquals(0, user.getId());
     }
 
     @Test

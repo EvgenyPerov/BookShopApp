@@ -30,14 +30,8 @@ public class BookRatingEntity {
     @JoinColumn(name = "book_id", referencedColumnName = "id")
     private Book book;
 
-//    @ManyToMany
-//    @JoinTable(name = "books2rating",
-//            joinColumns = @JoinColumn (name = "rating_id"),
-//            inverseJoinColumns = @JoinColumn (name = "book_id"))
-//    private List<Book> bookList = new ArrayList<>();
-
     @JsonIgnore
-    @ManyToMany(mappedBy = "RatingEntity")
+    @ManyToMany(mappedBy = "ratingEntity")
     private List<Book> bookList = new ArrayList<>();
 
     @ManyToOne
@@ -52,10 +46,4 @@ public class BookRatingEntity {
     @Column(columnDefinition = "SMALLINT NOT NULL")
     private Integer value;
 
-//    public BookRatingEntity(Book book, UserEntity user, LocalDateTime time, Integer value) {
-//        this.book = book;
-//        this.user = user;
-//        this.time = time;
-//        this.value = value;
-//    }
 }

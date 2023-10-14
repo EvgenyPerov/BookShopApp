@@ -1,7 +1,6 @@
 package com.example.MyBookShopApp.selenium;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 public class CartPage {
@@ -39,7 +38,7 @@ public class CartPage {
 
 
     public CartPage changeBookStatus(String bookStatus) {
-        WebElement webElement = driver.findElement(By.id(bookStatus));
+        var webElement = driver.findElement(By.id(bookStatus));
         webElement.click();
         return this;
     }

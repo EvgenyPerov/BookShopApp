@@ -1,13 +1,11 @@
 package com.example.MyBookShopApp.controllers;
 
-import com.example.MyBookShopApp.data.repo.Book2AuthorRepository;
 import com.example.MyBookShopApp.data.responses.ApiResponse;
 import com.example.MyBookShopApp.data.services.BookService;
 import com.example.MyBookShopApp.errs.BookstoreApiWrongPatameterException;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -15,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Api(description = "book data api")
+@Api("book data api")
 @RestController
 @RequestMapping("/api/books")
 public class BooksRestApiController {

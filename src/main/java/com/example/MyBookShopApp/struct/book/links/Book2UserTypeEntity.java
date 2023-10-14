@@ -1,6 +1,5 @@
 package com.example.MyBookShopApp.struct.book.links;
 
-import com.example.MyBookShopApp.struct.book.book.Book;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 

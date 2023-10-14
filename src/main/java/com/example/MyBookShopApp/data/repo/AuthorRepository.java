@@ -7,4 +7,5 @@ public interface AuthorRepository extends JpaRepository<Author, Integer> {
 
     Author findFirstByIdIs(Integer id);
 
+    Author findByNameIsIgnoreCase(String name);
 }

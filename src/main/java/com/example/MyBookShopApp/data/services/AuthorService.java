@@ -2,7 +2,6 @@ package com.example.MyBookShopApp.data.services;
 
 import com.example.MyBookShopApp.data.repo.AuthorRepository;
 import com.example.MyBookShopApp.data.repo.Book2AuthorRepository;
-import com.example.MyBookShopApp.data.repo.BookRepository;
 import com.example.MyBookShopApp.struct.author.Author;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.book.links.Book2AuthorEntity;
@@ -21,17 +20,14 @@ public class AuthorService {
 
     private AuthorRepository authorRepository;
 
-    private BookRepository bookRepository;
-
     private final UserService userService;
 
     private final BookService bookService;
 
     private final Book2AuthorRepository book2AuthorRepository;
 
-    public AuthorService(AuthorRepository authorRepository, BookRepository bookRepository, UserService userService, BookService bookService, Book2AuthorRepository book2AuthorRepository) {
+    public AuthorService(AuthorRepository authorRepository, UserService userService, BookService bookService, Book2AuthorRepository book2AuthorRepository) {
         this.authorRepository = authorRepository;
-        this.bookRepository = bookRepository;
         this.userService = userService;
         this.bookService = bookService;
         this.book2AuthorRepository = book2AuthorRepository;
@@ -44,7 +40,7 @@ public class AuthorService {
     public Map<String, List<Author>> getAuthorsMap() {
         List<Author> authors = authorRepository.findAll();
         return authors.stream()
-                .collect(Collectors.groupingBy((Author a) -> {return a.getName().substring(0,1);}));
+                .collect(Collectors.groupingBy((Author a) -> a.getName().substring(0,1)));
     }
 
     public List<Book> getBooksByAuthorId(Integer authorId, Integer offset, Integer limit){
@@ -66,5 +62,18 @@ public class AuthorService {
     public Integer getCountBooksByAuthorId(Integer id){
         List<Book2AuthorEntity> book2Author = book2AuthorRepository.findAllByAuthor(getAuthorById(id));
         return book2Author != null? book2Author.size() : 0;
+    }
+
+    public List<Author> getAllAuthors(){
+        return authorRepository.findAll();
+    }
+
+    public List<String> getAllAuthorsName(){
+        List<String> list =  getAllAuthors().stream()
+                .map(Author::getName)
+                .sorted()
+                .collect(Collectors.toList());
+        list.add(0,"");
+        return list;
     }
 }

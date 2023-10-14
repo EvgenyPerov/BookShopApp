@@ -1,7 +1,6 @@
 package com.example.MyBookShopApp.selenium;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 public class GenrePage {
@@ -24,7 +23,7 @@ public class GenrePage {
         return this;
     }
     public GenrePage clickGenre() {
-        WebElement webElement = driver.findElement(By.xpath("//*[contains(text(), 'Лёгкое чтение')]"));
+        var webElement = driver.findElement(By.xpath("//*[contains(text(), 'Лёгкое чтение')]"));
         webElement.click();
         return this;
     }

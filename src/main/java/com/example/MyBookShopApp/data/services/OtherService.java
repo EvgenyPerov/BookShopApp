@@ -19,14 +19,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class OtherService {
 
     private TagsRepository tagsRepository;
     private BookRepository bookRepository;
-
-    private BookFileTypeRepository bookFileTypeRepository;
 
     private final UserService userService;
 
@@ -39,10 +38,9 @@ public class OtherService {
     private final MessageRepository messageRepository;
 
     @Autowired
-    public OtherService(TagsRepository tagsRepository, BookRepository bookRepository, BookFileTypeRepository bookFileTypeRepository, UserService userService, BookService bookService, DocumentRepository documentRepository, FaqRepository faqRepository, MessageRepository messageRepository) {
+    public OtherService(TagsRepository tagsRepository, BookRepository bookRepository, UserService userService, BookService bookService, DocumentRepository documentRepository, FaqRepository faqRepository, MessageRepository messageRepository) {
         this.tagsRepository = tagsRepository;
         this.bookRepository = bookRepository;
-        this.bookFileTypeRepository = bookFileTypeRepository;
         this.userService = userService;
         this.bookService = bookService;
         this.documentRepository = documentRepository;
@@ -50,36 +48,44 @@ public class OtherService {
         this.messageRepository = messageRepository;
     }
 
-    public List<Tag> getTagsList() {
+    public List<Tag> getAllTags() {
         return tagsRepository.findAll();
     }
 
+    public List<String> getAllTagsName(){
+        List<String> list =  getAllTags().stream()
+                .map(Tag::getName)
+                .sorted()
+                .collect(Collectors.toList());
+        list.add(0,"");
+        return list;
+    }
+
     public Map<Tag, Integer> getTagsAndSizesMap(){
-        List<Tag> tagList = getTagsList();
+        List<Tag> tagList = getAllTags();
         Map<Tag, Integer> tagMap = new HashMap<>();
         int min, max;
 
-        if (tagList != null || !tagList.isEmpty() ){
-            min = tagList.get(0).getBookList().size();
-            max= min;
-            for (Tag tag : tagList) {
-                min = tag.getBookList().size() < min ? tag.getBookList().size() : min;
-                max = tag.getBookList().size() > max ? tag.getBookList().size() : max;
+        if (tagList != null && !tagList.isEmpty()){
+                min = tagList.get(0).getBookList().size();
+                max = min;
+                for (Tag tag : tagList) {
+                    min = tag.getBookList().size() < min ? tag.getBookList().size() : min;
+                    max = tag.getBookList().size() > max ? tag.getBookList().size() : max;
+                }
+                float variance = (min == 0) ? max : (max - min + 1);
+                for (Tag tag : tagList) {
+                    float sizePercent = variance == 0? 0 : Float.valueOf(tag.getBookList().size()) / variance * 10;
+                    tagMap.putIfAbsent(tag, (int) sizePercent);
+                }
             }
-            float variance = (min == 0) ? (max-min) : (max-min+1);
-            for (Tag tag : tagList) {
-                float sizePercent = Float.valueOf(tag.getBookList().size()) /variance*10;
-                tagMap.putIfAbsent(tag, (int) sizePercent);
-            }
-        }
         return tagMap;
     }
 
     public List<Book> getPageOfTagBooks(Integer tagId, Integer offset, Integer limit){
         Pageable nextPage = PageRequest.of(offset, limit);
-        Tag tag = tagsRepository.findTagByIdIs(tagId);
+        var tag = tagsRepository.findTagByIdIs(tagId);
         Page<Book> page = bookRepository.findBooksByTagListContains(tag, nextPage);
-        System.out.println("Количество подгруженных сервисом книг по тэгу = "+ page.stream().count());
 
         UserEntity user = userService.getCurrentUser();
         if (user != null) {bookService.updateStatusOfBook(page.getContent(), user);}
@@ -118,7 +124,7 @@ public class OtherService {
         UserEntity user = userService.getCurrentUser();
         String name;
         String email;
-        int userId = 0;
+        var userId = 0;
 
         if (user != null) {
             name = user.getName();
@@ -129,7 +135,7 @@ public class OtherService {
             email = form.getEmail();
         }
 
-        MessageEntity message = new MessageEntity();
+        var message = new MessageEntity();
         message.setTime(LocalDateTime.now());
         message.setName(name);
         message.setEmail(email);

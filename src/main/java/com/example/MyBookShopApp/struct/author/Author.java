@@ -1,6 +1,5 @@
 package com.example.MyBookShopApp.struct.author;
 
-import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.book.links.Book2AuthorEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;
@@ -40,10 +39,6 @@ public class Author {
     @ApiModelProperty("this is description of author")
     private String description;
 
-//    @JsonIgnore
-//    @OneToMany(mappedBy = "author")
-//    private List<Book> bookList = new ArrayList<>();
-
     @JsonIgnore
     @OneToMany(mappedBy = "author")
     private List<Book2AuthorEntity> book2AuthorEntities = new ArrayList<>();
@@ -62,9 +57,8 @@ public class Author {
                 "id=" + id +
                 ", photo='" + photo + '\'' +
                 ", slug='" + slug + '\'' +
-                ", name='" + name + '\'' +
+                ", nameAuthor='" + name + '\'' +
                 ", description='" + description + '\'' +
-//                ", bookList=" + bookList +
                 '}';
     }
 }

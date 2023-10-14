@@ -29,7 +29,7 @@ class AuthorPageSeleniumTests {
 
     @Test
     @DisplayName("Click по автору 'Ches Squire' из Авторов")
-    public void authorPageClickAuthorTest() throws InterruptedException {
+    void authorPageClickAuthorTest() throws InterruptedException {
         String author = "Ches Squire";
         AuthorPage authorPage = new AuthorPage(driver);
         authorPage
@@ -38,7 +38,7 @@ class AuthorPageSeleniumTests {
                 .clickAuthor(author)
                 .pause()
                 .pause();
-        Assertions.assertTrue(driver.findElementByXPath("/html/body/div/div/main/div[1]/h1").getText().equals(author));
+        Assertions.assertEquals(driver.findElementByXPath("/html/body/div/div/main/div[1]/h1").getText(), author);
     }
 
 }

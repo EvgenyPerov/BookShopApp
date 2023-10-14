@@ -7,11 +7,9 @@ import com.example.MyBookShopApp.data.services.*;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
 import com.example.MyBookShopApp.errs.PayException;
 import com.example.MyBookShopApp.struct.book.book.Book;
-import com.example.MyBookShopApp.struct.other.DocumentEntity;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -19,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.logging.Logger;
 
 @Controller
 public class OtherController {
@@ -31,6 +30,7 @@ public class OtherController {
     private final Book2UserService book2UserService;
 
     private final PaymentServise paymentServise;
+    private Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Autowired
     public OtherController(OtherService otherService, UserService userService, BookService bookService, Book2UserService book2UserService, PaymentServise paymentServise) {
@@ -88,40 +88,40 @@ public class OtherController {
 
     @GetMapping("/documents/index")
     public String documentsPage(Model model){
-        System.out.println("Переход на страницу Документы");
+        logger.info("Переход на страницу Документы");
         model.addAttribute("documents",otherService.getAllDocuments());
         return "/documents/index";
     }
 
     @GetMapping("/documents/{slug}")
     public String documentsPage(Model model, @PathVariable(value = "slug", required = false) String slug){
-        System.out.println("Переход на страницу Конкретного документа");
+        logger.info("Переход на страницу Конкретного документа");
         model.addAttribute("doc",otherService.getDocumentBySlug(slug));
         return "/documents/" + slug;
     }
 
     @GetMapping("/about")
     public String aboutCompanyPage(){
-        System.out.println("Переход на страницу О компании");
+        logger.info("Переход на страницу О компании");
         return "/about";
     }
 
     @GetMapping("/faq")
     public String faqPage(Model model){
-        System.out.println("Переход на страницу Помощь");
+        logger.info("Переход на страницу Помощь");
         model.addAttribute("faqMap",otherService.getMapAllFaq());
         return "/faq";
     }
 
     @GetMapping("/contacts")
     public String contactsPage(){
-        System.out.println("Переход на страницу Контакты");
+        logger.info("Переход на страницу Контакты");
         return "/contacts";
     }
 
     @PostMapping("/contacts")
     public String sendMessageToContacts(ContactMessageDto form){
-        System.out.println("Отправка сообщения в поддержку");
+        logger.info("Отправка сообщения в поддержку");
         otherService.addMessageToSupport(form);
         return "redirect:/contacts";
     }
@@ -130,7 +130,7 @@ public class OtherController {
     @GetMapping("/tags/index/{tagId}")
     public String getTags(Model model,
                           @PathVariable(value = "tagId", required = false) Integer tagId) {
-        System.out.println("Переход на страницу тэгов");
+        logger.info("Переход на страницу тэгов");
         List<Book> list = otherService.getPageOfTagBooks(tagId, 0, 20);
         model.addAttribute("bookListByTag",list);
         model.addAttribute("tagName",otherService.getTagNameById(tagId));
@@ -149,21 +149,19 @@ public class OtherController {
     }
 
     @PostMapping("/deposit")
-    public ResponseEntity<ApiResponse> handleAddDeposit(@RequestParam(value = "sum", required = false) String sum
-            , @RequestParam(value = "user", required = false) String userHash ) throws PayException {
+    public ResponseEntity<ApiResponse> handleAddDeposit(@RequestParam(value = "sum", required = false) String sum) throws PayException {
 
-        String paymentUrl="";
+        var paymentUrl="";
         UserEntity user = userService.getCurrentUser();
 
         if (user != null && Float.parseFloat(sum)>0) {
             try {
                 paymentUrl = paymentServise.getPaymentUrl(sum, user.getHash());
-                System.out.println("paymentUrl=" + paymentUrl);
             } catch (NoSuchAlgorithmException e) {
                 throw new PayException("Проблема с оплатой " + e.getMessage());
             }
         }
-        ApiResponse response = new ApiResponse();
+        var response = new ApiResponse();
         response.setMessage(paymentUrl);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -177,8 +175,7 @@ public class OtherController {
         UserEntity user = userService.getUserByHash(userHash);
         if (user != null) {
 
-            float costOfBooks = Float.parseFloat(sum);
-            System.out.println("Сумма книг в корзине = " + costOfBooks);
+//            var costOfBooks = Float.parseFloat(sum);
 
             List<Book> booksFromRepo = book2UserService.getBooksFromRepoByTypeCodeAndUser("CART",user);
 
@@ -188,7 +185,7 @@ public class OtherController {
                     bookService.decreaseCart(book.getId());
                     bookService.increasePaid(book.getId());
                     userService.changeUserBalanceBuy(user, book);
-                } else System.out.println("Эту книгу уже покупали");
+                }
             }
 
             return "redirect:/books/my";

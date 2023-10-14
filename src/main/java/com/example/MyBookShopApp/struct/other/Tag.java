@@ -31,7 +31,7 @@ public class Tag {
     public String toString() {
         return "Tag{" +
                 "id=" + id +
-                ", name='" + name + '\'' +
+                ", nameTag='" + name + '\'' +
                 '}';
     }
 }

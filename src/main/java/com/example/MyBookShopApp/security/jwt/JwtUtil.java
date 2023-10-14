@@ -2,28 +2,28 @@ package com.example.MyBookShopApp.security.jwt;
 
 import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.lang.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 @Service
 public class JwtUtil {
 
+    private Logger logger = Logger.getLogger(this.getClass().getName());
     @Value("${auth.secret}")
     private String secret;
 
     public String createToken(Map<String, Object> claims, String username){
-        final LocalDateTime now = LocalDateTime.now();
-        final Instant accessExpirationInstant = now.plusMonths(1).atZone(ZoneId.systemDefault()).toInstant();
-        final Date accessExpiration = Date.from(accessExpirationInstant);
+        final var now = LocalDateTime.now();
+        final var accessExpirationInstant = now.plusMonths(1).atZone(ZoneId.systemDefault()).toInstant();
+        final var accessExpiration = Date.from(accessExpirationInstant);
         return Jwts
                 .builder()
                 .setClaims(claims)
@@ -39,23 +39,22 @@ public class JwtUtil {
     }
 
     public <T> T extractClaim(String token, Function<Claims,T> claimsResolver) {
-            Claims claims = extractAllClaims(token);
+            var claims = extractAllClaims(token);
             return claimsResolver.apply(claims);
     }
     private Claims extractAllClaims(String token){
         try {
-            Claims claims = Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
-            return claims;
+            return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
         } catch (ExpiredJwtException expEx) {
-            System.out.println("Token expired> " + expEx);
+            logger.info("Token expired> " + expEx);
         } catch (UnsupportedJwtException unsEx) {
-            System.out.println("Unsupported jwt> " + unsEx);
+            logger.info("Unsupported jwt> " + unsEx);
         } catch (MalformedJwtException mjEx) {
-            System.out.println("Malformed jwt> " + mjEx);
+            logger.info("Malformed jwt> " + mjEx);
         } catch (SignatureException sEx) {
-            System.out.println("Invalid signature> " + sEx);
+            logger.info("Invalid signature> " + sEx);
         } catch (Exception e) {
-            System.out.println("invalid token> " + e);
+            logger.info("invalid token> " + e);
         }
         return null;
     }
@@ -69,7 +68,7 @@ public class JwtUtil {
 
     public Boolean isTokenExpired(String token){
         return extractExpiration(token).before(new Date());
-    } //
+    }
 
     public Boolean validateToken(String token, UserDetails userDetails){ //
         String username = extractUserName(token);

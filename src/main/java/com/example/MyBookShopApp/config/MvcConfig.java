@@ -15,14 +15,18 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class MvcConfig implements WebMvcConfigurer {
 
-    @Value(value = "${upload.path}")
-    private String uploadPath;
+    @Value(value = "${uploadCovers.path}")
+    private String uploadCoversPath;
+
+    @Value(value = "${uploadPhoto.path}")
+    private String uploadPhotoPath;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry
-                .addResourceHandler("/book-covers/**")
-                .addResourceLocations("file:" + uploadPath + "/");
+                .addResourceHandler("/book-covers/**","/author-photo/**")
+                .addResourceLocations("file:" + uploadCoversPath + "/")
+                .addResourceLocations("file:" + uploadPhotoPath + "/");
     }
 
     @Override
@@ -33,9 +37,8 @@ public class MvcConfig implements WebMvcConfigurer {
     }
     @Bean
     public WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> containerCustomizer() {
-        return container -> {
-            container.addErrorPages(new ErrorPage(HttpStatus.NOT_FOUND,"/notFoundPage"));
-        };
+        return container -> container.addErrorPages(new ErrorPage(HttpStatus.NOT_FOUND,"/notFoundPage"));
+
     }
     @Bean
     public RestTemplate getRestTemplate(){

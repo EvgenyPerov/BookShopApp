@@ -6,22 +6,25 @@ import com.example.MyBookShopApp.struct.book.review.BookReviewEntity;
 import com.example.MyBookShopApp.struct.book.review.BookReviewLikeEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 //@Data
 @Getter
 @Setter
 @Entity
 @Table(name = "users")
-public class UserEntity {
-
+public class UserEntity  implements Serializable {
+    private static final long serialVersionUID = 1905122041950251207L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -36,17 +39,23 @@ public class UserEntity {
     @Column(columnDefinition = "INT NOT NULL")
     private float balance;
 
+    @Size(min=2, message = "Не меньше 2 знаков")
     @Column(columnDefinition = "VARCHAR(255)")
     private String name;
 
-//    @Column(columnDefinition = "VARCHAR(255)")
     private String email;
 
-//    @Column(columnDefinition = "VARCHAR(30)")
     private String phone;
 
-//    @Column(columnDefinition = "VARCHAR(255)")
+    @Size(min=5, message = "Не меньше 5 знаков")
     private String password;
+
+    @Column(name = "status", columnDefinition = "SMALLINT DEFAULT 1")
+    private int status;
+
+    @JsonIgnore
+    @ManyToMany(fetch = FetchType.EAGER)
+    private Set<Role> roles= new HashSet<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "user")

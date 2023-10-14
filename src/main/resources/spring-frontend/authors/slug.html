@@ -13,8 +13,11 @@
     <link rel="stylesheet" href="/assets/css/fonts.min.css?v=93601584">
     <link rel="stylesheet" href="/assets/css/basic.min.css?v=93601584">
     <link rel="stylesheet" href="/assets/css/extra.min.css?v=93601584">
-    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <![endif]-->
     <script defer src="/assets/js/scripts.min.js?v=93601584"></script>
+    <script th:replace="~{fragments/common_js_fragment :: jsFragment}"> </script>
 </head>
 <body class="Site">
 <header class="Header"

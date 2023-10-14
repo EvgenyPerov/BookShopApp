@@ -1,6 +1,7 @@
 package com.example.MyBookShopApp.Aop;
 
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
+import com.example.MyBookShopApp.errs.BadRequestException;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -20,29 +21,31 @@ public class AopLoggerClassAdvicesInvokeControllers {
     //выполнение совета после успешного выполнения метода
     @AfterReturning(value = "execution(public * getRecomendedBooksOnMainPage(String, String,Integer, Integer))", returning = "page")
     public void loggGetRecomendedBooksOnMainPage(JoinPoint joinPoint, Page<Book> page){
-        logger.info(joinPoint.toString() + " Method 'getRecomendedBooksOnMainPage' start executing...");
-        logger.info("Count of recommended books = " + page.getContent().size());
+        if (joinPoint != null) logger.info(joinPoint + " Method 'getRecomendedBooksOnMainPage' start executing...");
+        if (page != null)  logger.info("Count of recommended books = " + page.getContent().size());
     }
 
     //выполнение совета после не успешного выполнения метода
     @AfterThrowing(value = "execution(public * getRecomendedBooksOnMainPage(String, String,Integer, Integer))", throwing = "ex")
     public void loggGetRecomendedBooksOnMainPage(JoinPoint joinPoint, Exception ex){
-        logger.info(joinPoint.toString() + " Method 'getRecomendedBooksOnMainPage' NOT start executing, becouse ERROR: " + ex.getLocalizedMessage());
+        if (joinPoint != null) logger.info(joinPoint + " Method 'getRecomendedBooksOnMainPage' NOT start executing, becouse ERROR: " + ex.getLocalizedMessage());
     }
 
     //выполнение совета во время выполнения метода (вместо Before и After)
     @Around(value = "execution(public String getSlugOfBook(..))")
-    public Object loggGetSlugOfBook(ProceedingJoinPoint joinPoint){
-        logger.info(joinPoint.toString() + " Method 'getSlugOfBook' start executing...");
-        Object returnValue;
+    public Object loggGetSlugOfBook(ProceedingJoinPoint joinPoint) throws BadRequestException {
+        Object returnValue = null;
 
-        try {
-            returnValue = joinPoint.proceed();
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
+        if (joinPoint != null) {
+            logger.info(joinPoint + " Method 'getSlugOfBook' start executing...");
+            try {
+                returnValue = joinPoint.proceed();
+            } catch (Throwable e) {
+                throw new BadRequestException(e.getLocalizedMessage());
+            }
+
+            logger.info(joinPoint + " Method 'getSlugOfBook' finish executing...");
         }
-
-        logger.info(joinPoint + " Method 'getSlugOfBook' finish executing...");
         return  returnValue;
     }
     @Pointcut(value = "within(com.example.MyBookShopApp.controllers.*)")
@@ -98,7 +101,7 @@ public class AopLoggerClassAdvicesInvokeControllers {
 
     @Before("selectRecentDatePointcut() && args(from,to,offset,limit)")
     public void printHelloOnRecentPageAdvice(String from, String to, Integer offset, Integer limit){
-        if (from == null | to == null){
+        if (from == null || to == null){
             from = "Today";
             to = "Last month";
         }

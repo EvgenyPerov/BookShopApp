@@ -42,7 +42,7 @@ public class Item {
     @JsonProperty("searchInfo")
     private SearchInfo searchInfo;
     @JsonIgnore
-    private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
+    private Map<String, Object> additionalProperties = new LinkedHashMap<>();
 
     @JsonProperty("kind")
     public String getKind() {

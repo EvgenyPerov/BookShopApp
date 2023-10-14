@@ -3,18 +3,20 @@ package com.example.MyBookShopApp.security;
 import com.example.MyBookShopApp.data.dto.BooksPageDto;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
 import com.example.MyBookShopApp.data.dto.TransactionsPageDto;
+import com.example.MyBookShopApp.data.responses.ResponseResultOrError;
 import com.example.MyBookShopApp.data.services.Book2UserService;
 import com.example.MyBookShopApp.data.services.BookService;
 import com.example.MyBookShopApp.data.services.PaymentServise;
 import com.example.MyBookShopApp.data.services.UserService;
-import com.example.MyBookShopApp.errs.BadRequestException;
 import com.example.MyBookShopApp.security.jwt.JwtService;
 import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.payments.BalanceTransactionEntity;
+import com.example.MyBookShopApp.struct.user.Role;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -25,21 +27,18 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
-import java.net.URISyntaxException;
+import javax.validation.Valid;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.StringJoiner;
-import java.util.concurrent.TimeUnit;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 @Controller
 public class AuthUserController {
 
     private Logger logger = Logger.getLogger(this.getClass().getName());
+    private static final String CUR_USER = "curUser";
 
     @Value("${appEmail.email}")
     private String email;
@@ -115,45 +114,44 @@ public class AuthUserController {
 
     @GetMapping("/signin")
     public String signInPage(Model model){
-        System.out.println("Переход на страницу Вход");
+        logger.info("Переход на страницу Вход");
         return "signin";
     }
 
     @GetMapping("/signup")
     public String signUpPage(Model model){
-        System.out.println("Переход на страницу Регистрация");
+        logger.info("Переход на страницу Регистрация пользователя");
         model.addAttribute("regForm", new RegistrationForm());
         return "signup";
     }
 
     @PostMapping("/requestContactConfirmation")
     @ResponseBody
-    public ContactConfirmationResponse handleRequestContactConfirmation(@RequestBody ContactConfirmationPayload payload) throws URISyntaxException, BadRequestException {
-        System.out.println("Сработал мапинг /requestContactConfirmation");
-        ContactConfirmationResponse response = new ContactConfirmationResponse();
-        response.setResult("true");
+    public ResponseResultOrError handleRequestContactConfirmation(@RequestBody ContactConfirmationPayload payload) {
+        var response = new ResponseResultOrError();
+        response.setError("Error phone");
+        response.setResult(true);
 
         if (!payload.getContact().contains("@")){
             String secret = smsService.sendSecretCodeSms(payload.getContact());
             smsService.saveSmsCode(new SmsCode(secret, 120)); // 120 секунд
+            response.setResult(true);
         }
 
         return response;
     }
 
-    @PostMapping("/requestEmailConfirmation")
+    @PostMapping("/registrationEmailConfirmation")
     @ResponseBody
-    public ContactConfirmationResponse handleRequestEmailConfirmation(@RequestBody ContactConfirmationPayload payload) throws URISyntaxException, BadRequestException {
-        ContactConfirmationResponse response = new ContactConfirmationResponse();
-
+    public ResponseResultOrError handleRequestEmailConfirmation(@RequestBody ContactConfirmationPayload payload)  {
+        var response = new ResponseResultOrError();
+        response.setError("Error email");
         String secret = smsService.generateRandomSMSCode(4);
 
-        SimpleMailMessage message = new SimpleMailMessage();
+        var message = new SimpleMailMessage();
 
-        System.out.println("from = " + email); //
         message.setFrom(email);
 
-        System.out.println("to = " + payload.getContact()); //
         message.setTo(payload.getContact());
 
         message.setSubject("Bookshop app code confirmation");
@@ -162,7 +160,7 @@ public class AuthUserController {
         try {
             javaMailSender.send(message);
             smsService.saveSmsCode(new SmsCode(secret, 300)); // 5 минут
-            response.setResult("true");
+            response.setResult(true);
         } catch (MailException e) {
             logger.warning("Не удалось отправить сообщение с кодом. Ошибка: " + e);
         }
@@ -172,105 +170,123 @@ public class AuthUserController {
 
     @PostMapping("/approveContact")
     @ResponseBody
-    public ContactConfirmationResponse handleApproveContact(@RequestBody ContactConfirmationPayload payload) {
-        ContactConfirmationResponse response = new ContactConfirmationResponse();
+    public ResponseResultOrError handleApproveContact(@RequestBody ContactConfirmationPayload payload) {
+        var response = new ResponseResultOrError();
 
         if (smsService.verifySmsCode(payload.getCode())) {
-            response.setResult("true");
-
-                System.out.println("Код верный, выход выполнен"); //
-
+            response.setResult(true);
+            response.setError("OK");
         }
-        else System.out.println("Код не верный, выход не выполнен"); //
-
+        else {
+            response.setResult(false);
+            response.setError("Неверный код или срок ожидания превышен. ");
+        }
         return response;
     }
 
     @PostMapping("/approveContactProfile")
     @ResponseBody
-    public ContactConfirmationResponse handleApproveContactProfile(@RequestBody ContactConfirmationPayload payload) {
-        ContactConfirmationResponse response = new ContactConfirmationResponse();
+    public ResponseResultOrError handleApproveContactProfile(@RequestBody ContactConfirmationPayload payload) {
+        var response = new ResponseResultOrError();
 
         if (smsService.verifySmsCode(payload.getCode())) {
-            response.setResult("true");
+            response.setResult(true);
+            response.setError("OK");
             isChangeUserPhone = true;
+        }else {
+            response.setResult(false);
+            response.setError("Wrong phone");
         }
         return response;
     }
- // удалить
+
     @PostMapping("/changeNameProfile")
     @ResponseBody
-    public ContactConfirmationResponse handleChangeNameProfile(@RequestBody ProfileChangeName profileChangeName) {
-        ContactConfirmationResponse response = new ContactConfirmationResponse();
+    public ResponseResultOrError handleChangeNameProfile() {
+        var response = new ResponseResultOrError();
         isChangeUserName= true;
-
-        response.setResult("true");
+        response.setResult(true);
+        response.setError("OK");
         return response;
     }
 
     @PostMapping("/reg")
-    public String signUpRegistrationPage(RegistrationForm form, Model model){
-        userService.addUser(form);
+    public String signUpRegistrationPage(@Valid RegistrationForm form, Model model){
+        UserEntity user = userService.addUser(form);
+        boolean isAdmin = user.getRoles().stream()
+                .anyMatch(role -> role.getRoleName().equals("ROLE_ADMIN"));
+
         model.addAttribute("regOk", true);
-        System.out.println("Пользователь добавлен в БД, регистрация прошла успешно");
-        return "redirect:/signin";
+
+        return isAdmin? "redirect:/admin/registration" : "redirect:/signin";
     }
 
     @PostMapping("/login-by-email")
     @ResponseBody
-    public ContactConfirmationResponse handleLogin(@RequestBody ContactConfirmationPayload payload,
+    public ResponseResultOrError handleLogin(@RequestBody ContactConfirmationPayload payload,
                                                    HttpServletResponse httpServletResponse){
-        System.out.println("@PostMapping(/login-by-email)"); //
+        var response = new ResponseResultOrError();
 
         ContactConfirmationResponse loginResponse = userService.jwtLogin(payload);
-        System.out.println("loginResponse = !!!"); //
 
+        if (loginResponse != null) {
+            if (jwtService.isTokenInBlacklist(loginResponse.getResult())) {
+                logger.info("Токен недействителен");
+                response.setResult(false);
+                response.setError("Wrong number");
+                return response;
+            }
 
-        if (jwtService.isTokenInBlacklist(loginResponse.getResult())){
-            System.out.println("Токен недействителен");
-            return null;
+            var cookie = new Cookie("token", loginResponse.getResult());
+            httpServletResponse.addCookie(cookie);
+
+            response.setResult(true);
+
+            Optional<Role> role = userService.getUserByEmail(payload.getContact()).getRoles().stream().findFirst();
+            if (role.isPresent())  response.setError(role.get().getRoleName());
         }
 
-        Cookie cookie = new Cookie("token", loginResponse.getResult());
-        httpServletResponse.addCookie(cookie);
-
-        return loginResponse;
+        return response;
     }
 
     @PostMapping("/login-by-phone-number")
     @ResponseBody
-    public ContactConfirmationResponse handleLoginByPhoneNumber(@RequestBody ContactConfirmationPayload payload,
-                                                 HttpServletResponse response,
-                                                 @CookieValue(name = "tryLoginPhone", required = false) String cookieLogin) {
+    public ResponseResultOrError handleLoginByPhoneNumber(@RequestBody ContactConfirmationPayload payload,
+                                                 HttpServletResponse httpServletResponse) {
 
+        var response = new ResponseResultOrError();
+        response.setError("Wrong number");
 
         if (smsService.verifySmsCode(payload.getCode())) {
             ContactConfirmationResponse loginResponse = userService.jwtLoginByPhoneNumber(payload);
 
             if (jwtService.isTokenInBlacklist(loginResponse.getResult())) {
-                System.out.println("Токен недействителен");
-                return null;
+                logger.info("Токен недействителен");
+                response.setResult(false);
+                return response;
             }
 
-            Cookie cookie = new Cookie("token", loginResponse.getResult());
-            response.addCookie(cookie);
-            return loginResponse;
+            var cookie = new Cookie("token", loginResponse.getResult());
+            httpServletResponse.addCookie(cookie);
+            response.setResult(true);
 
-        } else {
-                        return null;
+            Optional<Role> role = userService.getUserByPhone(payload.getContact()).getRoles().stream().findFirst();
+            if (role.isPresent())  response.setError(role.get().getRoleName());
+
         }
+        return response;
     }
 
     @GetMapping("/books/my")
     public String myPage(Model model,
                          @CookieValue(name = "cartContents", required = false) String cartContents,
                          @CookieValue(name = "postponedContents", required = false) String postponedContents){
-        System.out.println("Переход на страницу My");
+        logger.info("Переход на страницу My");
 
 
         UserEntity user = userService.getCurrentUser();
         if (user != null) {
-            model.addAttribute("curUser", user);
+            model.addAttribute(CUR_USER, user);
             List<Book> list = book2UserService.getPageOfBooksFromRepoByTypeCodeAndUser(0, 20,"PAID", user);
             model.addAttribute("myPaidBooks", list);
 
@@ -301,7 +317,7 @@ public class AuthUserController {
         UserEntity user = userService.getCurrentUser();
 
         if (user != null) {
-            model.addAttribute("curUser", user);
+            model.addAttribute(CUR_USER, user);
 
             List<Book> list = book2UserService.getPageOfBooksFromRepoByTypeCodeAndUser(offset, limit,"PAID", user);
             return new BooksPageDto(list);
@@ -311,24 +327,22 @@ public class AuthUserController {
 
     @PostMapping("/changeBookStatus/ARCHIVED/{bookId}")
     public String handleChangeBookStatusCart(@PathVariable(value = "bookId", required = false) String bookId){
-        System.out.println("Сработал контроллер /changeBookStatus/ARCHIVED/" + bookId);
-
-        Book book = bookService.getBookById(Integer.parseInt(bookId));
+        var book = bookService.getBookById(Integer.parseInt(bookId));
         UserEntity user = userService.getCurrentUser();
 
         if (user != null) {
-            boolean isChangeArchived = book2UserService.updateStatusOfBookPaidOrArchived(book, user);
+            book2UserService.updateStatusOfBookPaidOrArchived(book, user);
         }
         return "redirect:/books/" + bookId;
     }
 
     @GetMapping("/my/archive")
     public String myPage(Model model) {
-        System.out.println("Переход на страницу MyArchive");
+        logger.info("Переход на страницу MyArchive");
 
         UserEntity user = userService.getCurrentUser();
         if (user != null) {
-            model.addAttribute("curUser", user);
+            model.addAttribute(CUR_USER, user);
             model.addAttribute("myArchihedBooks", book2UserService.getBooksFromRepoByTypeCodeAndUser("ARCHIVED", user));
         }
 
@@ -338,12 +352,11 @@ public class AuthUserController {
     @ApiOperation("operation to get looked books")
     @GetMapping("/books/looked")
     public String lookedBooks(Model model){
-        System.out.println("Переход на страницу Просмотренное");
-//        model.addAttribute("lookedBooks",bookService.getPageOfPopularBooks(0, 20).getContent());
+        logger.info("Переход на страницу Просмотренное");
         UserEntity user = userService.getCurrentUser();
 
         if (user != null) {
-            model.addAttribute("curUser", user);
+            model.addAttribute(CUR_USER, user);
             model.addAttribute("lookedBooks",book2UserService.getPageOfLookedBooksByUserLastMonth(0, 20, user));
         }
 
@@ -359,7 +372,7 @@ public class AuthUserController {
         UserEntity user = userService.getCurrentUser();
 
         if (user != null) {
-            model.addAttribute("curUser", user);
+            model.addAttribute(CUR_USER, user);
             return new BooksPageDto(book2UserService.getPageOfLookedBooksByUserLastMonth(offset, limit, user));
         }
 
@@ -373,13 +386,13 @@ public class AuthUserController {
                               @RequestParam(value = "error", required = false) String errorMessage,
                               @RequestParam(value = "InvId", required = false) String invId,
                               @RequestParam(value = "SignatureValue", required = false) String signatureValue,
-                              @RequestParam(value = "OutSum", required = false) String outSum) throws NoSuchAlgorithmException, InterruptedException {
-        System.out.println("Переход на страницу Profile");
+                              @RequestParam(value = "OutSum", required = false) String outSum) throws NoSuchAlgorithmException {
+        logger.info("Переход на страницу Profile");
 
         if (signatureValue != null) {
             String createSignatureValue = paymentServise.createSignatureValue(outSum, invId);
 
-            float summ = Float.parseFloat(outSum);
+            var summ = Float.parseFloat(outSum);
             if (signatureValue.toUpperCase().equals(createSignatureValue) && summ>0) {
                 isPaymentOk = true;
                 UserEntity user = userService.getUserByHash(invId);
@@ -391,7 +404,7 @@ public class AuthUserController {
             return "redirect:/profile";
         }
 
-        model.addAttribute("curUser", userService.getCurrentUser());
+        model.addAttribute(CUR_USER, userService.getCurrentUser());
         model.addAttribute("changeDataForm", new RegistrationForm());
         model.addAttribute("ChangeOk", isChangeUserData);
         model.addAttribute("PaymentOk", isPaymentOk);
@@ -409,24 +422,22 @@ public class AuthUserController {
               @RequestParam(value ="sort", required = false) String sort
             , @RequestParam(value ="offset", required = false) Integer offset
             , @RequestParam(value ="limit", required = false) Integer limit) {
-        System.out.println("Передача данных истории транзакций в JS с параметрами offset = "+ offset +
-                " limit= "+ limit + " sort= "+ sort);
 
         List<BalanceTransactionEntity> list =
                 userService.getPageOfBalanceTransactionDesc(userService.getCurrentUser(), offset, limit, sort).getContent();
 
-        System.out.println("Список транзакций = " + list.size() + " пустой - "+ list.isEmpty());
         return new TransactionsPageDto(list);
     }
 
     @PostMapping("/profileChange")
-    public String profilePageChangeData(RegistrationForm form){
-        boolean isChangeUserData = false;
+    public ModelAndView profilePageChangeData(RegistrationForm form){
+        var isChangeUserData = false;
 
         if (form.getPass() != null && !form.getPass().isBlank() && form.getPass().equals(form.getPass2())) {
-        userService.changeUserPassword(form);
+            UserEntity user = userService.getCurrentUser();
+            userService.changeUserPassword(form, user);
             isChangeUserData = true;
-            System.out.println("Изменение пароля пользователя выполнено успешно");
+            logger.info("Изменение пароля пользователя выполнено успешно");
         }
 
         if (isChangeUserPhone != null && isChangeUserPhone) {
@@ -436,7 +447,7 @@ public class AuthUserController {
             {
                 userService.changeUserPhone(form);
                 isChangeUserData = true;
-                System.out.println("Изменение телефона пользователя выполнены успешно");
+                logger.info("Изменение телефона пользователя выполнены успешно");
             }
         }
 
@@ -444,10 +455,17 @@ public class AuthUserController {
             userService.changeUserName(form);
             isChangeUserData = true;
             isChangeUserName = false;
-            System.out.println("Изменение имени пользователя выполнены успешно");
+            logger.info("Изменение имени пользователя выполнены успешно");
         }
+        var mav = new ModelAndView();
+        mav.setStatus(HttpStatus.OK);
+        mav.setViewName("profile");
+        mav.addObject(CUR_USER, userService.getCurrentUser());
+        mav.addObject("changeDataForm", new RegistrationForm());
+        mav.addObject("ChangeOk", isChangeUserData);
+        mav.addObject("transactions", userService.getPageOfBalanceTransactionDesc(userService.getCurrentUser(),0,2 , "desc").getContent());
 
-        return "redirect:/profile?isChangeUserData=" + isChangeUserData;
+        return mav;
     }
 
 }

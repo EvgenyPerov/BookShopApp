@@ -8,5 +8,7 @@ public interface GenreRepository extends JpaRepository<GenreEntity, Integer> {
 
       GenreEntity findGenreEntityById(Integer id);
 
+      GenreEntity findByNameIs(String name);
+
 
 }

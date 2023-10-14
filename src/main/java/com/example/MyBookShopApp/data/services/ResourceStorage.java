@@ -3,7 +3,6 @@ package com.example.MyBookShopApp.data.services;
 import com.example.MyBookShopApp.data.repo.BookFileRepository;
 import com.example.MyBookShopApp.data.repo.FileDownloadRepository;
 import com.example.MyBookShopApp.struct.book.book.Book;
-import com.example.MyBookShopApp.struct.book.file.BookFileEntity;
 import com.example.MyBookShopApp.struct.book.file.FileDownloadEntity;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import org.apache.commons.io.FilenameUtils;
@@ -33,12 +32,10 @@ public class ResourceStorage {
         this.fileDownloadRepository = fileDownloadRepository;
     }
 
-    @Value(value = "${upload.path}")
-    private String uploadPath;
-
     @Value(value = "${download.path}")
     private String downloadPath;
-    public String saveNewBookImage(MultipartFile file, String slug) {
+
+    public String saveNewBookImage(MultipartFile file, String slug, String uploadPath) {
         String resourceURI = null;
 
         if (!file.isEmpty()) {
@@ -51,8 +48,8 @@ public class ResourceStorage {
             }
 
             String fileName = slug + "." + FilenameUtils.getExtension(file.getOriginalFilename());
-            Path path = Paths.get(uploadPath, fileName);
-            resourceURI = "/book-covers/" + fileName;
+            var path = Paths.get(uploadPath, fileName);
+            resourceURI = uploadPath.substring(uploadPath.lastIndexOf('/')) + "/" + fileName;
             try {
                 file.transferTo(path);
             } catch (IOException e) {
@@ -63,16 +60,14 @@ public class ResourceStorage {
     }
 
     public Path getBookPathFile(String hash) {
-        BookFileEntity bookFile = bookFileRepository.findBookFileEntityByHash(hash);
+        var bookFile = bookFileRepository.findBookFileEntityByHash(hash);
         String fileName = bookFile.getPath();
         String fileType = bookFile.getBookFileTypeEntity().getName();
-
         return Paths.get(fileName + "." + fileType);
-//       return Paths.get(bookFileRepository.findBookFileEntityByHash(hash).getPath());
     }
 
     public MediaType getBookFileMime(String hash) {
-        BookFileEntity bookFile = bookFileRepository.findBookFileEntityByHash(hash);
+        var bookFile = bookFileRepository.findBookFileEntityByHash(hash);
         String mimeType = URLConnection.guessContentTypeFromName(Paths.get(bookFile.getPath()).getFileName().toString());
         if (mimeType != null){
             return MediaType.parseMediaType(mimeType);
@@ -80,11 +75,11 @@ public class ResourceStorage {
     }
 
     public byte[] getBookFileByteArray(String hash) {
-        BookFileEntity bookFile = bookFileRepository.findBookFileEntityByHash(hash);
+        var bookFile = bookFileRepository.findBookFileEntityByHash(hash);
         String fileName = bookFile.getPath();
         String fileType = bookFile.getBookFileTypeEntity().getName();
 
-        Path path = Paths.get(downloadPath, fileName + "." + fileType);
+        var path = Paths.get(downloadPath, fileName + "." + fileType);
         try {
             return Files.readAllBytes(path);
         } catch (IOException e) {
@@ -94,7 +89,7 @@ public class ResourceStorage {
     }
 
     public void addFileDownload(String hash, UserEntity user){
-        Book book = bookFileRepository.findBookFileEntityByHash(hash).getBook();
+        var book = bookFileRepository.findBookFileEntityByHash(hash).getBook();
 
         FileDownloadEntity fileDownload = fileDownloadRepository.findByBookIdAndUserId(book.getId() ,user.getId());
         if (fileDownload != null){

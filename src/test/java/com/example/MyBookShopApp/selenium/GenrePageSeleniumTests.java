@@ -28,7 +28,7 @@ class GenrePageSeleniumTests {
 
     @Test
     @DisplayName("Click по жанру 'Лёгкое чтение'")
-    public void genrePageClickGenreTest() throws InterruptedException {
+    void genrePageClickGenreTest() throws InterruptedException {
         GenrePage genrePage = new GenrePage(driver);
         genrePage
                 .callPage()
@@ -36,6 +36,6 @@ class GenrePageSeleniumTests {
                 .clickGenre()
                 .pause()
                 .pause();
-        Assertions.assertTrue(driver.findElementByXPath("/html/body/div/div/main/header/h1").getText().equals("Лёгкое чтение"));
+        Assertions.assertEquals( "Лёгкое чтение", driver.findElementByXPath("/html/body/div/div/main/header/h1").getText());
     }
 }

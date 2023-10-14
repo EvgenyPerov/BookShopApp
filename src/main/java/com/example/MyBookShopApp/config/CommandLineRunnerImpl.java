@@ -1,6 +1,5 @@
 package com.example.MyBookShopApp.config;
 
-import com.example.MyBookShopApp.data.repo.BookRepository;
 import com.example.MyBookShopApp.data.TestEntity;
 import com.example.MyBookShopApp.data.TestEntityCrudRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,17 +9,15 @@ import org.springframework.boot.CommandLineRunner;
 public class CommandLineRunnerImpl implements CommandLineRunner {
 
     private TestEntityCrudRepository repository;
-    private BookRepository bookRepository;
 
     @Autowired
-    public CommandLineRunnerImpl(TestEntityCrudRepository repository, BookRepository bookRepository) {
+    public CommandLineRunnerImpl(TestEntityCrudRepository repository) {
         this.repository = repository;
-        this.bookRepository = bookRepository;
     }
 
     @Override
     public void run(String... args) throws Exception {
-        for (int i = 0; i < 5; i++) {
+        for (var i = 0; i < 5; i++) {
             createTestEntity(new TestEntity());
         }
 
@@ -50,7 +47,7 @@ public class CommandLineRunnerImpl implements CommandLineRunner {
     }
 
     private TestEntity updateTestEntity(Long id) {
-        TestEntity testEntity = readTestEntityById(id);
+        var testEntity = readTestEntityById(id);
         testEntity.setData(testEntity.getData()+ "NEW DATA!!!");
         repository.save(testEntity);
         return testEntity;

@@ -49,8 +49,8 @@ public class TelegramConfirmationBot extends TelegramLongPollingBot {
     }
 
     public void sendMessage(Long chatId, String text){
-        String chatIdString = String.valueOf(chatId);
-        SendMessage sendMessage = new SendMessage(chatIdString, text);
+        var chatIdString = String.valueOf(chatId);
+        var sendMessage = new SendMessage(chatIdString, text);
 
         try {
             execute(sendMessage);

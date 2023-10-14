@@ -27,4 +27,11 @@ public class Book2AuthorEntity {
     @Column(columnDefinition = "INT NOT NULL  DEFAULT 0")
     private int sortIndex;
 
+    @Override
+    public String toString() {
+        return "Book2AuthorEntity{" +
+                "id=" + id +
+                ", author=" + author +
+                '}';
+    }
 }

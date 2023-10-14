@@ -1,7 +1,6 @@
 package com.example.MyBookShopApp.selenium;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 public class SignupPage {
@@ -33,85 +32,79 @@ public class SignupPage {
     }
 
     public SignupPage setName(String name) {
-        WebElement webElement = driver.findElement(By.id("name"));
+        var webElement = driver.findElement(By.id("name"));
         webElement.sendKeys(name);
         return this;
     }
 
     public SignupPage setPhone(String phone) {
-        WebElement webElement = driver.findElement(By.id("phone"));
+        var webElement = driver.findElement(By.id("phone"));
         webElement.sendKeys(phone);
         return this;
     }
 
     public SignupPage submitPhone() {
-        WebElement webElement = driver.findElement(By.id("submitPhone"));
+        var webElement = driver.findElement(By.id("submitPhone"));
         webElement.click();
         return this;
     }
 
     public SignupPage setPhoneCode() {
-        WebElement webElement = driver.findElement(By.id("phoneCode"));
+        var webElement = driver.findElement(By.id("phoneCode"));
         webElement.sendKeys("123456");
         return this;
     }
 
     public SignupPage setEmail(String mail) {
-        WebElement webElement = driver.findElement(By.id("mail"));
+        var webElement = driver.findElement(By.id("mail"));
         webElement.sendKeys(mail);
         return this;
     }
 
     public SignupPage submitEmail() {
-        WebElement webElement = driver.findElement(By.id("submitMail"));
+        var webElement = driver.findElement(By.id("submitMail"));
         webElement.click();
         return this;
     }
 
     public SignupPage setMailCode() {
-        WebElement webElement = driver.findElement(By.id("mailCode"));
+        var webElement = driver.findElement(By.id("mailCode"));
         webElement.sendKeys("123456");
         return this;
     }
 
     public SignupPage setPassword(String password) {
-        WebElement webElement = driver.findElement(By.id("pass"));
+        var webElement = driver.findElement(By.id("pass"));
         webElement.sendKeys(password);
         return this;
     }
 
     public SignupPage clickRegistration() {
-        WebElement webElement = driver.findElement(By.id("registration"));
+        var webElement = driver.findElement(By.id("registration"));
         webElement.submit();
         return this;
     }
 
     public SignupPage setTypeAuth(){
-        WebElement webElement = driver.findElement(By.xpath("/html/body/div/div[2]/main/form/div/div[1]/div[2]/div/div[2]/label/input"));
+        var webElement = driver.findElement(By.xpath("/html/body/div/div[2]/main/form/div/div[1]/div[2]/div/div[2]/label/input"));
         webElement.click();
         return this;
     }
 
-    public SignupPage inputmail(String mail) {
-        WebElement webElement = driver.findElement(By.id("mail"));
-        webElement.sendKeys(mail);
-        return this;
-    }
-
     public SignupPage clickNext() {
-        WebElement webElement = driver.findElement(By.id("sendauth"));
+        var webElement = driver.findElement(By.id("sendauth"));
         webElement.click();
         return this;
     }
 
     public SignupPage inputPass(String password) {
-        WebElement webElement = driver.findElement(By.id("mailcode"));
+        var webElement = driver.findElement(By.id("mailcode"));
         webElement.sendKeys(password);
         return this;
     }
 
     public SignupPage clickSignin() {
-        WebElement webElement = driver.findElement(By.id("toComeInMail"));
+        var webElement = driver.findElement(By.id("toComeInMail"));
         webElement.click();
         return this;
     }
@@ -121,13 +114,14 @@ public class SignupPage {
 //        webElement.click();
 //        return this;
 //    }
+
     public SignupPage callPageProfile() {
         driver.get(urlProfile);
         return this;
     }
 
     public SignupPage clickLogout() {
-        WebElement webElement = driver.findElement(By.xpath("/html/body/header/div[1]/div/div/div[3]/div/a[5]"));
+        var webElement = driver.findElement(By.xpath("/html/body/header/div[1]/div/div/div[3]/div/a[5]"));
         webElement.click();
         return this;
     }

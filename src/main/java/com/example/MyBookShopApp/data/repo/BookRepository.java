@@ -51,4 +51,6 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
 
     Page<Book> findBooksByIdInOrderByPubDateDesc(List<Integer> list, Pageable nextPage);
 
+    Book findBySlugIsIgnoreCase(String slug);
+
 }

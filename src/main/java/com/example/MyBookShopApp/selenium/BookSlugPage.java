@@ -1,7 +1,6 @@
 package com.example.MyBookShopApp.selenium;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 public class BookSlugPage {
@@ -39,14 +38,13 @@ public class BookSlugPage {
     }
 
     public BookSlugPage clickAuthor(String name) {
-//        WebElement webElement = driver.findElement(By.xpath("/html/body/div/div/main/div/div[1]/div[2]/div[1]/div[1]/a"));
-        WebElement webElement = driver.findElement(By.xpath("//*[contains(text(), '"+name+"')]"));
+        var webElement = driver.findElement(By.xpath("//*[contains(text(), '"+name+"')]"));
         webElement.click();
         return this;
     }
 
     public BookSlugPage changeBookStatus(String bookStatus) {
-        WebElement webElement = driver.findElement(By.id(bookStatus));
+        var webElement = driver.findElement(By.id(bookStatus));
         webElement.click();
         return this;
     }

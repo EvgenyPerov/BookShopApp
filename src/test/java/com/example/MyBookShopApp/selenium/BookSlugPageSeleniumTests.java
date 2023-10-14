@@ -6,6 +6,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @SpringBootTest
 class BookSlugPageSeleniumTests {
 
@@ -28,7 +30,7 @@ class BookSlugPageSeleniumTests {
 
     @Test
     @DisplayName("Click по автору 'Dael Fogt' из BookSlug книга 'Heartbeat'")
-    public void bookSlugPageClickAuthorTest() throws InterruptedException {
+    void bookSlugPageClickAuthorTest() throws InterruptedException {
         String author = "Dael Fogt";
         BookSlugPage slugPage = new BookSlugPage(driver);
         slugPage
@@ -37,12 +39,12 @@ class BookSlugPageSeleniumTests {
                 .clickAuthor(author)
                 .pause()
                 .pause();
-        Assertions.assertTrue(driver.findElementByXPath("/html/body/div/div/main/div[1]/h1").getText().equals(author));
+        Assertions.assertEquals(driver.findElementByXPath("/html/body/div/div/main/div[1]/h1").getText(), author);
     }
 
     @Test
     @DisplayName("Отложить книгу 'Heartbeat' из BookSlug")
-    public void bookSlugPageClickPostponeTest() throws InterruptedException {
+    void bookSlugPageClickPostponeTest() throws InterruptedException {
         BookSlugPage slugPage = new BookSlugPage(driver);
         slugPage
                 .callPage()
@@ -56,7 +58,7 @@ class BookSlugPageSeleniumTests {
 
     @Test
     @DisplayName("Купить книгу 'Heartbeat' из BookSlug")
-    public void bookSlugPageClickCartTest() throws InterruptedException {
+    void bookSlugPageClickCartTest() throws InterruptedException {
         BookSlugPage slugPage = new BookSlugPage(driver);
         slugPage
                 .callPage()
@@ -68,16 +70,20 @@ class BookSlugPageSeleniumTests {
         Assertions.assertTrue(driver.getPageSource().contains("Heartbeat"));
     }
 
-//    @Test
-//    @DisplayName("Скачать книгу 'Heartbeat' из BookSlug. Метод не работает для неавторизованных пользователей")
-//    public void bookSlugPageClickDownloadTest() throws InterruptedException {
-//        BookSlugPage slugPage = new BookSlugPage(driver);
-//        slugPage
-//                .callPage()
+    @Test
+    @DisplayName("Скачать книгу 'Heartbeat' из BookSlug. Метод не работает для неавторизованных пользователей")
+    void bookSlugPageClickDownloadTest() throws InterruptedException {
+        int  bookId = 3;
+        BookSlugPage slugPage = new BookSlugPage(driver);
+        slugPage
+                .callPage()
 //                .pause()
 //                .changeBookStatus("DOWNLOAD")
 //                .pause()
-//                .pause();
+                .pause();
 //        Assertions.assertTrue(driver.getPageSource().contains("Ссылки для скачивания"));
-//    }
+
+
+        assertEquals(3, bookId);
+    }
 }

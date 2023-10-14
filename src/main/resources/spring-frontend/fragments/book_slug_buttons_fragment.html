@@ -44,7 +44,7 @@
                 <!--            th:text="${bookFile.getExtensionString()}"-->
                 <div th:each="bookFile: ${book.bookFileList}">
                     <a href="#" th:href="${'/books/download/'+ bookFile.hash}"
-                       th:text="${bookFile.bookFileTypeEntity.name + ' файл размер - ' + bookFile.size}"> </a>
+                       th:text="${bookFile.bookFileTypeEntity.name + ' файл размер в KБ= ' + bookFile.size}"> </a>
                 </div>
             </div>
 

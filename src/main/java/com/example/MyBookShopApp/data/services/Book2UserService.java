@@ -13,8 +13,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,27 +26,29 @@ public class Book2UserService {
   private Book2UserTypeRepository book2UserTypeRepository;
   private final BookRepository bookRepository;
 
+  private final UserRepository userRepository;
+
+    private Logger logger = Logger.getLogger(this.getClass().getName());
   @Autowired
-    public Book2UserService(Book2UserRepository book2UserRepository, Book2UserTypeRepository book2UserTypeRepository, BookRepository bookRepository) {
+    public Book2UserService(Book2UserRepository book2UserRepository, Book2UserTypeRepository book2UserTypeRepository, BookRepository bookRepository, UserRepository userRepository) {
         this.book2UserRepository = book2UserRepository;
         this.book2UserTypeRepository = book2UserTypeRepository;
       this.bookRepository = bookRepository;
+      this.userRepository = userRepository;
   }
 
     public void addLookedBook(Book book, UserEntity user) {
-        System.out.println("Сервис добавления книги в LOOKED");
-        boolean isExist = false;
+        logger.info("Сервис добавления книги в LOOKED");
+        var isExist = false;
         List<Book2UserEntity> lookedBooksList = book2UserRepository.findAllByBookAndUser(book, user);
         if (!lookedBooksList.isEmpty()) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-            LocalDateTime nowDate = LocalDateTime.now();
+            var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+            var nowDate = LocalDateTime.now();
             String formattedDateTimeNow = nowDate.format(formatter);
-            System.out.println("formattedDateTimeNow - " + formattedDateTimeNow); //
 
             for (Book2UserEntity lookedBook : lookedBooksList) {
-                LocalDateTime localDateTimeFromRepo = lookedBook.getTime();
+                var localDateTimeFromRepo = lookedBook.getTime();
                 String formattedDateTimeFromRepo = localDateTimeFromRepo.format(formatter);
-//                System.out.println("formattedDateTimeFromRepo - " + formattedDateTimeFromRepo);
 
                 if (formattedDateTimeFromRepo.equals(formattedDateTimeNow)) {
                     isExist = true;
@@ -61,14 +65,14 @@ public class Book2UserService {
     }
 
     public boolean update(String code, Book book, UserEntity user) {
-        System.out.println("Сервис обновления book2User");
+        logger.info("Сервис обновления book2User");
 
         List<Book2UserEntity> book2UserEntityList = book2UserRepository.findAllByBookAndUser(book, user);
 
         Book2UserEntity book2UserKeptOrCart = null;
 
-        boolean isKeptOrCart = false;
-        boolean isPaidOrArchive = false;
+        var isKeptOrCart = false;
+        var isPaidOrArchive = false;
 
         for (Book2UserEntity book2User : book2UserEntityList){
             if (book2User.getBook2UserType().getCode().equals("PAID") ||book2User.getBook2UserType().getCode().equals("ARCHIVED")) {
@@ -81,7 +85,6 @@ public class Book2UserService {
         }
 
         if (isKeptOrCart && !isPaidOrArchive) {
-            System.out.println("В репозитории book2User уже имеется запись CART или KEPT");
             Book2UserTypeEntity typeBook = book2UserTypeRepository.findByCodeIs(code);
             book2UserKeptOrCart.setTime(LocalDateTime.now());
             book2UserKeptOrCart.setBook2UserType(typeBook);
@@ -98,9 +101,9 @@ public class Book2UserService {
 
     public void createBook2UserEntity(String code, Book book, UserEntity user) {
         Book2UserTypeEntity typeBook = book2UserTypeRepository.findByCodeIs(code);
-        System.out.println("Сервис создание нового объекта book2UserEntity ");
+        logger.info("Сервис создание нового объекта book2UserEntity ");
 
-        Book2UserEntity newBook2UserEntity = new Book2UserEntity();
+        var newBook2UserEntity = new Book2UserEntity();
         newBook2UserEntity.setTime(LocalDateTime.now());
         newBook2UserEntity.setBook2UserType(typeBook);
         newBook2UserEntity.setBook(book);
@@ -110,14 +113,13 @@ public class Book2UserService {
     }
 
     public boolean delete(Book book, UserEntity user) {
-        System.out.println("Сервис удаления записи book2UserEntity");
+        logger.info("Сервис удаления записи book2UserEntity");
         List<Book2UserEntity> book2UserList  = book2UserRepository.findAllByBookAndUser(book, user);
 
         Optional<Book2UserEntity> book2User = book2UserList.stream().
                 filter(entity -> entity.getBook2UserType().getCode().equals("KEPT") || entity.getBook2UserType().getCode().equals("CART")).
                 findFirst();
 
-//        Book2UserEntity getBook2UserFromRepo = book2UserRepository.findByBookAndUserIs(book, user);
         if (book2User.isPresent()) {
             book2UserRepository.delete(book2User.get());
             return true;
@@ -166,15 +168,49 @@ public class Book2UserService {
                 .stream()
                 .map(Book2UserEntity::getBook)
                 .collect(Collectors.toList());
-        System.out.println("Количество подгруженных сервисом просмотренных книг = "+ list.size()); //
 
         if (user != null) {updateStatusOfBook(list, user);}
 
         return list;
     }
 
+    public boolean addGiftBookToUser(int IdBook, int IdUser){
+      Optional<Book> book = bookRepository.findById(IdBook);
+
+        Optional<UserEntity> user = userRepository.findById(IdUser);
+        if (!user.isPresent() || !book.isPresent())  return false;
+
+        List<String> codes = Arrays.asList("PAID", "ARCHIVED");
+
+        var Book2UserTypeList = book2UserTypeRepository.findAllByCodeIn(codes);
+
+        var paidOrArhivedBooks = book2UserRepository.findAllByUserAndBookAndBook2UserTypeIn(user.get(), book.get(), Book2UserTypeList);
+
+        if (paidOrArhivedBooks != null && !paidOrArhivedBooks.isEmpty()){
+            return false;
+        } else {
+            var typeEntityPaid = book2UserTypeRepository.findByCodeIs("PAID");
+            codes = Arrays.asList("KEPT", "CART");
+            Book2UserTypeList = book2UserTypeRepository.findAllByCodeIn(codes);
+            List<Book2UserEntity> keptOrCartBooks = book2UserRepository.findAllByUserAndBookAndBook2UserTypeIn(user.get(), book.get(), Book2UserTypeList);
+            if (keptOrCartBooks != null && !keptOrCartBooks.isEmpty()){
+                var book2User = keptOrCartBooks.get(0);
+                book2User.setBook2UserType(typeEntityPaid);
+                book2UserRepository.save(book2User);
+            } else {
+                var newBook2User = new Book2UserEntity();
+                newBook2User.setTime(LocalDateTime.now());
+                newBook2User.setBook2UserType(typeEntityPaid);
+                newBook2User.setBook(book.get());
+                newBook2User.setUser(user.get());
+                book2UserRepository.save(newBook2User);
+            }
+        }
+        return true;
+    }
+
     public void updateStatusOfBook(List<Book> list, UserEntity user) {
-        System.out.println("Обновление статуса у книг");
+        logger.info("Обновление статуса у книг");
         List<Book> booksForUpdate = new ArrayList<>();
         if (user != null) {
             List<Book> bookKeptList = getBooksFromRepoByTypeCodeAndUser("KEPT", user);
@@ -183,7 +219,7 @@ public class Book2UserService {
 
             for (Book book : list) {
 
-                boolean isFound = false;
+                var isFound = false;
 
                 if (bookKeptList.contains(book)) {
                     book.setStatus("KEPT");
@@ -219,14 +255,14 @@ public class Book2UserService {
     }
 
     public boolean updateStatusOfBookPaidOrArchived(Book book, UserEntity user) {
-        System.out.println("Обновление статуса у книги Куплено или В архиве");
+        logger.info("Обновление статуса у книги Куплено или В архиве");
 
             Book2UserTypeEntity typeEntityPaid = book2UserTypeRepository.findByCodeIs("PAID");
             Book2UserTypeEntity typeEntityArchived = book2UserTypeRepository.findByCodeIs("ARCHIVED");
 
             List<Book2UserEntity> list = book2UserRepository.findAllByBookAndUserAndBook2UserType(book, user, typeEntityPaid);
             if (list != null && !list.isEmpty()) {
-                Optional<Book2UserEntity> Book2User = list.stream().findFirst();
+                var Book2User = list.stream().findFirst();
             if (Book2User.isPresent()){
                 Book2User.get().setBook2UserType(typeEntityArchived);
                 book2UserRepository.save(Book2User.get());
@@ -234,7 +270,7 @@ public class Book2UserService {
             }
         } else {
                 list = book2UserRepository.findAllByBookAndUserAndBook2UserType(book, user, typeEntityArchived);
-                Optional<Book2UserEntity> Book2User = list.stream().findFirst();
+                var Book2User = list.stream().findFirst();
                 if (Book2User.isPresent()){
                     Book2User.get().setBook2UserType(typeEntityPaid);
                     book2UserRepository.save(Book2User.get());
@@ -245,6 +281,15 @@ public class Book2UserService {
             return false;
         }
 
+        public int countBuyBooksByUser(UserEntity user){
+            if (user == null) return 0;
+
+            List<String> codes = Arrays.asList("PAID", "ARCHIVED");
+
+            var book2UserTypeList = book2UserTypeRepository.findAllByCodeIn(codes);
+
+           return book2UserRepository.countByUserAndBook2UserTypeIn(user,  book2UserTypeList);
+        }
 
 }
 

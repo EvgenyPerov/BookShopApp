@@ -7,5 +7,4 @@ public class ContactConfirmationResponse {
 
     private String result;
 
-
 }

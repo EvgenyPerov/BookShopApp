@@ -3,9 +3,7 @@ package com.example.MyBookShopApp.struct.payments;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @Entity
 @Data

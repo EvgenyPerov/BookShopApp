@@ -1,5 +1,6 @@
 package com.example.MyBookShopApp.data.services;
 
+import com.example.MyBookShopApp.data.dto.ReviewDto;
 import com.example.MyBookShopApp.data.repo.*;
 import com.example.MyBookShopApp.errs.myJwtException;
 import com.example.MyBookShopApp.security.*;
@@ -9,6 +10,7 @@ import com.example.MyBookShopApp.struct.book.review.BookRatingEntity;
 import com.example.MyBookShopApp.struct.book.review.BookReviewEntity;
 import com.example.MyBookShopApp.struct.book.review.BookReviewLikeEntity;
 import com.example.MyBookShopApp.struct.payments.BalanceTransactionEntity;
+import com.example.MyBookShopApp.struct.user.Role;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +27,9 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,6 +56,10 @@ public class UserService {
     @Autowired
     private BookstoreUserDetailsService bookstoreUserDetailsService;
 
+    @Autowired
+    private RoleRepository roleRepository;
+    private Logger logger = Logger.getLogger(this.getClass().getName());
+
     @Value("${auth.expiredMessage}")
     private String expiredMessage;
 
@@ -70,6 +78,18 @@ public class UserService {
 
     public UserEntity getUserByName(String name){
         return userRepository.findUserEntityByName(name);
+    }
+
+    public UserEntity getUserById(int id){
+        return userRepository.findUserEntityById(id);
+    }
+
+    public UserEntity getUserByEmail(String email){
+       return userRepository.findUserEntityByEmail(email);
+    }
+
+    public UserEntity getUserByPhone(String phone){
+        return userRepository.findUserEntityByPhone(phone);
     }
 
     public UserEntity getUserByHash(String hash){ return userRepository.findByHashIs(hash);}
@@ -99,8 +119,8 @@ public class UserService {
 
     public Map<Integer, Integer> getRatingMapByBookId(Integer id) {
         List<BookRatingEntity> list = bookRatingRepository.findAllByBookId(id);
-        float sumOfRating = 0f;
-        int count = 0;
+        var sumOfRating = 0f;
+        var count = 0;
 
         Map<Integer, Integer> ratingMap = new HashMap<>();
         ratingMap.put(1, 0);
@@ -122,18 +142,18 @@ public class UserService {
                     count++;
                 }
             }
-            int averageRating = Math.round(sumOfRating / count);
+            int averageRating = count==0? Math.round(sumOfRating ) : Math.round(sumOfRating / count);
             ratingMap.put(100, averageRating);
             ratingMap.put(200, count);
         }
         return ratingMap;
     }
 
-    public Map<BookReviewEntity, List<Integer>> getReviewMapByBookId(Integer id) {
+    public Map<BookReviewEntity, List<Integer>> getReviewMapByBookId(Book book) {
         Map<BookReviewEntity, List<Integer>> reviewLikesMap = new HashMap<>();
         Map<BookReviewEntity, List<Integer>> resultMap = new LinkedHashMap<>();
         Map<Map<BookReviewEntity, List<Integer>>, Integer> noSortedMap = new HashMap<>();
-        List<BookReviewEntity> list = bookReviewRepository.findAllByBookIdOrderByTimeDesc(id);
+        List<BookReviewEntity> list = bookReviewRepository.findAllByBookAndIsCheckedInOrderByTimeDesc(book, Arrays.asList(0, 1));
 
         for (BookReviewEntity reviewEntity : list) {
             List<Integer> likes = getReviewLikeRatingByReviewId(reviewEntity.getId());
@@ -188,14 +208,10 @@ public class UserService {
         return false;
     }
 
-    public Integer getBookByReviewId(Integer reviewId) {
-        return bookReviewRepository.findByIdIs(reviewId).getBook().getId();
-    }
-
     public List<Integer> getReviewLikeRatingByReviewId(Integer reviewId) {
         List<BookReviewLikeEntity> list = bookReviewLikeRepository.findAllByReviewId(reviewId);
-        int countLike = 0;
-        int countDislike = 0;
+        var countLike = 0;
+        var countDislike = 0;
 
         for (BookReviewLikeEntity like : list) {
             if (like.getValue() > 0) ++countLike;
@@ -214,9 +230,8 @@ public class UserService {
         return Arrays.asList(0, countLike, countDislike);
     }
 
-    public void addReviewForBook(Book book, UserEntity user, String text) {
+    public boolean addReviewForBook(Book book, UserEntity user, String text) {
         if (user != null && !text.isBlank()) {
-
             BookReviewEntity review = BookReviewEntity.builder()
                     .book(book)
                     .user(user)
@@ -224,16 +239,18 @@ public class UserService {
                     .text(text)
                     .build();
             bookReviewRepository.save(review);
+            return true;
         }
+        return false;
     }
 
     public UserEntity addUser(RegistrationForm form) {
 
-        UserEntity userByEmail = userRepository.findUserEntityByEmail(form.getEmail());
-        UserEntity userByPhone = userRepository.findUserEntityByPhone(form.getPhone());
+        var userByEmail = userRepository.findUserEntityByEmail(form.getEmail());
+        var userByPhone = userRepository.findUserEntityByPhone(form.getPhone());
 
         if (userByEmail == null && userByPhone == null) {
-            UserEntity user = new UserEntity();
+            var user = new UserEntity();
             user.setName(form.getName());
             user.setEmail(form.getEmail());
             user.setPhone(form.getPhone());
@@ -241,18 +258,35 @@ public class UserService {
             user.setRegTime(LocalDateTime.now());
             user.setHash(String.valueOf(this.hashCode()));
             user.setBalance(0);
+            user.setStatus(1);
+
+            Role newRole;
+            Set<Role> roleSet = new HashSet<>();
+            if (getCurrentUser() != null && getCurrentUser().getRoles().stream()
+                    .anyMatch(role -> role.getRoleName().equals("ROLE_ADMIN")))  {
+                newRole = roleRepository.findByRoleName("ROLE_ADMIN");
+                roleSet.add(newRole);
+                user.setRoles(roleSet);
+            } else {
+                newRole = roleRepository.findByRoleName("ROLE_USER");
+                roleSet.add(newRole);
+                user.setRoles(roleSet);
+            }
 
             userRepository.save(user);
             return user;
         } else {
-            return userByPhone;
+            return userByEmail;
         }
     }
 
-    public void changeUserPassword(RegistrationForm form) {
-        UserEntity user = getCurrentUser();
-        user.setPassword(passwordEncoder.encode(form.getPass()));
-        userRepository.save(user);
+    public void changeUserPassword(RegistrationForm form, UserEntity user) {
+
+        if (user != null) {
+            logger.info("Сервис смены пароля для " + user.getName() + " на " + form.getPass());
+            user.setPassword(passwordEncoder.encode(form.getPass()));
+            userRepository.save(user);
+        }
     }
 
     public void changeUserPhone(RegistrationForm form) {
@@ -271,7 +305,7 @@ public class UserService {
         user.setBalance(user.getBalance() + sum);
         userRepository.save(user);
 
-        BalanceTransactionEntity transaction = new BalanceTransactionEntity();
+        var transaction = new BalanceTransactionEntity();
             transaction.setUserId(user.getId());
             transaction.setValue(sum);
             transaction.setBookId(0);
@@ -284,7 +318,7 @@ public class UserService {
         user.setBalance((float) (user.getBalance() - book.discountPrice()));
         userRepository.save(user);
 
-        BalanceTransactionEntity transaction = new BalanceTransactionEntity();
+        var transaction = new BalanceTransactionEntity();
             transaction.setUserId(user.getId());
             transaction.setValue((float) -book.discountPrice());
             transaction.setBookId(book.getId());
@@ -295,57 +329,52 @@ public class UserService {
     public Page<BalanceTransactionEntity> getPageOfBalanceTransactionDesc(UserEntity user, Integer offset, Integer limit, String sort){
         Pageable nextPage = PageRequest.of(offset, limit);
 
-        Page<BalanceTransactionEntity> page = sort.equalsIgnoreCase("desc")?
+        return sort.equalsIgnoreCase("desc")?
                 transactionRepository.findAllByUserIdOrderByTimeDesc(user.getId(), nextPage) :
                 transactionRepository.findAllByUserIdOrderByTimeAsc(user.getId(), nextPage);
-
-        return page;
     }
 
 
 
     public ContactConfirmationResponse login(ContactConfirmationPayload payload) {
-        Authentication authentication = authenticationManager.authenticate(
+        var authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(payload.getContact(), payload.getCode()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        ContactConfirmationResponse response = new ContactConfirmationResponse();
+        var response = new ContactConfirmationResponse();
         response.setResult("true");
         return response;
     }
 
     public ContactConfirmationResponse jwtLogin(ContactConfirmationPayload payload) {
-        System.out.println("Пароль не верный, вход выполнен - " + payload.getCode()); //
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(payload.getContact(), payload.getCode()));
 
-        System.out.println("payload.getContact() - " + payload.getContact());
-        System.out.println("payload.getCode() - "+ payload.getCode());
+        logger.info("payload.getContact() - " + payload.getContact());
+        logger.info("payload.getCode() - "+ payload.getCode());
 
         BookstoreUserDetails userDetails = (BookstoreUserDetails) userDetailsService.loadUserByUsername(payload.getContact());
 
         String jwtToken = jwtUtil.generateToken(userDetails);
 
-        ContactConfirmationResponse response = new ContactConfirmationResponse();
+        var response = new ContactConfirmationResponse();
         response.setResult(jwtToken);
-
-
 
         return response;
     }
 
 
     public ContactConfirmationResponse jwtLoginByPhoneNumber(ContactConfirmationPayload payload) {
-        RegistrationForm registrationForm = new RegistrationForm();
+        var registrationForm = new RegistrationForm();
         registrationForm.setPhone(payload.getContact());
         registrationForm.setPass(payload.getCode());
 
         addUser(registrationForm);
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(payload.getContact());
+        var userDetails = userDetailsService.loadUserByUsername(payload.getContact());
         String jwtToken = jwtUtil.generateToken(userDetails);
-        ContactConfirmationResponse response = new ContactConfirmationResponse();
+        var response = new ContactConfirmationResponse();
         response.setResult(jwtToken);
 
         return response;
@@ -353,11 +382,11 @@ public class UserService {
 
     public boolean userHasJwtToken(Object user){
         if (user instanceof UserDetails) {
-            System.out.println("Тип входа = токен " + user.getClass().getSimpleName() + " Email or Phone = " + ((BookstoreUserDetails) user).getUsername());
+            logger.info("Тип входа = токен " + user.getClass().getSimpleName() + " Email or Phone = " + ((BookstoreUserDetails) user).getUsername());
             return true;
         }
         if (user instanceof OAuth2User) {
-            System.out.println("Тип входа = OAuth2 " + user.getClass().getSimpleName() + " Email = " + ((CustomOAuth2User) user).getEmail());
+            logger.info("Тип входа = OAuth2 " + user.getClass().getSimpleName() + " Email = " + ((CustomOAuth2User) user).getEmail());
         }
         return  false;
     }
@@ -368,14 +397,13 @@ public class UserService {
 
             Object authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication == null) {
-                System.out.println("метод getCurrentUser получил authentication = null");
                 return null;
             }
 
             Object user = ((Authentication) authentication).getPrincipal();
 
-            if (user == null | user == "anonymousUser") {
-                System.out.println("Авторизация не пройдена, User = " + user);
+            if (user == null || user == "anonymousUser") {
+                logger.info("Авторизация не пройдена, User = " + user);
                 return null;
             }
 
@@ -384,17 +412,88 @@ public class UserService {
             } else {
                 String name = ((UserDetails) user).getUsername();
                 if (name.contains("@")) {
-                    System.out.println("Регистрированный клиент по Email - " + name);
+                    logger.info("Регистрированный клиент по Email - " + name);
                     return userRepository.findUserEntityByEmail(name);
                 } else {
-                    System.out.println("Регистрированный клиент по Phone - " + name);
+                    logger.info("Регистрированный клиент по Phone - " + name);
                     return userRepository.findUserEntityByPhone(name);
                 }
             }
         } else {
-            System.out.println("<UserService>- " + expiredMessage);
             throw new myJwtException(expiredMessage);
         }
     }
 
+    public List<BookReviewEntity> getReviewBetweenDate(ReviewDto form){
+        var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+
+        LocalDateTime from;
+        if (form.getStartDatetime() == null || form.getStartDatetime().isBlank()){
+            from = LocalDateTime.now().minusHours(24);
+        } else {
+            from = LocalDateTime.parse(form.getStartDatetime(), formatter);
+        }
+//
+        LocalDateTime to;
+        if (form.getEndDatetime() == null || form.getEndDatetime().isBlank()){
+            to = LocalDateTime.now();
+        } else {
+            to = LocalDateTime.parse(form.getEndDatetime(), formatter);
+        }
+
+        List<Integer> statuses = (form.getStatus() != null && form.getStatus().equals("checked"))? Arrays.asList(-1, 1) : Arrays.asList(0);
+
+        return bookReviewRepository.findAllByIsCheckedInAndTimeBetweenOrderByTime(statuses, from, to);
+    }
+
+    public void changeStatusForReview(ReviewDto form){
+
+        int isChecked = (form.getStatus().equals("approve"))? 1 : -1;
+
+        BookReviewEntity review = bookReviewRepository.findByIdIs(form.getId());
+        review.setIsChecked(isChecked);
+        bookReviewRepository.save(review);
+    }
+
+    public void changeStatusForAllReviews(ReviewDto form){
+        List<BookReviewEntity> reviews;
+        int isChecked = (form.getStatus().equals("approve"))? 1 : -1;
+        List<Integer> idListInteger = new ArrayList<>();
+
+        form.getIds().forEach(idString -> idListInteger.add(Integer.parseInt(idString)));
+        reviews = bookReviewRepository.findAllByIdIn(idListInteger);
+
+        reviews.forEach(review -> review.setIsChecked(isChecked));
+
+        bookReviewRepository.saveAll(reviews);
+    }
+
+    public UserEntity getUserByDataForm(RegistrationForm form){
+        UserEntity user = null;
+        if (form.getId() != 0) {
+            user = getUserById(form.getId());
+        } else if (form.getEmail() != null && !form.getEmail().isBlank()) {
+            user = getUserByEmail(form.getEmail());
+        } else if (form.getPhone() != null && !form.getPhone().isBlank()) {
+            user = getUserByPhone(form.getPhone());
+        } else if (form.getName() != null && !form.getName().isBlank()) {
+            user = getUserByName(form.getName());
+        }
+        return user;
+    }
+
+    public int getCountReviewByUserAndStatus(UserEntity user){
+        if (user == null) return 0;
+        return bookReviewRepository.countByUserAndIsChecked(user, -1);
+    }
+
+    public void changeStatusUser(ReviewDto form) {
+        int status = form.getStatus().equals("active")? 1 : 0;
+
+        var user = userRepository.findUserEntityById(form.getId());
+        if (user != null) {
+            user.setStatus(status);
+            userRepository.save(user);
+        }
+    }
 }

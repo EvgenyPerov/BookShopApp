@@ -1,6 +1,7 @@
 package com.example.MyBookShopApp.data.services;
 
 import com.example.MyBookShopApp.Aop.annotations.SelectRecentDateAnnotation;
+import com.example.MyBookShopApp.data.dto.BookCreateDto;
 import com.example.MyBookShopApp.data.google.api.books.Item;
 import com.example.MyBookShopApp.data.google.api.books.Root;
 import com.example.MyBookShopApp.data.repo.Book2AuthorRepository;
@@ -28,6 +29,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,6 +46,7 @@ public class BookService {
     private final Book2AuthorRepository book2AuthorRepository;
     @Autowired
     private RestTemplate restTemplate;
+    private Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Autowired
     public BookService(UserService userService, BookRepository bookRepository, BookRatingRepository bookRatingRepository, Book2UserService book2UserService, Book2AuthorRepository book2AuthorRepository) {
@@ -64,8 +67,8 @@ public class BookService {
         if (bookTitle == null || bookTitle.isBlank() || bookTitle.length() <=1){
             throw new BookstoreApiWrongPatameterException("Wrong values passed to one or more parameters");
         } else {
-            List<Book> data = bookRepository.findBooksByTitleContaining(bookTitle);
-            if (data.size()>0) return data;
+            List<Book> list = bookRepository.findBooksByTitleContaining(bookTitle);
+            if (!list.isEmpty()) return list;
             else
                 throw new BookstoreApiWrongPatameterException("No data found with specified parameters...");
         }
@@ -91,8 +94,6 @@ public class BookService {
         Pageable nextPage = PageRequest.of(offset, limit);
         Page<Book> page = bookRepository.findAllByTitleContainingIgnoreCase(regex, nextPage);
 
-        System.out.println("Сервис нашел книг = " + page.getContent().size());
-
         UserEntity user = userService.getCurrentUser();
         if (user != null) {
             updateStatusOfBook(page.getContent(), user);
@@ -103,7 +104,7 @@ public class BookService {
     }
 
     public List<Book> getPageOfGoogleBooksApiSearchResult(String regex, Integer offset, Integer limit){
-        String REQUEST_URL = "https://www.googleapis.com/books/v1/volumes?" +
+        var REQUEST_URL = "https://www.googleapis.com/books/v1/volumes?" +
                 "q=" +regex +
                 "&filter=paid-ebooks" +
                 "&startIndex=" +offset +
@@ -111,18 +112,17 @@ public class BookService {
                 "&orderBy=relevance" +
                 "&key=" + key;
 
-        Root root = restTemplate.getForEntity(REQUEST_URL, Root.class).getBody();
+        var root = restTemplate.getForEntity(REQUEST_URL, Root.class).getBody();
 
         List<Book> list = new ArrayList<>();
 
         if (root != null && root.getItems() != null){
             for (Item item : root.getItems()){
-                Book book = new Book();
+                var book = new Book();
                     if (item.getVolumeInfo() != null){
                         book.setTitle(item.getVolumeInfo().getTitle());
                         book.setDescription(item.getVolumeInfo().getDescription());
                         book.setImage(item.getVolumeInfo().getImageLinks().getThumbnail());
-//                        book.setAuthor(new Author(item.getVolumeInfo().getAuthors())); //
                     }
                 if (item.getSaleInfo() != null){
                     Double fullPrice = item.getSaleInfo().getListPrice().getAmount();
@@ -154,14 +154,13 @@ public class BookService {
 
         UserEntity user = userService.getCurrentUser();
         if (user == null) {
-            System.out.println("User не зарегистрирован");
+            logger.info("User не зарегистрирован");
 
-            Date dateFrom = Date.from(LocalDate.now().minusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            var dateFrom = Date.from(LocalDate.now().minusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
             List<Book> getBooksByPubDateAfter = bookRepository.findAllByPubDateAfterOrderByPubDateDesc(dateFrom);
 
             if ((postponedCookies == null || postponedCookies.isBlank()) &&
                     (cartCookies == null || cartCookies.isBlank())) {
-                System.out.println("Ничего нет в Отложенном и Корзине");
 
                 Set<Integer> setIds = new HashSet<>();
 
@@ -172,16 +171,13 @@ public class BookService {
                 Set<Integer> listBooksId = getAllRatingsForBooks.stream()
                         .map(BookRatingEntity::getBook).map(Book ::getId).collect(Collectors.toSet());
 
-                int ratingFrom = 3;
+                var ratingFrom = 3;
                 for (Integer id : listBooksId){
                     OptionalDouble averageRating =  getAllRatingsForBooks.stream()
                             .filter(bookRatingEntity -> bookRatingEntity.getBook().getId() == id)
                             .mapToInt(BookRatingEntity::getValue).average();
-//                    System.out.println("Для книги #" + id + " средний рейтинг = " + averageRating.getAsDouble());
-                    if (averageRating.isPresent()) {
-                        if (averageRating.getAsDouble() >= ratingFrom) {
+                    if (averageRating.isPresent() && averageRating.getAsDouble() >= ratingFrom) {
                             setIds.add(id);
-                        }
                     }
                 }
 
@@ -191,8 +187,6 @@ public class BookService {
                 resultPage = bookRepository.findBooksByIdInOrderByPubDateDesc(listIds, nextPage);
 
             } else   {
-                System.out.println("есть содержимое в Отложенном или Корзине");
-
                 Set<Integer> allIdBooksThese = new HashSet<>();
                 allIdBooksThese.addAll(getBooksByPubDateAfter.stream().map(Book::getId).collect(Collectors.toSet()));
 
@@ -228,13 +222,12 @@ public class BookService {
 
                 listIds.removeAll(listIdsCartBooksForDelete);
 
-                System.out.println("Количество найденных рекомендованных книг = "+ listIds.size());
+                logger.info("Количество найденных рекомендованных книг = "+ listIds.size());
                 resultPage = bookRepository.findBooksByIdInOrderByPubDateDesc(listIds, nextPage);
 
                 updateStatusOfBook(resultPage.getContent(), null);
             }
         } else {
-            System.out.println("Авторизация выполнена - " + user.getName());
 
             List<Book> paidBooks = book2UserService.getBooksFromRepoByTypeCodeAndUser("PAID", user);
             List<Book> keptBooks = book2UserService.getBooksFromRepoByTypeCodeAndUser("KEPT", user);
@@ -291,7 +284,7 @@ public class BookService {
             updateStatusOfBook(resultPage.getContent(), user);
 
         }
-        System.out.println("Количество подгруженных сервисом рекомендованных книг = "+ resultPage.getContent().size());
+        logger.info("Количество подгруженных сервисом рекомендованных книг = "+ resultPage.getContent().size());
 
         return resultPage.getContent();
     }
@@ -302,7 +295,7 @@ public class BookService {
     public List<Book> getPageOfPopularBooks(Integer offset, Integer limit){
         Pageable nextPage = PageRequest.of(offset, limit);
         Page<Book> page = bookRepository.booksRatingAndPopulatityService(nextPage);
-        System.out.println("Количество подгруженных сервисом популярных книг = "+ page.stream().count()); //
+        logger.info("Количество подгруженных сервисом популярных книг = "+ page.stream().count());
 
         UserEntity user = userService.getCurrentUser();
         if (user != null) {
@@ -325,7 +318,7 @@ public class BookService {
     // далее при карусели
     @SelectRecentDateAnnotation
     public List<Book> getPageOfRecentBooks(String from, String to, Integer offset, Integer limit){
-        SimpleDateFormat Dformat = new SimpleDateFormat("dd.MM.yyyy");
+        var dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Page<Book> page;
         Pageable nextPage;
         Date dFrom;
@@ -333,20 +326,20 @@ public class BookService {
 
         if (from != null && to != null) {
             try {
-                dFrom = Dformat.parse(from);
-                dTo = Dformat.parse(to);
+                dFrom = dateFormat.parse(from);
+                dTo = dateFormat.parse(to);
             } catch (ParseException e) {
                 throw new RuntimeException(e);
             }
         } else {
             dFrom = Date.from(LocalDate.now().minusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
             dTo = new Date();
-            System.out.println("На главной странице карусель Новинки книг даты не определены, по умолчанию  from " + dFrom +" to= " + dTo);
+            logger.info("На главной странице карусель Новинки книг даты не определены, по умолчанию  from " + dFrom +" to= " + dTo);
         }
 
         nextPage = PageRequest.of(offset, limit);
         page = bookRepository.findBooksByPubDateBetweenOrderByPubDateDesc(dFrom, dTo, nextPage);
-        System.out.println("Количество подгруженных на странице Новинок сервисом книг = " + page.stream().count());
+        logger.info("Количество подгруженных на странице Новинок сервисом книг = " + page.stream().count());
 
         UserEntity user = userService.getCurrentUser();
         if (user != null) {
@@ -360,7 +353,7 @@ public class BookService {
     }
 
     public void updateStatusOfBook(List<Book> list, UserEntity user){
-        System.out.println("Обновление статуса у книг");
+        logger.info("Обновление статуса у книг");
         List<Book> booksForUpdate = new ArrayList<>();
         if (user != null) {
             List<Book> bookKeptList = book2UserService.getBooksFromRepoByTypeCodeAndUser("KEPT", user);
@@ -370,7 +363,7 @@ public class BookService {
 
             for (Book book : list) {
 
-                boolean isFound = false;
+                var isFound = false;
 
                 if (bookKeptList.contains(book)) {
                     book.setStatus("KEPT");
@@ -410,22 +403,12 @@ public class BookService {
         }
     }
 
-//            // сортировка по значению по убыванию "-v.getValue()"
-//            Map <Book, Double> sortedMap = mapBookAndRating.entrySet().stream()
-//                    .sorted(Comparator.comparingDouble(v -> -v.getValue()))
-//                    .collect(Collectors.toMap(
-//                            Map.Entry :: getKey,
-//                            Map.Entry :: getValue,
-//                            (a,b) -> {throw new AssertionError();},
-//                            LinkedHashMap ::new
-//                    ));
-
     public Book getBookById(Integer id){
-        return bookRepository.findById(id).get();
+        return bookRepository.findById(id).isPresent()? bookRepository.findById(id).get() : null;
     }
 
-    public String getBookSlugById(Integer id) {
-        return getBookById(id).getSlug();
+    public List<Book> getAllBooks() {
+        return bookRepository.findAll();
     }
 
     public List<Book> getBooksByIdIn(String[] arrayStringId){
@@ -443,39 +426,39 @@ public class BookService {
     }
 
     public void decreaseCart(Integer bookId) {
-        Book book = bookRepository.findById(bookId).get();
-        if (book != null & book.getCountOfCart() >= 0) {
+        Book book = bookRepository.findById(bookId).isPresent()? bookRepository.findById(bookId).get() : null;
+        if (book != null && book.getCountOfCart() >= 0) {
             book.setCountOfCart(book.getCountOfCart() - 1);
             bookRepository.save(book);
         }
     }
 
     public void increaseCart(Integer bookId) {
-        Book book = bookRepository.findById(bookId).get();
-        if (book != null & book.getCountOfCart() >= 0) {
+        Book book = bookRepository.findById(bookId).isPresent()? bookRepository.findById(bookId).get() : null;
+        if (book != null && book.getCountOfCart() >= 0) {
             book.setCountOfCart(book.getCountOfCart() + 1);
             bookRepository.save(book);
         }
     }
 
     public void decreaseKept(Integer bookId) {
-        Book book = bookRepository.findById(bookId).get();
-        if (book != null & book.getCountOfPostponed() >= 0) {
+        Book book = bookRepository.findById(bookId).isPresent()? bookRepository.findById(bookId).get() : null;
+        if (book != null && book.getCountOfPostponed() >= 0) {
             book.setCountOfPostponed(book.getCountOfPostponed() - 1);
             bookRepository.save(book);
         }
     }
 
     public void increaseKept(Integer bookId) {
-        Book book = bookRepository.findById(bookId).get();
-        if (book != null & book.getCountOfPostponed() >= 0) {
+        Book book = bookRepository.findById(bookId).isPresent()? bookRepository.findById(bookId).get() : null;
+        if (book != null && book.getCountOfPostponed() >= 0) {
             book.setCountOfPostponed(book.getCountOfPostponed() + 1);
             bookRepository.save(book);
         }
     }
 
     public void increasePaid(Integer bookId) {
-        Book book = bookRepository.findById(bookId).get();
+        Book book = bookRepository.findById(bookId).isPresent()? bookRepository.findById(bookId).get() : null;
         if (book != null) {
             book.setCountOfBuy(book.getCountOfBuy() + 1);
             bookRepository.save(book);
@@ -495,7 +478,7 @@ public class BookService {
 
 
     public int getBookCartTotalCost(List<Book> booksFromCookie) {
-        int summ = 0;
+        var summ = 0;
 
         if (booksFromCookie != null) {
             summ = booksFromCookie.stream()
@@ -506,12 +489,12 @@ public class BookService {
     }
 
     public String getIdListPostponedBooks(List<Book> booksFromCookie) {
-        StringJoiner stringJoiner = new StringJoiner(", ");
-        if (booksFromCookie != null)
-        for(Book book : booksFromCookie){
-            stringJoiner.add(String.valueOf(book.getId()));
+        var stringJoiner = new StringJoiner(", ");
+        if (booksFromCookie != null) {
+            for (Book book : booksFromCookie) {
+                stringJoiner.add(String.valueOf(book.getId()));
+            }
         }
-        System.out.println("[" + stringJoiner + "]");
         return "[" + stringJoiner + "]";
     }
 
@@ -532,11 +515,7 @@ public class BookService {
 
      Set<Integer> getAllBooksIdTheseAuthors(List<Book> books){
         Set<Integer> allBooksIdTheseAuthors = new HashSet<>();
-        if (books != null & !books.isEmpty()) {
-
-            Set<String> authorNameSet = new HashSet<>();
-//                    = statusBooks.stream().map(Book::authorName).collect(Collectors.toSet());
-//            authorNameSet.forEach(System.out::println); //
+        if (books != null && !books.isEmpty()) {
 
             List<Book2AuthorEntity> book2AuthorEntityListByBooks = book2AuthorRepository.findAllByBookIn(books);
 
@@ -546,38 +525,19 @@ public class BookService {
 
             allBooksIdTheseAuthors = book2AuthorEntityListByAuthors.stream().map(Book2AuthorEntity :: getBook).map(Book :: getId).collect(Collectors.toSet());
 
-//            for(Book book : books){
-//
-//                for(String name : book.allAuthorsNameList()){
-//                    authorNameSet.add(name);
-//                }
-
-
-//                for(String name : book.allAuthorsNameList()){
-//                    authorNameSet.add(name);
-////                }
-//            }
-//
-//            List<Book> allBooks = bookRepository.findAll();
-//            for (String name : authorNameSet) {
-//                allBooksIdTheseAuthors.addAll(allBooks.stream().filter(i -> i.getAuthor()
-//                        .getName().equalsIgnoreCase(name)).map(Book::getId).collect(Collectors.toList()));
-//            }
         }
-        System.out.println("Найдено рекомендованных книг по авторам - "+ allBooksIdTheseAuthors.size());
-//        allBooksByAuthor.forEach(book -> System.out.println("Книга № " +book.getId()+" Автор - "+book.getAuthor().getName())); //
+         logger.info("Найдено рекомендованных книг по авторам - "+ allBooksIdTheseAuthors.size());
         return allBooksIdTheseAuthors;
     }
 
     Set<Integer> getAllBooksIdTheseTags(List<Book> statusBooks){
         Set<Integer> allBooksTheseTags = new HashSet<>();
-        if (statusBooks != null & !statusBooks.isEmpty()) {
+        if (statusBooks != null && !statusBooks.isEmpty()) {
 
             Set<String> tagsSet = new HashSet<>();
             for (Book book : statusBooks){
                 tagsSet.addAll(book.getTagList().stream().map(Tag::getName).collect(Collectors.toSet()));
             }
-//            tagsSet.forEach(System.out::println); //
 
             List<Book> allBooks = bookRepository.findAll();
             for (String name : tagsSet) {
@@ -590,14 +550,14 @@ public class BookService {
                 }
             }
         }
-        System.out.println("Найдено рекомендованных книг по тэгам - "+ allBooksTheseTags.size());
+        logger.info("Найдено рекомендованных книг по тэгам - "+ allBooksTheseTags.size());
 
         return allBooksTheseTags;
     }
 
     Set<Integer> getAllBooksIdTheseGenre(List<Book> statusBooks){
         Set<Integer> allBooksTheseGenres = new HashSet<>();
-        if (statusBooks != null & !statusBooks.isEmpty()) {
+        if (statusBooks != null && !statusBooks.isEmpty()) {
 
             Set<String> genreSet = new HashSet<>();
             for (Book book : statusBooks){
@@ -616,10 +576,19 @@ public class BookService {
                 }
             }
         }
-        System.out.println("Найдено рекомендованных книг по жанрам - "+ allBooksTheseGenres.size());
+        logger.info("Найдено рекомендованных книг по жанрам - "+ allBooksTheseGenres.size());
 
         return allBooksTheseGenres;
     }
 
-
+    public Book getBookByDataForm(BookCreateDto form) {
+        Book book = null;
+        if (form.getId() != 0) {
+            Optional<Book> tempBook = bookRepository.findById(form.getId());
+            book = tempBook.isPresent()? tempBook.get() : null;
+        } else if (form.getSlug() != null && !form.getSlug().isBlank()) {
+            book = bookRepository.findBySlugIsIgnoreCase(form.getSlug());
+        }
+        return book;
+    }
 }

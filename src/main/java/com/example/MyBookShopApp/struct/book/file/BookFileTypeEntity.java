@@ -1,6 +1,5 @@
 package com.example.MyBookShopApp.struct.book.file;
 
-import com.example.MyBookShopApp.struct.book.book.Book;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -25,6 +24,12 @@ public class BookFileTypeEntity {
     @OneToMany(mappedBy = "bookFileTypeEntity")
     private List<BookFileEntity> bookFileList = new ArrayList<>();
 
-
-
+    @Override
+    public String toString() {
+        return "BookFileTypeEntity{" +
+                "id=" + id +
+                ", nameTypeFile='" + name + '\'' +
+                ", description='" + description + '\'' +
+                '}';
+    }
 }

@@ -20,8 +20,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
-@Api(description = "контроллер для обработки главной страницы book")
+@Api("контроллер для обработки главной страницы book")
 @Controller
 public class MainPageController {
 
@@ -31,6 +32,7 @@ public class MainPageController {
     private final UserService userService;
 
     private final Book2UserService book2UserService;
+    private Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Autowired
     public MainPageController(BookService bookService, OtherService otherService, UserService userService, Book2UserService book2UserService) {
@@ -100,10 +102,8 @@ public class MainPageController {
                                   Model model) throws EmptySearchException {
         if (searchWordDto != null) {
         model.addAttribute("searchWordDto", searchWordDto);
-//        List<Book> searchResults = bookService.getPageOfGoogleBooksApiSearchResult(searchWordDto.getExample(), 0, 20);
         List<Book> searchResults = bookService.getPageOfSearchResultBooks(searchWordDto.getExample(), 0, 20);
         model.addAttribute("searchResults",searchResults);
-            System.out.println("найдено сначала книг = " + searchResults.size());
         return "/search/index";
         } else {
             throw new EmptySearchException("Поисковый запрос не задан");
@@ -115,11 +115,9 @@ public class MainPageController {
                                           @RequestParam("limit") Integer limit,
                                           @PathVariable(value = "searchWord", required = false) SearchWordDto searchWordDto,
                                           Model model) {
-//        List<Book> searchResults =bookService.getPageOfGoogleBooksApiSearchResult(searchWordDto.getExample(), offset, limit);
         List<Book> searchResults =bookService.getPageOfSearchResultBooks(searchWordDto.getExample(), offset, limit);
         model.addAttribute("searchWordDto", searchWordDto);
-        System.out.println("searchWordDto = " + searchWordDto.getExample()); //
-        System.out.println("найдено Pageable книг = " + searchResults.size());
+        logger.info("найдено Pageable книг = " + searchResults.size());
         return new BooksPageDto(searchResults);
     }
 
@@ -127,7 +125,7 @@ public class MainPageController {
     public String mainPage(Model model,
                            @CookieValue(name = "cartContents", required = false) String cartContents,
                            @CookieValue(name = "postponedContents", required = false) String postponedContents){
-        System.out.println("Переход на страницу Главная");
+        logger.info("Переход на страницу Главная");
         model.addAttribute("searchWordDto", new SearchWordDto());
         model.addAttribute("recommendedBooks",
                 bookService.getRecomendedBooksOnMainPage(postponedContents, cartContents, 0,6));
@@ -142,7 +140,6 @@ public class MainPageController {
                                                  @CookieValue(name = "postponedContents", required = false) String postponedContents,
                                                  @RequestParam(value ="offset" , required = false) Integer offset,
                                                  @RequestParam(value ="limit" , required = false) Integer limit) {
-        System.out.println("Передача данных рекомендованных книг в JS с параметрами offset = "+ offset + " limit= "+ limit);
         return new BooksPageDto(bookService.
                 getRecomendedBooksOnMainPage(postponedContents, cartContents, offset,limit));
     }

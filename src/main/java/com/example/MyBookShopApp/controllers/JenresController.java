@@ -10,12 +10,12 @@ import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 @Controller
 public class JenresController {
@@ -25,6 +25,7 @@ public class JenresController {
 
     private final BookService bookService;
     private final Book2UserService book2UserService;
+    private Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Autowired
     public JenresController(GenreService genreService, UserService userService, BookService bookService, Book2UserService book2UserService) {
@@ -77,7 +78,7 @@ public class JenresController {
     @ApiOperation("этот метод изначально при переходе с главной страницы на Жанры")
     @GetMapping("/genres")
     public String getGenreList(Model model){
-        System.out.println("Переход на страницу Жанры");
+        logger.info("Переход на страницу Жанры");
         model.addAttribute("genreList",genreService.getGenreList());
         return "/genres/index";
     }
