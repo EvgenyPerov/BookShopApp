@@ -38,8 +38,6 @@ public class AdminController {
 
     private final AuthorService authorService;
     private final BookService bookService;
-    private final OtherService otherService;
-
     private final UserService userService;
 
     private final Book2UserService book2UserService;
@@ -54,12 +52,11 @@ public class AdminController {
     private static final String NEW_USER = "usersForm";
 
     @Autowired
-    public AdminController(AdminService adminService, ResourceStorage storage, AuthorService authorService, BookService bookService, OtherService otherService, UserService userService, Book2UserService book2UserService, GenreService genreService) {
+    public AdminController(AdminService adminService, ResourceStorage storage, AuthorService authorService, BookService bookService, UserService userService, Book2UserService book2UserService, GenreService genreService) {
         this.adminService = adminService;
         this.storage = storage;
         this.authorService = authorService;
         this.bookService = bookService;
-        this.otherService = otherService;
         this.userService = userService;
         this.book2UserService = book2UserService;
         this.genreService = genreService;
@@ -80,7 +77,7 @@ public class AdminController {
         model.addAttribute(NEW_BOOK_DTO, newBookDto);
         model.addAttribute(AUTHORS, authorService.getAllAuthorsName());
         model.addAttribute(GENRES, genreService.getAllGenresName());
-        model.addAttribute("tags", otherService.getAllTagsName());
+        model.addAttribute("tags", bookService.getAllTagsName());
 
         return "/admin/newBook";
     }
@@ -97,7 +94,7 @@ public class AdminController {
         mav.addObject(NEW_BOOK_DTO, newBookDto);
         mav.addObject(AUTHORS, authorService.getAllAuthorsName());
         mav.addObject(GENRES, genreService.getAllGenresName());
-        mav.addObject("tags", otherService.getAllTagsName());
+        mav.addObject("tags", bookService.getAllTagsName());
 
         mav.setStatus(HttpStatus.OK);
         mav.setViewName("/admin/newBook");
@@ -118,7 +115,7 @@ public class AdminController {
         mav.addObject(NEW_BOOK_DTO, newBookDto);
         mav.addObject(AUTHORS, authorService.getAllAuthorsName());
         mav.addObject(GENRES, genreService.getAllGenresName());
-        mav.addObject("tags", otherService.getAllTagsName());
+        mav.addObject("tags", bookService.getAllTagsName());
         mav.setStatus(HttpStatus.OK);
         mav.setViewName("/admin/newBook");
         return mav;
@@ -134,7 +131,7 @@ public class AdminController {
         model.addAttribute("books", bookService.getAllBooks().stream().sorted(Comparator.comparing(Book::getTitle)).collect(Collectors.toList()));
         model.addAttribute(AUTHORS, authorService.getAllAuthorsName());
         model.addAttribute(GENRES, genreService.getAllGenresName());
-        model.addAttribute("tags", otherService.getAllTagsName());
+        model.addAttribute("tags", bookService.getAllTagsName());
 
         return "/admin/editBook";
     }
@@ -153,7 +150,7 @@ public class AdminController {
         mav.addObject("books", bookService.getAllBooks().stream().sorted(Comparator.comparing(Book::getTitle)).collect(Collectors.toList()));
         mav.addObject(AUTHORS, authorService.getAllAuthorsName());
         mav.addObject(GENRES, genreService.getAllGenresName());
-        mav.addObject("tags", otherService.getAllTagsName());
+        mav.addObject("tags", bookService.getAllTagsName());
         mav.setStatus(HttpStatus.OK);
         mav.setViewName("/admin/editBook");
         return mav;
@@ -172,7 +169,7 @@ public class AdminController {
         mav.addObject("books", bookService.getAllBooks().stream().sorted(Comparator.comparing(Book::getTitle)).collect(Collectors.toList()));
         mav.addObject(AUTHORS, authorService.getAllAuthorsName());
         mav.addObject(GENRES, genreService.getAllGenresName());
-        mav.addObject("tags", otherService.getAllTagsName());
+        mav.addObject("tags", bookService.getAllTagsName());
         mav.setStatus(HttpStatus.OK);
         mav.setViewName("/admin/editBook");
         return mav;

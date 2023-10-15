@@ -1,5 +1,6 @@
 package com.example.MyBookShopApp.data.services;
 
+import com.example.MyBookShopApp.data.dto.ContactMessageDto;
 import com.example.MyBookShopApp.data.dto.ReviewDto;
 import com.example.MyBookShopApp.data.repo.*;
 import com.example.MyBookShopApp.errs.myJwtException;
@@ -9,6 +10,7 @@ import com.example.MyBookShopApp.struct.book.book.Book;
 import com.example.MyBookShopApp.struct.book.review.BookRatingEntity;
 import com.example.MyBookShopApp.struct.book.review.BookReviewEntity;
 import com.example.MyBookShopApp.struct.book.review.BookReviewLikeEntity;
+import com.example.MyBookShopApp.struct.book.review.MessageEntity;
 import com.example.MyBookShopApp.struct.payments.BalanceTransactionEntity;
 import com.example.MyBookShopApp.struct.user.Role;
 import com.example.MyBookShopApp.struct.user.UserEntity;
@@ -58,6 +60,8 @@ public class UserService {
 
     @Autowired
     private RoleRepository roleRepository;
+    @Autowired
+    private MessageRepository messageRepository;
     private Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Value("${auth.expiredMessage}")
@@ -495,5 +499,30 @@ public class UserService {
             user.setStatus(status);
             userRepository.save(user);
         }
+    }
+
+    public void addMessageToSupport(ContactMessageDto form){
+        UserEntity user = getCurrentUser();
+        String name;
+        String email;
+        var userId = 0;
+
+        if (user != null) {
+            name = user.getName();
+            email = user.getEmail();
+            userId = user.getId();
+        } else {
+            name = form.getName();
+            email = form.getEmail();
+        }
+
+        var message = new MessageEntity();
+        message.setTime(LocalDateTime.now());
+        message.setName(name);
+        message.setEmail(email);
+        message.setSubject(form.getSubject());
+        message.setText(form.getText());
+        message.setUserId(userId);
+        messageRepository.save(message);
     }
 }

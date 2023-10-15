@@ -20,9 +20,8 @@ import java.util.List;
 import java.util.logging.Logger;
 
 @Controller
-public class OtherController {
+public class UserServiceController {
 
-    private OtherService otherService;
     private final UserService userService;
 
     private final BookService bookService;
@@ -33,8 +32,7 @@ public class OtherController {
     private Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Autowired
-    public OtherController(OtherService otherService, UserService userService, BookService bookService, Book2UserService book2UserService, PaymentServise paymentServise) {
-        this.otherService = otherService;
+    public UserServiceController(UserService userService, BookService bookService, Book2UserService book2UserService, PaymentServise paymentServise) {
         this.userService = userService;
         this.bookService = bookService;
         this.book2UserService = book2UserService;
@@ -89,14 +87,14 @@ public class OtherController {
     @GetMapping("/documents/index")
     public String documentsPage(Model model){
         logger.info("Переход на страницу Документы");
-        model.addAttribute("documents",otherService.getAllDocuments());
+        model.addAttribute("documents",bookService.getAllDocuments());
         return "/documents/index";
     }
 
     @GetMapping("/documents/{slug}")
     public String documentsPage(Model model, @PathVariable(value = "slug", required = false) String slug){
         logger.info("Переход на страницу Конкретного документа");
-        model.addAttribute("doc",otherService.getDocumentBySlug(slug));
+        model.addAttribute("doc",bookService.getDocumentBySlug(slug));
         return "/documents/" + slug;
     }
 
@@ -109,7 +107,7 @@ public class OtherController {
     @GetMapping("/faq")
     public String faqPage(Model model){
         logger.info("Переход на страницу Помощь");
-        model.addAttribute("faqMap",otherService.getMapAllFaq());
+        model.addAttribute("faqMap",bookService.getMapAllFaq());
         return "/faq";
     }
 
@@ -122,7 +120,7 @@ public class OtherController {
     @PostMapping("/contacts")
     public String sendMessageToContacts(ContactMessageDto form){
         logger.info("Отправка сообщения в поддержку");
-        otherService.addMessageToSupport(form);
+        userService.addMessageToSupport(form);
         return "redirect:/contacts";
     }
 
@@ -131,9 +129,9 @@ public class OtherController {
     public String getTags(Model model,
                           @PathVariable(value = "tagId", required = false) Integer tagId) {
         logger.info("Переход на страницу тэгов");
-        List<Book> list = otherService.getPageOfTagBooks(tagId, 0, 20);
+        List<Book> list = bookService.getPageOfTagBooks(tagId, 0, 20);
         model.addAttribute("bookListByTag",list);
-        model.addAttribute("tagName",otherService.getTagNameById(tagId));
+        model.addAttribute("tagName",bookService.getTagNameById(tagId));
         model.addAttribute("id",tagId);
     return "/tags/index";
     }
@@ -144,7 +142,7 @@ public class OtherController {
     public BooksPageDto getRecentNextPage(@PathVariable(value = "tagId", required = false) Integer tagId
             ,@RequestParam(value ="offset", required = false) Integer offset
             , @RequestParam(value ="limit", required = false) Integer limit){
-        List<Book> list = otherService.getPageOfTagBooks(tagId, offset, limit);
+        List<Book> list = bookService.getPageOfTagBooks(tagId, offset, limit);
         return new BooksPageDto(list);
     }
 

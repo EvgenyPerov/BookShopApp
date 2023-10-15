@@ -4,7 +4,6 @@ import com.example.MyBookShopApp.data.dto.BooksPageDto;
 import com.example.MyBookShopApp.data.dto.SearchWordDto;
 import com.example.MyBookShopApp.data.services.Book2UserService;
 import com.example.MyBookShopApp.data.services.BookService;
-import com.example.MyBookShopApp.data.services.OtherService;
 import com.example.MyBookShopApp.data.services.UserService;
 import com.example.MyBookShopApp.errs.EmptySearchException;
 import com.example.MyBookShopApp.struct.book.book.Book;
@@ -27,17 +26,14 @@ import java.util.logging.Logger;
 public class MainPageController {
 
     private final BookService bookService;
-    private final OtherService otherService;
-
     private final UserService userService;
 
     private final Book2UserService book2UserService;
     private Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Autowired
-    public MainPageController(BookService bookService, OtherService otherService, UserService userService, Book2UserService book2UserService) {
+    public MainPageController(BookService bookService, UserService userService, Book2UserService book2UserService) {
         this.bookService = bookService;
-        this.otherService = otherService;
         this.userService = userService;
         this.book2UserService = book2UserService;
     }
@@ -64,7 +60,7 @@ public class MainPageController {
 
     @ModelAttribute("tagsMap")
     public Map<Tag, Integer> getTagsIdList(){
-        return otherService.getTagsAndSizesMap();
+        return bookService.getTagsAndSizesMap();
     }
 
     @ModelAttribute("myBooks")

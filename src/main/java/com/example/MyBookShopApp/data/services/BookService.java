@@ -4,9 +4,7 @@ import com.example.MyBookShopApp.Aop.annotations.SelectRecentDateAnnotation;
 import com.example.MyBookShopApp.data.dto.BookCreateDto;
 import com.example.MyBookShopApp.data.google.api.books.Item;
 import com.example.MyBookShopApp.data.google.api.books.Root;
-import com.example.MyBookShopApp.data.repo.Book2AuthorRepository;
-import com.example.MyBookShopApp.data.repo.BookRatingRepository;
-import com.example.MyBookShopApp.data.repo.BookRepository;
+import com.example.MyBookShopApp.data.repo.*;
 import com.example.MyBookShopApp.errs.BookstoreApiWrongPatameterException;
 import com.example.MyBookShopApp.struct.author.Author;
 import com.example.MyBookShopApp.struct.book.book.Book;
@@ -14,6 +12,8 @@ import com.example.MyBookShopApp.struct.book.links.Book2AuthorEntity;
 import com.example.MyBookShopApp.struct.book.links.Book2GenreEntity;
 import com.example.MyBookShopApp.struct.book.review.BookRatingEntity;
 import com.example.MyBookShopApp.struct.genre.GenreEntity;
+import com.example.MyBookShopApp.struct.other.DocumentEntity;
+import com.example.MyBookShopApp.struct.other.FaqEntity;
 import com.example.MyBookShopApp.struct.other.Tag;
 import com.example.MyBookShopApp.struct.user.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,19 +42,25 @@ public class BookService {
     private final BookRepository bookRepository;
     private final BookRatingRepository bookRatingRepository;
     private final Book2UserService book2UserService;
-
     private final Book2AuthorRepository book2AuthorRepository;
+
+    private final TagsRepository tagsRepository;
+    @Autowired
+    private DocumentRepository documentRepository;
+    @Autowired
+    private FaqRepository faqRepository;
     @Autowired
     private RestTemplate restTemplate;
     private Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Autowired
-    public BookService(UserService userService, BookRepository bookRepository, BookRatingRepository bookRatingRepository, Book2UserService book2UserService, Book2AuthorRepository book2AuthorRepository) {
+    public BookService(UserService userService, BookRepository bookRepository, BookRatingRepository bookRatingRepository, Book2UserService book2UserService, Book2AuthorRepository book2AuthorRepository, TagsRepository tagsRepository) {
         this.userService = userService;
         this.bookRepository = bookRepository;
         this.bookRatingRepository = bookRatingRepository;
         this.book2UserService = book2UserService;
         this.book2AuthorRepository = book2AuthorRepository;
+        this.tagsRepository = tagsRepository;
     }
 
     public List<Book> getBooksByAuthorContaining(String authorName){
@@ -590,5 +596,77 @@ public class BookService {
             book = bookRepository.findBySlugIsIgnoreCase(form.getSlug());
         }
         return book;
+    }
+
+    public List<Tag> getAllTags() {
+        return tagsRepository.findAll();
+    }
+
+    public List<String> getAllTagsName(){
+        List<String> list =  getAllTags().stream()
+                .map(Tag::getName)
+                .sorted()
+                .collect(Collectors.toList());
+        list.add(0,"");
+        return list;
+    }
+
+    public Map<Tag, Integer> getTagsAndSizesMap(){
+        List<Tag> tagList = getAllTags();
+        Map<Tag, Integer> tagMap = new HashMap<>();
+        int min, max;
+
+        if (tagList != null && !tagList.isEmpty()){
+            min = tagList.get(0).getBookList().size();
+            max = min;
+            for (Tag tag : tagList) {
+                min = tag.getBookList().size() < min ? tag.getBookList().size() : min;
+                max = tag.getBookList().size() > max ? tag.getBookList().size() : max;
+            }
+            float variance = (min == 0) ? max : (max - min + 1);
+            for (Tag tag : tagList) {
+                float sizePercent = variance == 0? 0 : Float.valueOf(tag.getBookList().size()) / variance * 10;
+                tagMap.putIfAbsent(tag, (int) sizePercent);
+            }
+        }
+        return tagMap;
+    }
+
+    public List<Book> getPageOfTagBooks(Integer tagId, Integer offset, Integer limit){
+        Pageable nextPage = PageRequest.of(offset, limit);
+        var tag = tagsRepository.findTagByIdIs(tagId);
+        Page<Book> page = bookRepository.findBooksByTagListContains(tag, nextPage);
+
+        UserEntity user = userService.getCurrentUser();
+        if (user != null) {updateStatusOfBook(page.getContent(), user);}
+
+        return page.getContent();
+    }
+
+    public String getTagNameById(Integer tagId){
+        return tagsRepository.findTagByIdIs(tagId).getName();
+    }
+
+    public List<DocumentEntity> getAllDocuments(){
+        return documentRepository.findAll();
+    }
+
+    public DocumentEntity getDocumentBySlug(String slug){
+        return documentRepository.findBySlug(slug);
+    }
+
+    public Map<String, List<String>> getMapAllFaq(){
+        List<FaqEntity> faqEntityList = faqRepository.findAll();
+        Map<String, List<String>> map = new HashMap<>();
+
+        for (FaqEntity faq : faqEntityList) {
+            map.put(faq.getQuestion(), new ArrayList<>());
+        }
+
+        for (FaqEntity faq : faqEntityList) {
+            map.get(faq.getQuestion()).add(faq.getAnswer());
+        }
+
+        return map;
     }
 }
